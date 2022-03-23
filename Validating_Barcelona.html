@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+
+
+<title>Validating barcelona script (.annot processing)</title>
+
+<script src="site_libs/header-attrs-2.10/header-attrs.js"></script>
+<script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/spacelab.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<style>h1 {font-size: 34px;}
+       h1.title {font-size: 38px;}
+       h2 {font-size: 30px;}
+       h3 {font-size: 24px;}
+       h4 {font-size: 18px;}
+       h5 {font-size: 16px;}
+       h6 {font-size: 12px;}
+       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
+       pre:not([class]) { background-color: white }</style>
+<script src="site_libs/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<script src="site_libs/navigation-1.1/codefolding.js"></script>
+<link href="site_libs/highlightjs-9.12.0/default.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+<style type="text/css">code{white-space: pre;}</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+
+
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+pre code {
+  padding: 0;
+}
+</style>
+
+
+<style type="text/css">
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #adb5bd;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script type="text/javascript">
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.tab('show');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+
+  // Navbar adjustments
+  var navHeight = $(".navbar").first().height() + 15;
+  var style = document.createElement('style');
+  var pt = "padding-top: " + navHeight + "px; ";
+  var mt = "margin-top: -" + navHeight + "px; ";
+  var css = "";
+  // offset scroll position for anchor links (for fixed navbar)
+  for (var i = 1; i <= 6; i++) {
+    css += ".section h" + i + "{ " + pt + mt + "}\n";
+  }
+  style.innerHTML = "body {" + pt + "padding-bottom: 40px; }\n" + css;
+  document.head.appendChild(style);
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+<style type="text/css">
+.code-folding-btn { margin-bottom: 4px; }
+</style>
+
+
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-inverse  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">Morphometricity</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="Serious_Pipeline.html">Main pre-processing</a>
+</li>
+<li>
+  <a href="index.html">Tab 2</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div id="header">
+
+<div class="btn-group pull-right float-right">
+<button type="button" class="btn btn-default btn-xs btn-secondary btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span>Code</span> <span class="caret"></span></button>
+<ul class="dropdown-menu dropdown-menu-right" style="min-width: 50px;">
+<li><a id="rmd-show-all-code" href="#">Show All Code</a></li>
+<li><a id="rmd-hide-all-code" href="#">Hide All Code</a></li>
+</ul>
+</div>
+
+
+
+<h1 class="title toc-ignore">Validating barcelona script (.annot processing)</h1>
+
+</div>
+
+
+<p>Here I test the Barcelona pipeline by processing Desikan-Killiany and comparing the output with the Desikan-Killiany anatomical stats as they are provided by UKB. To get a sense of the accuracy, I have processed all subjects with the lh.aparc.annot files (re-named it to lh.test.aparc.annot so that files stats files don’t overwrite each other).</p>
+<div id="individual-participants" class="section level1 tabset">
+<h1 class="tabset">Individual participants</h1>
+<pre class="r"><code># iterate through subjects
+subjects &lt;- read.table(&quot;/mnt/lustre/datasets/ukbiobank/ukb40933/imaging/output/error/download_success&quot;, header=F)
+subjects &lt;- as.vector(subjects$V1)
+# only keep subjects that aren&#39;t duplicated
+subjects &lt;- subjects[!duplicated(subjects)]
+
+names &lt;- NULL
+for(i in subjects){
+# load file that holds all successful downloads
+
+setwd(paste0(&quot;/mnt/lustre/datasets/ukbiobank/ukb40933/imaging/FS_processing/&quot;,i,&quot;/stats&quot;))
+
+ # read left stats file processed with Barcelona pipeline
+lh.test.stats &lt;- as.data.frame(read.table(&quot;lh.test.aparc.stats&quot;, sep=&quot;&quot;, skip=15))
+names(lh.test.stats) &lt;- c(&quot;test.NumVert&quot;,&quot;test.SurfArea&quot;,&quot;test.GrayVol&quot;,&quot;test.ThickAvg&quot;,&quot;ThickStd&quot;,&quot;MeanCurv&quot;,&quot;GausCurv&quot;,&quot;FoldInd&quot;,&quot;CurvInd&quot;,&quot;StructName&quot;)
+# re-name StructName to know which hemisphere it belongs to
+lh.test.stats$StructName&lt;-paste0(&quot;lh.&quot;,as.character(lh.test.stats$StructName))
+
+# read right stats file processed with Barcelona pipeline
+rh.test.stats &lt;- as.data.frame(read.table(&quot;rh.test.aparc.stats&quot;, sep=&quot;&quot;, skip=15))
+names(rh.test.stats) &lt;- c(&quot;test.NumVert&quot;,&quot;test.SurfArea&quot;,&quot;test.GrayVol&quot;,&quot;test.ThickAvg&quot;,&quot;ThickStd&quot;,&quot;MeanCurv&quot;,&quot;GausCurv&quot;,&quot;FoldInd&quot;,&quot;CurvInd&quot;,&quot;StructName&quot;)
+# re-name StructName to know which hemisphere it belongs to
+rh.test.stats$StructName&lt;-paste0(&quot;rh.&quot;,as.character(rh.test.stats$StructName))
+
+# rbind the two data.frames
+test_aparc &lt;- rbind(lh.test.stats[,c(&quot;StructName&quot;,&quot;test.NumVert&quot;,&quot;test.SurfArea&quot;,&quot;test.GrayVol&quot;,&quot;test.ThickAvg&quot;)], rh.test.stats[,c(&quot;StructName&quot;,&quot;test.NumVert&quot;,&quot;test.SurfArea&quot;,&quot;test.GrayVol&quot;,&quot;test.ThickAvg&quot;)])
+
+# read left stats file as provided by UKB
+lh.UKB.stats &lt;- as.data.frame(read.table(&quot;lh.aparc.stats&quot;, sep=&quot;&quot;))
+# name columns
+names(lh.UKB.stats) &lt;- c(&quot;StructName&quot;,&quot;UKB.NumVert&quot;,&quot;UKB.SurfArea&quot;,&quot;UKB.GrayVol&quot;,&quot;UKB.ThickAvg&quot;,&quot;ThickStd&quot;,&quot;MeanCurv&quot;,&quot;GausCurv&quot;,&quot;FoldInd&quot;,&quot;CurvInd&quot;)
+# re-name StructName to know which hemisphere it belongs to
+lh.UKB.stats$StructName&lt;-paste0(&quot;lh.&quot;,as.character(lh.UKB.stats$StructName))
+
+# read right stats file as provided by UKB
+rh.UKB.stats &lt;- as.data.frame(read.table(&quot;rh.aparc.stats&quot;, sep=&quot;&quot;))
+# name columns
+names(rh.UKB.stats) &lt;- c(&quot;StructName&quot;,&quot;UKB.NumVert&quot;,&quot;UKB.SurfArea&quot;,&quot;UKB.GrayVol&quot;,&quot;UKB.ThickAvg&quot;,&quot;ThickStd&quot;,&quot;MeanCurv&quot;,&quot;GausCurv&quot;,&quot;FoldInd&quot;,&quot;CurvInd&quot;)
+# re-name StructName to know which hemisphere it belongs to
+rh.UKB.stats$StructName&lt;-paste0(&quot;rh.&quot;,as.character(rh.UKB.stats$StructName))
+
+# rbind the two data.frames
+UKB_aparc &lt;- rbind(lh.UKB.stats[,c(&quot;StructName&quot;,&quot;UKB.NumVert&quot;,&quot;UKB.SurfArea&quot;,&quot;UKB.GrayVol&quot;,&quot;UKB.ThickAvg&quot;)], rh.UKB.stats[,c(&quot;StructName&quot;,&quot;UKB.NumVert&quot;,&quot;UKB.SurfArea&quot;,&quot;UKB.GrayVol&quot;,&quot;UKB.ThickAvg&quot;)])
+
+# merge test and UKB dataframes
+aparc &lt;- merge(test_aparc, UKB_aparc, by = &quot;StructName&quot;)
+
+# save aparc frame in files in case I want to revisit that 
+#write.table(aparc, paste0( &quot;/mnt/lustre/datasets/ukbiobank/ukb40933/imaging/output/evalute_barcelona/table_aparc_ukb_test_barcelona&quot;,i))
+
+# report extreme values of disagreement
+
+for(j in c(&quot;NumVert&quot;,&quot;SurfArea&quot;,&quot;GrayVol&quot;,&quot;ThickAvg&quot;)){
+  test &lt;- paste0(&quot;test.&quot;, j)
+  UKB &lt;- paste0(&quot;UKB.&quot;,j)
+  #print(test)
+  #print(UKB)
+  aparc$diff &lt;- abs(aparc[,test]- aparc[,UKB])
+  max_diff &lt;- sort(aparc$diff)[(nrow(aparc)-3):nrow(aparc)]
+  #print(aparc[aparc$diff %in% max_diff,])
+  # it seems that different regions have bigger disagreement depending on the subject
+  # keep region names and see which ones come up often
+  names &lt;- append(names,aparc$StructName[aparc$diff %in% max_diff])
+}
+#aparc$diff_NumVert &lt;- abs(aparc$test.NumVert- aparc$UKB.NumVert)
+#max_Numvert_diff &lt;- sort(aparc$diff_NumVert)[(nrow(aparc)-3):nrow(aparc)]
+#aparc[aparc$diff_NumVert %in% max_Numvert_diff,]
+
+
+
+# plot results
+png(paste0(&quot;/mnt/lustre/datasets/ukbiobank/ukb40933/imaging/output/&quot;,which(subjects == i),&quot;_compare_aparc.png&quot;), width = 8, height = 8, units = &#39;in&#39;, res=800)
+    grid &lt;- par(mfrow=c(2, 2))
+    plot(aparc$test.NumVert, aparc$UKB.NumVert, xlim=c(280,14700),ylim = c(280,14700))
+    abline(a = 0,b = 1, col=&quot;red&quot;)
+    plot(aparc$test.SurfArea, aparc$UKB.SurfArea, xlim=c(190,10000),ylim = c(190,10000))
+    abline(a = 0,b = 1, col=&quot;red&quot;)
+    plot(aparc$test.GrayVol, aparc$UKB.GrayVol, xlim=c(650,33000),ylim = c(650,33000))
+    abline(a = 0,b = 1, col=&quot;red&quot;)
+    plot(aparc$test.ThickAvg, aparc$UKB.ThickAvg, xlim=c(1.4,4.1),ylim = c(1.4,4.1))
+    abline(a = 0,b = 1, col=&quot;red&quot;)
+    par(grid)
+dev.off()
+}
+
+# table indicating how often an area was among the 4 most different regions within one subject 
+# the difference is calculates as abs(aparc$test.NumVert- aparc$UKB.NumVert) for Number of vertices for example 
+# most common ones: rh.insula, rh.fusiform, lh.superiortemporal,rh.lateraloccipital
+table(names)</code></pre>
+<div id="participant-1" class="section level2">
+<h2>Participant 1</h2>
+<p><img src="compare_aparc_Barcelona_pipeline/1_compare_aparc.png" /></p>
+</div>
+<div id="participant-2" class="section level2">
+<h2>Participant 2</h2>
+<p><img src="compare_aparc_Barcelona_pipeline/2_compare_aparc.png" /></p>
+</div>
+<div id="participant-3" class="section level2">
+<h2>Participant 3</h2>
+<p><img src="compare_aparc_Barcelona_pipeline/3_compare_aparc.png" /> ## Participant 4 <img src="compare_aparc_Barcelona_pipeline/4_compare_aparc.png" /></p>
+</div>
+<div id="participant-5" class="section level2">
+<h2>Participant 5</h2>
+<p><img src="compare_aparc_Barcelona_pipeline/5_compare_aparc.png" /></p>
+</div>
+<div id="participant-6" class="section level2">
+<h2>Participant 6</h2>
+<p><img src="compare_aparc_Barcelona_pipeline/6_compare_aparc.png" /></p>
+</div>
+<div id="participant-7" class="section level2">
+<h2>Participant 7</h2>
+<p><img src="compare_aparc_Barcelona_pipeline/7_compare_aparc.png" /></p>
+</div>
+<div id="participant-8" class="section level2">
+<h2>Participant 8</h2>
+<p><img src="compare_aparc_Barcelona_pipeline/8_compare_aparc.png" /></p>
+</div>
+<div id="participant-9" class="section level2">
+<h2>Participant 9</h2>
+<p><img src="compare_aparc_Barcelona_pipeline/9_compare_aparc.png" /></p>
+</div>
+<div id="participant-10" class="section level2">
+<h2>Participant 10</h2>
+<p><img src="compare_aparc_Barcelona_pipeline/10_compare_aparc.png" /></p>
+</div>
+</div>
+<div id="bland-altman-plots" class="section level1 tabset">
+<h1 class="tabset">Bland-Altman plots</h1>
+<p>Looking at 10 subjects individually, the pipeline seems relatively reliable, and it doesn’t seem to produce results biased towards specific regions or only one hemisphere, but it’s hard to say from only 10 subjects. As we must use this pipeline to process Julich Brain and Yeo if we want to include them in the study, we will go ahead and process the data with the pipeline. To get a more reliable quantification of the performance of the pipeline, and to test more reliably whether using the Barcelona pipeline produced very different results, we have processed the DK atlas based on DK .annot files and compared the output with the DK measures provided by UKB in a <a href="https://www.statology.org/bland-altman-plot-r/">Bland-Altman</a>. There are many different patterns across the different regions. This suggests that estimates from the Barcelona pipeline differ from the original estimates, but those differences are at least not the same across all regions.</p>
+<pre class="r"><code>#load dependencies
+library(ggplot2)
+library(stringr)
+library(cowplot)
+
+
+setwd(&quot;C:/Users/k1894405/OneDrive - King&#39;s College London/PhD/Projects/Comparing labelling protocols/temp&quot;)
+
+# iterate over GrayVol, SurfArea &amp; AvgThick
+iter = c(&quot;GrayVol&quot;, &quot;ThickAvg&quot;, &quot;SurfArea&quot;)
+
+for(j in iter){
+# read in data as formatted with combine_atlas_output.R
+test_GrayVol &lt;- read.table(list.files(pattern=paste0(&quot;test.aparc_&quot;,j)), header=T)
+orig_GrayVol &lt;- read.table(list.files(pattern=paste0(&quot;DK_&quot;,j)), header=T)
+
+# test if column names are identical
+if(sum(names(test_GrayVol) != names(orig_GrayVol))){print(&quot;Aparc test and original DK output differ in their included ROIs&quot;)}
+
+# name columns unique to wether it&#39;s from test or orig
+names(test_GrayVol)[2:length(names(test_GrayVol))] &lt;- paste0(&quot;test_&quot;,names(test_GrayVol)[2:length(names(test_GrayVol))])
+names(orig_GrayVol)[2:length(names(orig_GrayVol))] &lt;- paste0(&quot;orig_&quot;,names(orig_GrayVol)[2:length(names(orig_GrayVol))])
+
+
+#################################################
+## Iterate through all ROIs
+#################################################
+ROIs &lt;- str_remove(names(test_GrayVol)[2:length(names(test_GrayVol))], pattern=&quot;test_&quot;)
+
+# make table to hold p-values from the variances ratio test
+# we need 68 regions/ rows &amp; 2 columns
+table &lt;- data.frame(matrix(nrow = 68, ncol = 2))
+names(table) &lt;- c(&quot;ROI&quot;, &quot;p_value&quot;)
+table$ROI &lt;- ROIs
+
+for(i in ROIs){
+  
+      # create dataset for specific ROI
+      ROI_tested &lt;- merge(test_GrayVol[,c(&quot;IID&quot;,paste0(&quot;test_&quot;,i))], orig_GrayVol[,c(&quot;IID&quot;,paste0(&quot;orig_&quot;,i))], by = &quot;IID&quot;)
+      
+      # remove missing datapoints
+      ROI_tested = ROI_tested[which(!is.na(ROI_tested$IID)),]
+      
+      #create new column for average measurement
+      ROI_tested$avg &lt;- rowMeans(ROI_tested[2:3]) 
+      
+      #create new column for difference in measurements
+      ROI_tested$diff &lt;- ROI_tested[,paste0(&quot;test_&quot;,i)] - ROI_tested[,paste0(&quot;orig_&quot;,i)]
+      
+      #find average difference
+      mean_diff &lt;- mean(ROI_tested$diff, na.rm = T)
+      
+      
+      #find lower 95% confidence interval limits
+      lower &lt;- mean_diff - 1.96*sd(ROI_tested$diff, na.rm = T)
+      
+      
+      #find upper 95% confidence interval limits
+      upper &lt;- mean_diff + 1.96*sd(ROI_tested$diff, na.rm = T)
+      
+      # pick color depending on whether we&#39;re dealing with GrayVol, SurfArea or ThicAvg
+      if(j == &quot;GrayVol&quot;){pick_color = &quot;#61a8ff&quot;}
+      if(j == &quot;SurfArea&quot;){pick_color = &quot;#ff6961&quot;}
+      if(j == &quot;ThickAvg&quot;){pick_color = &quot;#61ffb8&quot;}
+      
+      #create Bland-Altman plot
+plot&lt;-ggplot(ROI_tested, aes(x = avg, y = diff)) +
+        geom_point(size=2, alpha = 0.3, color=pick_color) +
+        geom_hline(yintercept = mean_diff) +
+        geom_hline(yintercept = lower, color = &quot;red&quot;, linetype=&quot;dashed&quot;) +
+        geom_hline(yintercept = upper, color = &quot;red&quot;, linetype=&quot;dashed&quot;) +
+        ggtitle(paste0(i, &quot; (&quot;,j,&quot;)&quot;)) +
+        ylab(&quot;Difference Between Measurements\n(Barcelona-processed minus original UKB estimate)&quot;) +
+        xlab(&quot;Average Measurement&quot;)+
+        theme_bw()
+  
+      assign(paste0(&quot;plot_&quot;,i,&quot;_&quot;,j), plot)
+  }
+}
+
+for(i in ROIs){
+png(paste0(&quot;C:/Users/k1894405/Documents/GitHub/Comparing_atlases/Bland_Altman/&quot;,i,&quot;_Bland_Altman.png&quot;), width = 11, height = 6, units = &#39;in&#39;, res=600)
+plot_GrayVol = get(paste0(&quot;plot_&quot;,i,&quot;_GrayVol&quot;))
+plot_SurfArea = get(paste0(&quot;plot_&quot;,i,&quot;_SurfArea&quot;))
+plot_AvgThick = get(paste0(&quot;plot_&quot;,i,&quot;_ThickAvg&quot;))
+print(plot_grid(plot_GrayVol, plot_SurfArea, plot_AvgThick, nrow = 1, ncol= 3))
+dev.off()
+}</code></pre>
+<p>The equivalent plots for the right hemisphere can be found on <a href="">Github</a>.</p>
+<div id="lh.bankssts" class="section level2">
+<h2>lh.bankssts</h2>
+<p><img src="Bland_Altman/lh.bankssts_Bland_Altman.png" /></p>
+</div>
+<div id="lh.caudalanteriorcingulate" class="section level2">
+<h2>lh.caudalanteriorcingulate</h2>
+<p><img src="Bland_Altman/lh.caudalanteriorcingulate_Bland_Altman.png" /></p>
+</div>
+<div id="lh.caudalmiddlefrontal" class="section level2">
+<h2>lh.caudalmiddlefrontal</h2>
+<p><img src="Bland_Altman/lh.caudalmiddlefrontal_Bland_Altman.png" /></p>
+</div>
+<div id="lh.cuneus" class="section level2">
+<h2>lh.cuneus</h2>
+<p><img src="Bland_Altman/lh.cuneus_Bland_Altman.png" /></p>
+</div>
+<div id="lh.entorhinal" class="section level2">
+<h2>lh.entorhinal</h2>
+<p><img src="Bland_Altman/lh.entorhinal_Bland_Altman.png" /></p>
+</div>
+<div id="lh.fusiform" class="section level2">
+<h2>lh.fusiform</h2>
+<p><img src="C:/Users/k1894405/Documents/GitHub/Comparing_atlases/Bland_Altman/lh.fusiform_Bland_Altman" /></p>
+</div>
+<div id="lh.inferiorparietal" class="section level2">
+<h2>lh.inferiorparietal</h2>
+<p><img src="Bland_Altman/lh.inferiorparietal_Bland_Altman.png" /></p>
+</div>
+<div id="lh.inferiortemporal" class="section level2">
+<h2>lh.inferiortemporal</h2>
+<p><img src="Bland_Altman/lh.inferiortemporal_Bland_Altman.png" /></p>
+</div>
+<div id="lh.isthmuscingulate" class="section level2">
+<h2>lh.isthmuscingulate</h2>
+<p><img src="Bland_Altman/lh.isthmuscingulate_Bland_Altman.png" /></p>
+</div>
+<div id="lh.lateraloccipital" class="section level2">
+<h2>lh.lateraloccipital</h2>
+<p><img src="Bland_Altman/lh.lateraloccipital_Bland_Altman.png" /> ## lh.lateralorbitofrontal <img src="Bland_Altman/lh.lateralorbitofrontal_Bland_Altman.png" /></p>
+</div>
+<div id="lh.lingual" class="section level2">
+<h2>lh.lingual</h2>
+<p><img src="Bland_Altman/lh.lingual_Bland_Altman.png" /></p>
+</div>
+<div id="lh.medialorbitofrontal" class="section level2">
+<h2>lh.medialorbitofrontal</h2>
+<p><img src="Bland_Altman/lh.medialorbitofrontal_Bland_Altman.png" /></p>
+</div>
+<div id="lh.insula" class="section level2">
+<h2>lh.insula</h2>
+<p><img src="Bland_Altman/lh.insula_Bland_Altman.png" /></p>
+</div>
+<div id="lh.middletemporal" class="section level2">
+<h2>lh.middletemporal</h2>
+<p><img src="Bland_Altman/lh.middletemporal_Bland_Altman.png" /></p>
+</div>
+<div id="lh.paracentral" class="section level2">
+<h2>lh.paracentral</h2>
+<p><img src="Bland_Altman/lh.paracentral_Bland_Altman.png" /> ## lh.parahippocampal <img src="Bland_Altman/lh.parahippocampal_Bland_Altman.png" /></p>
+</div>
+<div id="lh.parsopercularis" class="section level2">
+<h2>lh.parsopercularis</h2>
+<p><img src="Bland_Altman/lh.parsopercularis_Bland_Altman.png" /></p>
+</div>
+<div id="lh.parsorbitalis" class="section level2">
+<h2>lh.parsorbitalis</h2>
+<p><img src="Bland_Altman/lh.parsorbitalis_Bland_Altman.png" /> ## lh.parstriangularis <img src="Bland_Altman/lh.parstriangularis_Bland_Altman.png" /> ## lh.pericalcarine <img src="Bland_Altman/lh.pericalcarine_Bland_Altman.png" /></p>
+</div>
+<div id="lh.postcentral" class="section level2">
+<h2>lh.postcentral</h2>
+<p><img src="Bland_Altman/lh.postcentral_Bland_Altman.png" /></p>
+</div>
+<div id="lh.posteriorcingulate" class="section level2">
+<h2>lh.posteriorcingulate</h2>
+<p><img src="Bland_Altman/lh.posteriorcingulate_Bland_Altman.png" /></p>
+</div>
+<div id="lh.precentral" class="section level2">
+<h2>lh.precentral</h2>
+<p><img src="Bland_Altman/lh.precentral_Bland_Altman.png" /></p>
+</div>
+<div id="lh.precuneus" class="section level2">
+<h2>lh.precuneus</h2>
+<p><img src="Bland_Altman/lh.precuneus_Bland_Altman.png" /></p>
+</div>
+<div id="lh.rostralanteriorcingulate" class="section level2">
+<h2>lh.rostralanteriorcingulate</h2>
+<p><img src="Bland_Altman/lh.rostralanteriorcingulate_Bland_Altman.png" /></p>
+</div>
+<div id="lh.rostralmiddlefrontal" class="section level2">
+<h2>lh.rostralmiddlefrontal</h2>
+<p><img src="Bland_Altman/lh.rostralmiddlefrontal_Bland_Altman.png" /></p>
+</div>
+<div id="lh.superiorfrontal" class="section level2">
+<h2>lh.superiorfrontal</h2>
+<p><img src="Bland_Altman/lh.superiorfrontal_Bland_Altman.png" /></p>
+</div>
+<div id="lh.superiorparietal" class="section level2">
+<h2>lh.superiorparietal</h2>
+<p><img src="Bland_Altman/lh.superiorparietal_Bland_Altman.png" /></p>
+</div>
+<div id="lh.superiortemporal" class="section level2">
+<h2>lh.superiortemporal</h2>
+<p><img src="Bland_Altman/lh.superiortemporal_Bland_Altman.png" /></p>
+</div>
+<div id="lh.supramarginal" class="section level2">
+<h2>lh.supramarginal</h2>
+<p><img src="Bland_Altman/lh.supramarginal_Bland_Altman.png" /> ## lh.temporalpole <img src="Bland_Altman/lh.temporalpole_Bland_Altman.png" /></p>
+</div>
+<div id="lh.transversetemporal" class="section level2">
+<h2>lh.transversetemporal</h2>
+<p><img src="Bland_Altman/lh.transversetemporal_Bland_Altman.png" /></p>
+</div>
+</div>
+
+&nbsp;
+<hr />
+<a href = "https://www.kcl.ac.uk/">
+<p style="text-align: center"><img src="KCL_logo.jpg" href="https://www.kcl.ac.uk/" style="width:70px;height:50px"> 
+</a>
+</p>
+
+<a href = "https://www.kcl.ac.uk/people/anna-furtjes">
+<p style="text-align: center;">By Anna Elisabeth Fürtjes</a></p>
+<p style="text-align: center;"><span style="color: #808080;"><em>anna.furtjes@kcl.ac.uk</em></span></p>
+
+<!-- Add icon library -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+<!-- Add font awesome icons -->
+<p style="text-align: center;">
+    <a href="https://twitter.com/Anna_Furtjes" class="fa fa-twitter"></a>
+</p>
+
+&nbsp;
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.odd').parent('tbody').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open');
+  });
+});
+</script>
+
+<!-- code folding -->
+<script>
+$(document).ready(function () {
+  window.initializeCodeFolding("hide" === "show");
+});
+</script>
+
+<script>
+$(document).ready(function ()  {
+
+    // temporarily add toc-ignore selector to headers for the consistency with Pandoc
+    $('.unlisted.unnumbered').addClass('toc-ignore')
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_');
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

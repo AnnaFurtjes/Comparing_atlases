@@ -1,0 +1,66 @@
+---
+title: "Comparing Brain Atlases"
+author: "Anna Elisabeth Fürtjes"
+output:
+  html_document:
+    theme: spacelab
+    includes:
+      after_body: footer.html 
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = F, message = F)
+```
+
+<script>
+   $(document).ready(function() {
+     $head = $('#header');
+     $head.prepend('<img src=\"Iterseed12345_nseed500_k6_multiQueryNAsverticesROI_out.png\" style=\"float: right;width: 150px;\"/>')
+   });
+</script>
+
+
+<br>
+<br>
+
+***
+
+<br>
+
+
+# Abstract
+
+Neuroscientists working with structural magnetic resonance imaging (sMRI) must decide how to represent their participants’ brains. Many rely on brain atlases to subdivide the cortex into dozens or hundreds of regions-of-interest (ROIs). Others consider hundreds of thousands of “vertex-wise” measurements across the cortex. To date, there is no data-driven guideline about which atlas is most suitable to maximise associations between brain and non-brain traits when running prediction models. By calculating morphometricity estimates—which index the proportion of variance explained by a given atlas—previous work suggested that hundreds of thousands of vertex-wise measurements captured more interindividual variance in an age variable (as well as many other variables) than the much coarser 68 ROI-averaged measures in the Desikan-Killiany atlas. Our study will compare morphometricity estimates of vertex-wise measurements, seven empirical atlases (Desikan-Killiany, Destrieux, Glasser, Gordon, Schaefer, Yeo, Jülich-Brain), and multiple randomly generated parcellations to determine whether empirical data represented in one or the other brain atlas is superior in capturing interindividual variance across a variety of morphometric traits, including age, body-mass index, cognitive abilities, and alcohol consumption. We hypothesise that more fine-grained brain representations will yield larger morphometricity estimates than coarser atlases, since explanatory variance is lost when averaging across ROIs. It is also reasonable to expect that sufficiently highly-resolved atlases will capture about the same or more variance as vertex-wise measurements, because they should be less effected by anatomical variability. Our findings will provide a basis for future studies to choose a brain atlas that maximises the relationship between brain and non-brain traits.
+
+<br>
+<br>
+
+***
+
+<br>
+
+
+# Analysis steps
+
+<br>
+
+  1. [Phenotype cleaning]()
+  
+  2. [Creating atlases](Serious_Pipeline.html)
+  
+  2. [Morphometricity estimates]()
+  
+  3. [LASSO]()
+  
+  4. [Random parcellations]()
+  
+  
+# Results
+
+<br>
+
+  1. [Morphometricity]()
+  
+  2. [Likelihood ratio test]()
+  
+  3. [LASSO]()

@@ -1,0 +1,1188 @@
+---
+title: "Developing atlas processing pipeline"
+author: "Anna Elisabeth Furtjes"
+highlighter: prettify
+output: 
+  html_document:
+    code_folding: hide
+    toc: yes
+    toc_depth: 2
+    toc_float: yes
+    theme: spacelab
+    includes:
+      after_body: footer.html
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE, eval = FALSE)
+```
+
+
+<br>
+<br>
+
+<br>
+<br>
+
+<br>
+<br>
+
+# Data processing
+The UK Biobank study provides field ID 20263 as processed neuroimaging data in FreeSurfer formats. We use field 20263 to extract our atlases and vertex-wise measures. 
+As the data is very large, we proceed to process each participant individually, so we can then save the information we need, and delete the rest to make space for more data. 
+
+<br>
+<br>
+
+## 1. Installing FreeSurfer v6.0.0
+We downloaded the software [here](https://surfer.nmr.mgh.harvard.edu/fswiki/rel6downloads), and installed it on our Linux system. The software will only work if a license file is generated and saved in the FreeSurfer directory.
+
+```{bash downloading_FS, eval=F}
+#download
+wget https://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/6.0.0/freesurfer-Linux-centos6_x86_64-stable-pub-v6.0.0.tar.gz
+
+#unpack
+tar -C /users/anna -xzvf freesurfer-Linux-centos6_x86_64-stable-pub-v6.0.0.tar.gz
+
+# rename
+mv freesurfer freesurfer-6.0.0
+
+# setup
+export FREESURFER_HOME=/users/anna/freesurfer-6.0.0
+source $FREESURFER_HOME/SetUpFreeSurfer.sh
+
+# remove downloaded file
+rm freesurfer-Linux-centos6_x86_64-stable-pub-v6.0.0.tar.gz
+```
+
+<br>
+<br>
+
+## 2. Download atlas annotation files
+The Desikan-Killiany and the Destrieux atlases have previously been processed by UKB and are provided as anatomical stats as part of field 20263 (stats/?h.aparc.a2009s.stats for Destrieux;  stats/?h.aparc.stats for DK). 
+For all other atlases, we need annotation files in order to be able to map then onto our individuals brains, and to know which vertices fall into specific regions-of-interest (ROIs). Ideally, we use .gcs mapping files, because the mapping of the atlas onto each participant is straightforward (find an illustration [here](https://surfer.nmr.mgh.harvard.edu/fswiki/SurfaceLabelAtlas)). We obtain .gcs files for most of our atlases from the multiAtlasTT repository [here](https://figshare.com/ndownloader/files/25079594). 
+However, we could only find annotation files in .annot format for the Julich-Brain ([here](https://search.kg.ebrains.eu/instances/ff1bae02-857d-4d1b-8b2d-b9dbd583a459)),  and Yeo (?h.Yeo2011_17Networks.annot files are included when downloading FreeSurfer software). To process the latter, we use a pipeline from the [CJNeuroLab](https://cjneurolab.org/2016/11/22/hcp-mmp1-0-volumetric-nifti-masks-in-native-structural-space/). Throughout this document, I may sometimes refer to this pipeline as the *Barcelona pipeline*.
+
+
+<br>
+<br>
+
+
+## 3. Extract atlases on individual level
+
+### 3.1 Mapping from .gcs files 
+```{bash}
+	####################################################################################
+	### Process mris_ca_label script to obtain atlases from gcs files
+	### illustration of what it does here: https://surfer.nmr.mgh.harvard.edu/fswiki/SurfaceLabelAtlas
+	####################################################################################
+
+	for hemisphere in lh rh
+	do
+	for atlasName in schaefer500-yeo17 hcp-mmp-b gordon333dil
+	do
+
+		echo $hemisphere
+		echo $atlasName
+
+		# 2) create annot file for each subject
+		${fsdir}/bin/mris_ca_label -sdir ${wd} ${subjID} $hemisphere ${wd}/${subjID}/surf/$hemisphere.sphere.reg ${atlasFolder}/$atlasName/$hemisphere.${atlasName}_6p0.gcs ${wd}/${subjID}/${hemisphere}.${atlasName}.${subjID}.annot
+
+		# 3) create stat file 
+		${fsdir}/bin/mris_anatomical_stats -a ${wd}/${subjID}/${hemisphere}.${atlasName}.${subjID}.annot -f ${wd}/${subjID}/stats/$hemisphere.$atlasName.stats -b ${subjID} $hemisphere
+
+	done
+	done
+
+	echo "Done schaefer500-yeo17 hcp-mmp-b gordon333dil"
+
+	
+```
+
+The output files we get from this step can be transformed into OSCA format with the script below (we use OSCA to calculate morphometricity estimates).
+<br>
+
+The OSCA format requires the following headers as described [here](https://yanglab.westlake.edu.cn/software/osca/#MakeaBODfile):
+
+*individual ID and names of probes (e.g. FID  IID cg00000658  cg26036652  cg00489772  ...)*
+
+So, we are aiming for a file in which we have the following headers:
+
+*IID ROI1 ROI2 ROI3 etc.*
+
+The script outputs one file for each participant with 1 row and these headers. We will later be able to easily `cbind` all the result into one big file in OSCA format (I chose to do it this way because I am launching parallel scripts processing many participants simultaneously, and would be risking to lose data if the different arrays were editing one file simultaneously).
+
+<br>
+
+Launch script to format .gcs-processed files with:
+
+**Rscript save_FS_stats_in_OSCA_format.R ${wd} ${subjID} ${od}/indiv_output_OSCA**
+
+```{r save_FS_stats_in_OSCA_format, eval=F}
+# launch this as: 
+# Rscript save_FS_stats_in_OSCA_format.R ${wd} ${subjID} ${od}/indiv_output_OSCA
+# the script assumes that object "ref" (below) incorporates all required atlases 
+
+args <- commandArgs(trailingOnly = TRUE)
+
+print(args[1])
+print(args[2])
+print(args[3])
+subjectdir <- args[1]
+subjectID <- args[2]
+outputdir <- args[3]
+
+# dependencies
+packages <-c("data.table","berryFunctions")
+
+package.check <- lapply(
+  packages,
+  FUN = function(x) {
+    if (!require(x, character.only = TRUE)) {
+      install.packages(x, dependencies = TRUE)
+      library(x, character.only = TRUE)
+    }
+  }
+)
+
+print("All required R packages are loaded")
+
+# This assumes FS directory
+setwd(paste0(subjectdir,"/",subjectID,"/stats/"))
+
+files = c(".aparc.stats",".aparc.a2009s.stats",".gordon333dil.stats",".hcp-mmp-b.stats",".schaefer500-yeo17.stats")
+atlases = c("DK","Des","Gordon","Glasser","Schaefer")
+ref <- cbind(files, atlases)
+
+
+# repeating by atlas
+for(i in 1:nrow(ref)){
+      # read left stats file (we read left and right hemisphere because Gordon atlas for example has different numbers of regions in each hemisphere)
+      lh.stats <- as.data.frame(read.table(paste0(subjectdir,"/",subjectID,"/stats/lh", as.character(ref[i,1]), sep="")))
+      # name columns
+      names(lh.stats) <- c("StructName","NumVert","SurfArea","GrayVol","ThickAvg","ThickStd","MeanCurv","GausCurv","FoldInd","CurvInd")
+      # read right stats file
+      rh.stats <- as.data.frame(read.table(paste0(subjectdir,"/",subjectID,"/stats/rh", as.character(ref[i,1]), sep="")))
+      # name columns
+      names(rh.stats) <- c("StructName","NumVert","SurfArea","GrayVol","ThickAvg","ThickStd","MeanCurv","GausCurv","FoldInd","CurvInd")
+      
+	  # read stats file in to get  structnames
+      lh.areas <- paste0("lh.",as.character(lh.stats$StructName))
+      rh.areas <- paste0("rh.",as.character(rh.stats$StructName))
+	  # in Schaefer atlas we still have Background and Medial wall as a variable which we don't want to include
+	  if(as.character(ref[i, "atlases"]) == "Schaefer"){
+        lh.areas <- lh.areas[which(lh.areas !="lh.Background+FreeSurfer_Defined_Medial_Wall")]
+		rh.areas <- rh.areas[which(rh.areas !="rh.Background+FreeSurfer_Defined_Medial_Wall")]
+	  }
+	  
+      areas <- append(lh.areas,rh.areas)
+
+	  
+        
+	  ## now we create empty frames and save values in it
+      # repeating three times for surfarea, thickness and volume
+      for(meas in c("SurfArea","ThickAvg","GrayVol")){
+        #print(meas)
+        # the modality we're interested in: eg. DK_Volume or Glasser_Thickness
+         modality <-paste0(as.character(ref[i,2]),"_",meas)
+         print(modality)
+        
+        # create empty matrix
+		frame <- as.data.frame(matrix(nrow=1, ncol = length(areas)+1))
+		names(frame) <- append("IID",areas)
+		frame[1,"IID"] <- subjectID
+		row.names(frame) <- subjectID
+		# show dimensions of the frame
+		print(ref[i,2])
+		print(dim(frame))
+	
+        
+        # take region name and value for modality
+        lh.areas <- paste0("lh.",as.character(lh.stats$StructName))
+        lh.vector <- lh.stats[,meas]
+        rh.areas <- paste0("rh.",as.character(rh.stats$StructName))
+        rh.vector <- rh.stats[,meas]
+       
+		# in Schaefer atlas we still have Background and Medial wall as a variable which we don't want to include
+		if(as.character(ref[i, "atlases"]) == "Schaefer"){
+			lh.areas <- lh.areas[which(lh.areas !="lh.Background+FreeSurfer_Defined_Medial_Wall")]
+			rh.areas <- rh.areas[which(rh.areas !="rh.Background+FreeSurfer_Defined_Medial_Wall")]
+		}
+		
+		vector <- append(lh.vector,rh.vector)
+        test_areas <- append(lh.areas, rh.areas)
+		
+
+        # check that regions in the value file are in the same order as the output file (not applicable anymore)
+        if(!all(areas == test_areas)){print(paste0("Areas in subject file and output template file saved in ",modality, " don't include the same areas")); break}
+        
+        # copy measures into frame into the row corresponding to subjectID
+        frame <- insertRows(frame, which(row.names(frame) == subjectID),append(subjectID, vector))
+        # print what's been saved in the file
+        print("This has been saved in our output file")
+        print(frame[which(row.names(frame) == subjectID),])
+
+        # save this file, and overwrite previous one
+        fwrite(frame[1,], file = paste0(outputdir,"/",subjectID,"_", modality), na=NA, quote=FALSE, col.names=T, row.names=F, sep = "\t")
+		rm("frame")
+      }
+  print("Output above should correspond to these stats files")
+  print(head(lh.stats))
+  print(head(rh.stats))
+}
+
+print(paste0("Done saving results from ",subjectID," as outfiles in ",outputdir))
+
+```
+
+
+<br>
+<br>
+
+
+### 3.2 Mapping from .annot file (Barcelona pipeline from CJNeuroLab)
+
+```{bash}
+	####################################################################################################
+	### Run Barcelona pipeline for Yeo and Julich atlases
+	### https://cjneurolab.org/2016/11/22/hcp-mmp1-0-volumetric-nifti-masks-in-native-structural-space/
+	####################################################################################################
+	
+	# create file containing subjectname as input to pipeline
+	cd ${wd}
+	echo $subjID > ${wd}/target_${subjID}.txt
+
+	# start loop to process Julich and Yeo 
+	for atlasName in JulichBrain Yeo2011_17Networks test.aparc
+	do
+		echo ${atlasName}
+
+		bash create_subj_volume_parcellation.sh -L ${wd}/target_${subjID}.txt -f 1 -l 1 -a ${atlasName} -d ${wd}/${subjID} -s NO -m NO -t YES
+
+		# move into stats folder and rename
+		mv ${wd}/${subjID}/tables/lh.${atlasName}.${subjID}.txt ${wd}/${subjID}/stats/lh.${atlasName}.stats
+		mv ${wd}/${subjID}/tables/rh.${atlasName}.${subjID}.txt ${wd}/${subjID}/stats/rh.${atlasName}.stats
+	done
+
+	# remove subject_list created above 
+	rm ${wd}/target_${subjID}.txt
+
+	echo "Done Julich-Brain  & Yeo" $subjID
+
+```
+
+
+
+Launch script to format .annot-processed files with:
+ 
+**Rscript save_FS_stats_in_OSCA_format_Yeo_Julich.R ${wd} ${subjID} ${od}/indiv_output_OSCA**
+
+
+
+```{r save_FS_stats_in_OSCA_format_Yeo_Julich, eval=F}
+# the script assumes that object "ref" (below) incorporates all required atlases 
+
+args <- commandArgs(trailingOnly = TRUE)
+
+print(args[1])
+print(args[2])
+print(args[3])
+subjectdir <- args[1]
+subjectID <- args[2]
+outputdir <- args[3]
+
+# dependencies
+packages <-c("data.table","berryFunctions")
+
+package.check <- lapply(
+  packages,
+  FUN = function(x) {
+    if (!require(x, character.only = TRUE)) {
+      install.packages(x, dependencies = TRUE)
+      library(x, character.only = TRUE)
+    }
+  }
+)
+
+print("All required R packages are loaded")
+
+# This assumes FS directory
+setwd(paste0(subjectdir,"/",subjectID,"/stats/"))
+
+files = c(".Yeo2011_17Networks.stats",".JulichBrain.stats",".test.aparc.stats")
+atlases = c("Yeo","JulichBrain","test.aparc")
+ref <- cbind(files, atlases)
+
+
+# repeating by atlas
+for(i in 1:nrow(ref)){
+      # read left stats file (we read left and right hemisphere because Gordon atlas for example has different numbers of regions in each hemisphere)
+      lh.stats <- as.data.frame(read.table(paste0(subjectdir,"/",subjectID,"/stats/lh", as.character(ref[i,1]), sep=""), skip=15))
+      # name columns
+      names(lh.stats) <- c("NumVert","SurfArea","GrayVol","ThickAvg","ThickStd","MeanCurv","GausCurv","FoldInd","CurvInd","StructName")
+      # read right stats file
+      rh.stats <- as.data.frame(read.table(paste0(subjectdir,"/",subjectID,"/stats/rh", as.character(ref[i,1]), sep=""), skip=15))
+      # name columns
+      names(rh.stats) <- c("NumVert","SurfArea","GrayVol","ThickAvg","ThickStd","MeanCurv","GausCurv","FoldInd","CurvInd","StructName")
+      
+	  # read stats file in to get  structnames
+      lh.areas <- paste0("lh.",as.character(lh.stats$StructName))
+      rh.areas <- paste0("rh.",as.character(rh.stats$StructName))
+	  # in Schaefer atlas we still have Background and Medial wall as a variable which we don't want to include
+	  if(as.character(ref[i, "atlases"]) == "Yeo"){
+        lh.areas <- lh.areas[which(lh.areas !="lh.FreeSurfer_Defined_Medial_Wall")]
+		rh.areas <- rh.areas[which(rh.areas !="rh.FreeSurfer_Defined_Medial_Wall")]
+	  }
+	  
+	  if(as.character(ref[i, "atlases"]) == "JulichBrain"){
+		lh.areas <- lh.areas[which(lh.areas !="lh.unlabelled")]
+		rh.areas <- rh.areas[which(rh.areas !="rh.unlabelled")]
+	  }
+	  
+	  # store all area names in the same vector
+      areas <- append(lh.areas,rh.areas)
+
+	  
+        
+	  ## now we create empty frames and save values in it
+      # repeating three times for surfarea, thickness and volume
+      for(meas in c("SurfArea","ThickAvg","GrayVol")){
+        #print(meas)
+        # the modality we're interested in: eg. DK_Volume or Glasser_Thickness
+         modality <-paste0(as.character(ref[i,2]),"_",meas)
+         print(modality)
+        
+        # create empty matrix
+		frame <- as.data.frame(matrix(nrow=1, ncol = length(areas)+1))
+		names(frame) <- append("IID",areas)
+		frame[1,"IID"] <- subjectID
+		row.names(frame) <- subjectID
+		# show dimensions of the frame
+		print(ref[i,2])
+		print(dim(frame))
+	
+        
+        # take region name and value for modality
+        lh.areas <- paste0("lh.",as.character(lh.stats$StructName))
+        lh.vector <- lh.stats[,meas]
+        rh.areas <- paste0("rh.",as.character(rh.stats$StructName))
+        rh.vector <- rh.stats[,meas]
+       
+		# in Schaefer atlas we still have Background and Medial wall as a variable which we don't want to include
+		  if(as.character(ref[i, "atlases"]) == "Yeo"){
+			lh.areas <- lh.areas[which(lh.areas !="lh.FreeSurfer_Defined_Medial_Wall")]
+			rh.areas <- rh.areas[which(rh.areas !="rh.FreeSurfer_Defined_Medial_Wall")]
+		  }
+
+		if(as.character(ref[i, "atlases"]) == "JulichBrain"){
+			lh.areas <- lh.areas[which(lh.areas !="lh.unlabelled")]
+			rh.areas <- rh.areas[which(rh.areas !="rh.unlabelled")]
+		}
+	  	  
+		
+		vector <- append(lh.vector,rh.vector)
+        test_areas <- append(lh.areas, rh.areas)
+		
+
+        # check that regions in the value file are in the same order as the output file (not applicable anymore)
+        if(!all(areas == test_areas)){print(paste0("Areas in subject file and output template file saved in ",modality, " don't include the same areas")); break}
+        
+        # copy measures into frame into the row corresponding to subjectID
+        frame <- insertRows(frame, which(row.names(frame) == subjectID),append(subjectID, vector))
+        # print what's been saved in the file
+        #print("This has been saved in our output file")
+        #print(frame[which(row.names(frame) == subjectID),])
+
+        # save this file, and overwrite previous one
+        fwrite(frame[1,], file = paste0(outputdir,"/",subjectID,"_", modality), na=NA, quote=FALSE, col.names=T, row.names=F, sep = "\t")
+		rm("frame")
+      }
+  #print("Output above should correspond to these stats files")
+  #print(head(lh.stats))
+  #print(head(rh.stats))
+}
+
+print(paste0("Done saving results from ",subjectID," as outfiles in ",outputdir))
+
+```
+
+Note that here we also process the "test_aparc" atlas. I have only introduced this to get a quantification of how accurate the Barcelona pipeline works, but we won't get morphometricity estimates from it lateron. I process the Desikan-Killiany atlas through the Barcelona pipeline, and then compare the output per region with the results as downloaded from UKB.
+
+
+<br>
+<br>
+
+
+## 4. Prepare Barcelona pipeline
+
+```{bash}
+#!/usr/bin/env bash
+
+# Creates subject-level parcellation image from annotation files in fsaverage space. Can be used with the HCP-MMP1.0 projected on fsaverage annotation files available from https://figshare.com/articles/HCP-MMP1_0_projected_on_fsaverage/3498446
+# usage:
+# bash create_subj_volume_parcellation -L <subject_list> -a <name_of_annot_file> -f <first_subject_row> -l <last_subject_row> -d <name_of_output_dir>
+# 
+# 
+# HOW TO USE
+# 
+# Ingredients:
+# 
+# Subject data. First of all, you need to have your subjects’ structural data preprocessed with FreeSurfer.
+# Shell script. Download the script: create_subj_volume_parcellation, unzip it (because wordpress won’t upload .sh files directly), and copy it to to your $SUBJECTS_DIR/ folder.
+# Fsaverage data. Copy the fsaverage folder from the FreeSurfer directory ($FREESURFER_HOME/subjects/fsaverage) to your $SUBJECTS_DIR/ folder.
+# Annotation files. Download rh.HCPMMP1.annot and lh.HCPMMP1.annot from https://figshare.com/articles/HCP-MMP1_0_projected_on_fsaverage/3498446. Copy them to your $SUBJECTS_DIR/ folder or to $SUBJECTS_DIR/fsaverage/label/.
+# Subject list. Create a list with the identifiers of the desired target subjects (named exactly as their corresponding names in $SUBJECTS_DIR/, of course).
+#  
+# Instructions:
+# 
+# Launch the script: bash create_subj_volume_parcellation.sh (this will show the compulsory and optional arguments).
+# The compulsory arguments are:
+# -L subject_list_name
+# -a name_of_annotation_file (without hemisphere or extension; in this case, HCPMMP1)
+# -d name_of_output_dir (will be created in $SUBJECTS_DIR)
+# Optional arguments:
+# -f and -l indicate the first and last subjects in the subject list to be processed. Eg, in order to process the third till the fifth subject, one would enter -f 3 -l 5 (whole thing takes a bit of time, so one might want to launch it in separate terminals for speed)
+# -m (YES or NO, default NO) indicates whether individual volume files for each parcellation region should be created. This requires FSL
+# -s (“YES” or “NO”, default is NO) indicates whether individual volume files for each subcortical aseg region should be created. Also requires FSL, and requires that the FreeSurferColorLUT.txt file be present at the base (subjects) folder
+# -t (YES or NO, default YES) indicates whether to create anatomical stats table (number of vertices, area, volume, mean thickness, etc.) per region
+# Output:
+# An output folder named as specified with the -d option will be created, which will contain a directory called label/, where the labels for the regions projected on fsaverage will be stored. The output directory will also contain a folder for each subject. Inside these subject folders, a .nii.gz file named as # the annotation file (-a option) will contain the final parcellation volume. A look-up table will also be created inside each subject’s folder, named LUT_<name_of_annotation_file>.txt. In each subject’s folder, a directory called label/ will also be created, where the transformed labels will be stored
+# If the -m option is set to YES, each subject’s directory will also contain a masks/ directory containing one volume .nii.gz file for each binary mask
+# If the -s option is set to YES, an aseg_masks/ directory will be created, containing one .nii.gz file for each subcortical region
+# Inside the original subjects’ label folders, post-transformation annotation files will be created. These are not overwritten if the script is relaunched; so, if you ran into a problem and want to start over, you should delete these files (named lh(rh).<subject>_<name_of_annotation_file>.annot)
+
+# define compulsory and optional arguments
+while getopts ":L:f:l:a:d::m:t:s:" o; do
+    case "${o}" in
+        L)
+            L=${OPTARG}
+            ;;
+        f)
+            f=${OPTARG}
+            ;;
+        l)
+            l=${OPTARG}
+            ;;
+        a)
+            a=${OPTARG}
+            ;;
+        d)
+            d=${OPTARG}
+            ;;
+        m)
+            m=${OPTARG}
+            ;;
+	t)
+	    t=${OPTARG}
+	    ;;
+	s)
+	    s=${OPTARG}
+	    ;;
+    esac
+done
+
+if [ -z "${L}" ] || [ -z "${a}" ] || [ -z "${d}" ]; then printf '\n Usage:\n	-To be run from the directory containing FreeSurfer subject folders, which should also contain the fsaverage folder. User must have writing permission. Original annotation files (eg, lh.HCPMMP1.annot, rh.HCPMMP1.annot) must be present in $SUBJECTS_DIR/fsaverage/label/, or in the base folder ($SUBJECTS_DIR/).\n	-Output: individual nifti volume, where regions are indicated by voxel values, is stored in each subject·s folder inside the output directory. Regions can then be identified through the region_index_table.txt stored in the output folder. Final annotation file in subject space is stored in original subject·s folder ($SUBJECTS_DIR/subject/label/), and will NOT ovewrite old files.\n\n Compulsory arguments:\n	-L <subject_list> (names must correspond to names of folders in $SUBJECTS_DIR)\n	-a <name_of_input_annot_file> (without specifying hemisphere and without extension. Usually, HCPMMP1)\n	-d <name_of_ouput_dir> \n\n Optional arguments:\n	-f: row in subject list indicating first subject to be processed\n	-l: row in subject list indicating last subject to be processed\n	-m <YES or NO> create individual nii.gz masks for cortical regions (requires FSL. Default is NO. Masks will be saved in /output_dir/subject/masks/)\n	-s <YES or NO> create individual nii.gz masks for 14 subcortical regions (from the FreeSurfer automatic segmentation. Requires the FreeSurferColorLUT.txt file in the base folder. Requires FSL. Defaults is NO)\n	-t <YES or NO> generate anatomical stats (mean area, volume, thickness, etc., per region. Saved in /output_dir/subject/tables/. Default is YES) table\n\n	2018 CJNeurolab\n	University of Barcelona\n	by Hugo C Baggio & Alexandra Abos\n\n'; exit 1; fi
+
+create_individual_masks="NO"
+annotation_file=$a
+subject_list_all=$L
+output_dir=$d
+get_anatomical_stats="YES"
+create_aseg_files="NO"
+
+if [ ! -z "${f}" ] ; then first=$f; else first=1; fi
+if [ ! -z "${l}" ] ; then last=$l; else last=`wc -l < ${subject_list_all}`; fi
+if [ ! -z "${m}" ] ; then create_individual_masks=$m; fi
+if [ ! -z "${s}" ] ; then create_aseg_files=$s; fi
+if [ ! -z "${t}" ] ; then get_anatomical_stats=$t; fi
+ 
+printf "\n         >>>>         Current FreeSurfer subjects folder is $SUBJECTS_DIR\n\n"
+
+#Check if FreeSurferColorLUT.txt is present in base folder
+if [[ ${create_aseg_files} == "YES" ]]; then if [[ ! -e FreeSurferColorLUT.txt ]]; then printf "         >>>>         ERROR: FreeSurferColorLUT.txt file not found. Subcortical masks will NOT be created\n\n"; create_aseg_files=NO; colorlut_miss=YES; fi; fi
+
+# Create subject list with subjects defined in the input
+#sed -n "${first},${last} p" ${subject_list_all} > temp_subject_list_${first}_${last}
+#subject_list=temp_subject_list_${first}_${last}
+# MODIFICATION, AEF, 22.11.2021, for simplicity
+subject_list=$L
+
+#mkdir -p ${output_dir}
+mkdir -p ${output_dir}/label_new
+rand_id=$RANDOM
+mkdir -p ${output_dir}/temp_${first}_${last}_${rand_id}
+rm -f ${output_dir}/temp_${first}_${last}_${rand_id}/colortab_?
+rm -f ${output_dir}/temp_${first}_${last}_${rand_id}/list_labels_${annotation_file}?
+
+# Check whether original annotation files are in fsaverage/label folder, copy them if not
+if [[ ! -e $SUBJECTS_DIR/fsaverage/label/lh.${annotation_file}.annot ]]
+	then cp $SUBJECTS_DIR/lh.${annotation_file}.annot $SUBJECTS_DIR/fsaverage/label/
+fi
+if [[ ! -e $SUBJECTS_DIR/fsaverage/label/rh.${annotation_file}.annot ]] 
+	then cp $SUBJECTS_DIR/rh.${annotation_file}.annot $SUBJECTS_DIR/fsaverage/label/
+fi
+
+# Convert annotation to label, and get color lookup tables
+rm -f ./${output_dir}/log_annotation2label
+/users/anna/freesurfer-6.0.0/bin/mri_annotation2label --subject fsaverage --hemi lh --outdir ${output_dir}/label_new --annotation ${annotation_file} >> ${output_dir}/temp_${first}_${last}_${rand_id}/log_annotation2label
+/users/anna/freesurfer-6.0.0/bin/mri_annotation2label --subject fsaverage --hemi lh --outdir ${output_dir}/label_new --annotation ${annotation_file} --ctab ${output_dir}/temp_${first}_${last}_${rand_id}/colortab_${annotation_file}_L1 >> ${output_dir}/temp_${first}_${last}_${rand_id}/log_annotation2label
+/users/anna/freesurfer-6.0.0/bin/mri_annotation2label --subject fsaverage --hemi rh --outdir ${output_dir}/label_new --annotation ${annotation_file} >> ${output_dir}/temp_${first}_${last}_${rand_id}/log_annotation2label
+/users/anna/freesurfer-6.0.0/bin/mri_annotation2label --subject fsaverage --hemi rh --outdir ${output_dir}/label_new --annotation ${annotation_file} --ctab ${output_dir}/temp_${first}_${last}_${rand_id}/colortab_${annotation_file}_R1 >> ${output_dir}/temp_${first}_${last}_${rand_id}/log_annotation2label
+
+# Remove number columns from ctab
+awk '!($1="")' ${output_dir}/temp_${first}_${last}_${rand_id}/colortab_${annotation_file}_L1 >> ${output_dir}/temp_${first}_${last}_${rand_id}/colortab_${annotation_file}_L2
+awk '!($1="")' ${output_dir}/temp_${first}_${last}_${rand_id}/colortab_${annotation_file}_R1 >> ${output_dir}/temp_${first}_${last}_${rand_id}/colortab_${annotation_file}_R2
+
+# Create list with region names
+awk '{print $2}' ${output_dir}/temp_${first}_${last}_${rand_id}/colortab_${annotation_file}_L1 > ${output_dir}/temp_${first}_${last}_${rand_id}/list_labels_${annotation_file}L1
+awk '{print $2}' ${output_dir}/temp_${first}_${last}_${rand_id}/colortab_${annotation_file}_R1 > ${output_dir}/temp_${first}_${last}_${rand_id}/list_labels_${annotation_file}R1
+
+echo "Done mri_annotation2label"
+
+## MODIFICATION AEF: 22.11.2021
+# Figured out that the label names in ./label don't match the label names in list_labels_${annotation_file}L because the label names are seperated by spaces
+# The following line gets rid of spaces
+
+if [ $annotation_file = "JulichBrain" ]
+then
+cd ${output_dir}/label_new
+for f in *\ *; do mv "$f" "${f// /}"; done
+fi
+
+# Create lists with regions that actually have corresponding labels
+for labelsL in `cat ${output_dir}/temp_${first}_${last}_${rand_id}/list_labels_${annotation_file}L1`
+	do if [[ -e ${output_dir}/label_new/lh.${labelsL}.label ]]
+		then
+		echo lh.${labelsL}.label >> ${output_dir}/temp_${first}_${last}_${rand_id}/list_labels_${annotation_file}L
+		grep " ${labelsL} " ${output_dir}/temp_${first}_${last}_${rand_id}/colortab_${annotation_file}_L2 >> ${output_dir}/temp_${first}_${last}_${rand_id}/colortab_${annotation_file}_L3
+	fi
+done
+
+echo "Done past line 141"
+
+for labelsR in `cat ${output_dir}/temp_${first}_${last}_${rand_id}/list_labels_${annotation_file}R1`
+	do if [[ -e ${output_dir}/label_new/rh.${labelsR}.label ]]
+		then
+		echo rh.${labelsR}.label >> ${output_dir}/temp_${first}_${last}_${rand_id}/list_labels_${annotation_file}R
+		grep " ${labelsR} " ${output_dir}/temp_${first}_${last}_${rand_id}/colortab_${annotation_file}_R2 >> ${output_dir}/temp_${first}_${last}_${rand_id}/colortab_${annotation_file}_R3
+	fi
+done
+
+# Create new numbers column
+number_labels_R=`wc -l < ${output_dir}/temp_${first}_${last}_${rand_id}/list_labels_${annotation_file}R` 
+number_labels_L=`wc -l < ${output_dir}/temp_${first}_${last}_${rand_id}/list_labels_${annotation_file}L`
+
+for ((i=1;i<=${number_labels_L};i+=1))
+	do num=`echo "${i}+1000" | bc`
+	printf "$num\n" >> ${output_dir}/temp_${first}_${last}_${rand_id}/LUT_number_table_${annotation_file}L
+	printf "$i\n" >> ${output_dir}/temp_${first}_${last}_${rand_id}/${annotation_file}_number_tableL
+done
+for ((i=1;i<=${number_labels_R};i+=1))
+	do num=`echo "${i}+2000" | bc`
+	printf "$num\n" >> ${output_dir}/temp_${first}_${last}_${rand_id}/LUT_number_table_${annotation_file}R
+	printf "$i\n" >> ${output_dir}/temp_${first}_${last}_${rand_id}/${annotation_file}_number_tableR
+done
+
+# Create ctabs with actual regions
+paste ${output_dir}/temp_${first}_${last}_${rand_id}/${annotation_file}_number_tableL ${output_dir}/temp_${first}_${last}_${rand_id}/colortab_${annotation_file}_L3 > ${output_dir}/temp_${first}_${last}_${rand_id}/colortab_${annotation_file}_L
+paste ${output_dir}/temp_${first}_${last}_${rand_id}/LUT_number_table_${annotation_file}L ${output_dir}/temp_${first}_${last}_${rand_id}/list_labels_${annotation_file}L > ${output_dir}/temp_${first}_${last}_${rand_id}/LUT_left_${annotation_file}
+paste ${output_dir}/temp_${first}_${last}_${rand_id}/${annotation_file}_number_tableR ${output_dir}/temp_${first}_${last}_${rand_id}/colortab_${annotation_file}_R3 > ${output_dir}/temp_${first}_${last}_${rand_id}/colortab_${annotation_file}_R
+paste ${output_dir}/temp_${first}_${last}_${rand_id}/LUT_number_table_${annotation_file}R ${output_dir}/temp_${first}_${last}_${rand_id}/list_labels_${annotation_file}R > ${output_dir}/temp_${first}_${last}_${rand_id}/LUT_right_${annotation_file}
+cat ${output_dir}/temp_${first}_${last}_${rand_id}/LUT_left_${annotation_file} ${output_dir}/temp_${first}_${last}_${rand_id}/LUT_right_${annotation_file} > ${output_dir}/temp_${first}_${last}_${rand_id}/LUT_${annotation_file}.txt
+
+echo "Done past line 175"
+
+# Take labels from fsaverage to subject space
+cd $SUBJECTS_DIR
+for subject in `cat ${subject_list}`
+	do printf "\n         >>>>         PREPROCESSING ${subject}         <<<< \n"
+
+	echo $(date) > ${output_dir}/temp_${first}_${last}_${rand_id}/start_date
+	echo "         >>>>         START TIME: `cat ${output_dir}/temp_${first}_${last}_${rand_id}/start_date`         <<<<"
+	#mkdir -p ${output_dir}/${subject}
+	#mkdir -p ${output_dir}/${subject}/label
+	sed '/_H_ROI/d' ${output_dir}/temp_${first}_${last}_${rand_id}/LUT_${annotation_file}.txt > ${output_dir}/LUT_${annotation_file}.txt
+
+	if [[ -e $SUBJECTS_DIR/${subject}/label/lh.${subject}_${annotation_file}.annot ]] && [[ -e $SUBJECTS_DIR/${subject}/label/rh.${subject}_${annotation_file}.annot ]]
+		then
+		echo ">>>>	Annotation files lh.${subject}_${annotation_file}.annot and rh.${subject}_${annotation_file}.annot already exist in ${subject}/label. Won't perform transformations"
+		else
+
+		rm -f $SUBJECTS_DIR/${subject}/label2annot_${annotation_file}?h.log
+		rm -f $SUBJECTS_DIR/${subject}/log_label2label
+		
+		for label in `cat ${output_dir}/temp_${first}_${last}_${rand_id}/list_labels_${annotation_file}R`
+			do echo "transforming ${label}"
+			mri_label2label --srcsubject fsaverage --srclabel ${output_dir}/label_new/${label} --trgsubject ${subject} --trglabel ${output_dir}/label_new/${label}.label --regmethod surface --hemi rh >> ${output_dir}/log_label2label
+		done
+		for label in `cat ${output_dir}/temp_${first}_${last}_${rand_id}/list_labels_${annotation_file}L`
+			do echo "transforming ${label}"
+			mri_label2label --srcsubject fsaverage --srclabel ${output_dir}/label_new/${label} --trgsubject ${subject} --trglabel ${output_dir}/label_new/${label}.label --regmethod surface --hemi lh >> ${output_dir}/log_label2label
+		done
+
+		# Convert labels to annot (in subject space)
+		rm -f ${output_dir}/temp_${first}_${last}_${rand_id}/temp_cat_${annotation_file}_R
+		rm -f ${output_dir}/temp_${first}_${last}_${rand_id}/temp_cat_${annotation_file}_L
+		for labelsR in `cat ${output_dir}/temp_${first}_${last}_${rand_id}/list_labels_${annotation_file}R`
+			do printf " --l ${output_dir}/label_new/${labelsR}" >> ${output_dir}/temp_${first}_${last}_${rand_id}/temp_cat_${annotation_file}_R
+		done
+		for labelsL in `cat ${output_dir}/temp_${first}_${last}_${rand_id}/list_labels_${annotation_file}L`
+			do if [ -e ${output_dir}/label_new/${labelsL} ]
+				then printf " --l ${output_dir}/label_new/${labelsL}" >> ${output_dir}/temp_${first}_${last}_${rand_id}/temp_cat_${annotation_file}_L
+			fi
+		done
+	
+		mris_label2annot --s ${subject} --h rh `cat ${output_dir}/temp_${first}_${last}_${rand_id}/temp_cat_${annotation_file}_R` --a ${subject}_${annotation_file} --ctab ${output_dir}/temp_${first}_${last}_${rand_id}/colortab_${annotation_file}_R >> ${output_dir}/label2annot_${annotation_file}rh.log 
+		mris_label2annot --s ${subject} --h lh `cat ${output_dir}/temp_${first}_${last}_${rand_id}/temp_cat_${annotation_file}_L` --a ${subject}_${annotation_file} --ctab ${output_dir}/temp_${first}_${last}_${rand_id}/colortab_${annotation_file}_L >> ${output_dir}/label2annot_${annotation_file}lh.log 
+
+	fi
+
+echo "Done mris_label2annot, past line 221"
+
+	# Convert annot to volume
+	rm -f ${output_dir}/log_aparc2aseg
+	mri_aparc2aseg --s ${subject} --o ${output_dir}/temp_${first}_${last}_${rand_id}/${annotation_file}.nii.gz  --annot ${subject}_${annotation_file} >> ${output_dir}/log_aparc2aseg
+
+	# Remove hippocampal 'residue' --> voxels assigned to hippocampus in the HCPMMP1.0 parcellation will be very few, corresponding to vertices around the actual structure. These will be given the same voxel values as the hippocampi (as defined by the FS automatic segmentation): 17 (L) and 53 (R)
+	### AEF, 22.11.2021: I think I can ignore this because I will delete the subcortical measures anyway
+	l_hipp_index=`grep 'L_H_ROI.label' ${output_dir}/temp_${first}_${last}_${rand_id}/LUT_${annotation_file}.txt | cut -c-4`
+	r_hipp_index=`grep 'R_H_ROI.label' ${output_dir}/temp_${first}_${last}_${rand_id}/LUT_${annotation_file}.txt | cut -c-4`
+
+	fslmaths ${output_dir}/temp_${first}_${last}_${rand_id}/${annotation_file}.nii.gz -thr $l_hipp_index -uthr $l_hipp_index ${output_dir}/temp_${first}_${last}_${rand_id}/l_hipp_HCP
+	fslmaths ${output_dir}/temp_${first}_${last}_${rand_id}/l_hipp_HCP -bin -mul 17 ${output_dir}/temp_${first}_${last}_${rand_id}/l_hipp_FS
+
+	fslmaths ${output_dir}/temp_${first}_${last}_${rand_id}/${annotation_file}.nii.gz -thr $r_hipp_index -uthr $r_hipp_index -add ${output_dir}/temp_${first}_${last}_${rand_id}/l_hipp_HCP ${output_dir}/temp_${first}_${last}_${rand_id}/l_r_hipp_HCP
+	fslmaths ${output_dir}/temp_${first}_${last}_${rand_id}/${annotation_file}.nii.gz -thr $r_hipp_index -uthr $r_hipp_index -bin -mul 53 -add ${output_dir}/temp_${first}_${last}_${rand_id}/l_hipp_FS ${output_dir}/temp_${first}_${last}_${rand_id}/l_r_hipp_FS
+
+	fslmaths ${output_dir}/temp_${first}_${last}_${rand_id}/${annotation_file}.nii.gz -sub ${output_dir}/temp_${first}_${last}_${rand_id}/l_r_hipp_HCP -add ${output_dir}/temp_${first}_${last}_${rand_id}/l_r_hipp_FS ${output_dir}/${annotation_file}.nii.gz
+
+	# Create individual mask files
+	if [[ ${create_individual_masks} == "YES" ]]
+		then 
+		printf ">> Creating individual region masks for subject ${subject}\n"
+		mkdir -p ${output_dir}/masks
+		for ((i=1;i<=${number_labels_L};i+=1))
+			do num=`echo "${i}+1000" | bc`
+			if [[ $num != $l_hipp_index ]]
+				then
+				temp_region=`sed -n "$i,$i p" ${output_dir}/temp_${first}_${last}_${rand_id}/list_labels_${annotation_file}L1`
+				echo "Mask left hemisphere: $i ${temp_region}"
+				fslmaths ${output_dir}/${annotation_file}.nii.gz -thr ${num} -uthr ${num} -bin ${output_dir}/masks/${temp_region}
+				else
+				echo ">> Skipping left hippocampus"
+			fi
+		done
+		for ((i=1;i<=${number_labels_R};i+=1))
+			do num=`echo "${i}+2000" | bc`
+			if [[ $num != $r_hipp_index ]]
+				then
+				temp_region=`sed -n "$i,$i p" ${output_dir}/temp_${first}_${last}_${rand_id}/list_labels_${annotation_file}R1`
+				echo "Mask right hemisphere: $i ${temp_region}"
+				fslmaths ${output_dir}/${annotation_file}.nii.gz -thr ${num} -uthr ${num} -bin ${output_dir}/masks/${temp_region}
+				else
+				echo ">> Skipping right hippocampus"
+			fi
+		done
+
+	fi
+
+	# Create individual subcortical masks
+	if [[ ${create_aseg_files} == "YES" ]]
+		then
+		mkdir -p ${output_dir}/aseg_masks
+		printf ">> Creating subcortical aseg masks for subject ${subject}\n"
+		if [[ -e ${output_dir}/aseg_masks/list_aseg ]]; then rm ${output_dir}/aseg_masks/list_aseg; fi
+		for side in Left Right
+			do printf "$side-Thalamus-Proper\n$side-Caudate\n$side-Pallidum\n$side-Hippocampus\n$side-Amygdala\n$side-Accumbens-area\n" >> ${output_dir}/aseg_masks/list_aseg
+		done
+		
+		for rois in `cat ${output_dir}/aseg_masks/list_aseg`
+			do roi_index=`grep "${rois} " FreeSurferColorLUT.txt | cut -c-2` # the space after ${rois} is not casual
+			fslmaths ${output_dir}/${annotation_file}.nii.gz -thr ${roi_index} -uthr ${roi_index} -bin ${output_dir}/aseg_masks/${rois}
+		done
+
+	fi
+
+	# Get anatomical stats table
+	if [[ $get_anatomical_stats == "YES" ]]
+		then
+		echo "Starting anatomical stats"
+		mkdir -p ${output_dir}/tables
+		mris_anatomical_stats -a $SUBJECTS_DIR/${subject}/label/lh.${subject}_${annotation_file}.annot -b ${subject} lh > ${output_dir}/temp_${first}_${last}_${rand_id}/lh.${annotation_file}.${subject}.txt
+		sed '/_H_ROI/d; /???/d' ${output_dir}/temp_${first}_${last}_${rand_id}/lh.${annotation_file}.${subject}.txt > ${output_dir}/tables/lh.${annotation_file}.${subject}.txt
+		mris_anatomical_stats -a $SUBJECTS_DIR/${subject}/label/rh.${subject}_${annotation_file}.annot -b ${subject} rh > ${output_dir}/temp_${first}_${last}_${rand_id}/rh.${annotation_file}.${subject}.txt
+		sed '/_H_ROI/d; /???/d' ${output_dir}/temp_${first}_${last}_${rand_id}/rh.${annotation_file}.${subject}.txt > ${output_dir}/tables/rh.${annotation_file}.${subject}.txt
+		
+		# Get tables with numerical values only
+		grep -n 'structure' ${output_dir}/tables/lh.${annotation_file}.${subject}.txt > ${output_dir}/temp_${first}_${last}_${rand_id}/temp_line_structure_name
+		grep -Eo '[0-9]{1,4}' ${output_dir}/temp_${first}_${last}_${rand_id}/temp_line_structure_name > ${output_dir}/temp_${first}_${last}_${rand_id}/temp_line_structure_name2
+		line_structure_name=`cat ${output_dir}/temp_${first}_${last}_${rand_id}/temp_line_structure_name2`
+		post_end_line=`echo "1+${line_structure_name}" | bc`
+		sed "1,${post_end_line}d" ${output_dir}/tables/rh.${annotation_file}.${subject}.txt > ${output_dir}/tables/table_rh_values_${annotation_file}.${subject}
+		sed "1,${post_end_line}d" ${output_dir}/tables/lh.${annotation_file}.${subject}.txt > ${output_dir}/tables/table_lh_values_${annotation_file}.${subject}
+		sed -i -r 's/\S+//10' ${output_dir}/tables/table_lh_values_${annotation_file}.${subject}
+		sed -i -r 's/\S+//10' ${output_dir}/tables/table_rh_values_${annotation_file}.${subject}
+
+		# Get variable names
+		grep -n 'number of vertices' ${output_dir}/tables/lh.${annotation_file}.${subject}.txt > ${output_dir}/temp_${first}_${last}_${rand_id}/temp_number_vert
+		grep -Eo '[0-9]{1,4}' ${output_dir}/temp_${first}_${last}_${rand_id}/temp_number_vert > ${output_dir}/temp_${first}_${last}_${rand_id}/temp_number_vert2
+		line_number_vert=`cat ${output_dir}/temp_${first}_${last}_${rand_id}/temp_number_vert2`
+		pre_number_vert=`echo "${line_number_vert}-1" | bc`
+		
+		number_lines=`wc -l < ${output_dir}/tables/rh.${annotation_file}.${subject}.txt`
+		sed "1,${pre_number_vert}d;${post_end_line},${number_lines}d" ${output_dir}/tables/rh.${annotation_file}.${subject}.txt > ${output_dir}/temp_${first}_${last}_${rand_id}/rh_mri_anatomical_stats_variables.txt
+		cut -c5- ${output_dir}/temp_${first}_${last}_${rand_id}/rh_mri_anatomical_stats_variables.txt > ${output_dir}/temp_${first}_${last}_${rand_id}/rh_mri_anatomical_stats_variables2.txt 
+		sed -i 's/ /_/g' ${output_dir}/temp_${first}_${last}_${rand_id}/rh_mri_anatomical_stats_variables2.txt        
+		awk '{ for (f = 1; f <= NF; f++)   a[NR, f] = $f  }  NF > nf { nf = NF } END {   for (f = 1; f <= nf; f++) for (r = 1; r <= NR; r++)     printf a[r, f] (r==NR ? RS : FS)  }' ${output_dir}/temp_${first}_${last}_${rand_id}/rh_mri_anatomical_stats_variables2.txt > ${output_dir}/tables/rh_mri_anatomical_stats_variables
+
+		sed "1,${pre_number_vert}d;${post_end_line},${number_lines}d" ${output_dir}/tables/lh.${annotation_file}.${subject}.txt > ${output_dir}/temp_${first}_${last}_${rand_id}/lh_mri_anatomical_stats_variables.txt
+		cut -c5- ${output_dir}/temp_${first}_${last}_${rand_id}/lh_mri_anatomical_stats_variables.txt > ${output_dir}/temp_${first}_${last}_${rand_id}/lh_mri_anatomical_stats_variables2.txt 
+		sed -i 's/ /_/g' ${output_dir}/temp_${first}_${last}_${rand_id}/lh_mri_anatomical_stats_variables2.txt        
+		awk '{ for (f = 1; f <= NF; f++)   a[NR, f] = $f  }  NF > nf { nf = NF } END {   for (f = 1; f <= nf; f++) for (r = 1; r <= NR; r++)     printf a[r, f] (r==NR ? RS : FS)  }' ${output_dir}/temp_${first}_${last}_${rand_id}/lh_mri_anatomical_stats_variables2.txt > ${output_dir}/tables/lh_mri_anatomical_stats_variables
+
+	fi
+
+	if [[ ${colorlut_miss} == "YES" ]]; then printf "\n         >>>>         ERROR: FreeSurferColorLUT.txt file not found. Individual subcortical masks NOT created\n"; fi
+
+	printf "\n         >>>>         ${subject} STARTED AT `cat ${output_dir}/temp_${first}_${last}_${rand_id}/start_date`, ENDED AT: $(date)\n\n"
+	echo "Done mris_anatomical_stats"
+done
+
+
+
+rm -r ${output_dir}/temp_${first}_${last}_${rand_id}
+
+#rm ${subject_list}
+
+echo "Done whole script"
+```
+
+
+The Barcelona pipeline as displayed here is mostly identical to the one provided by the CJNeuroLab. I only changed a few lines, as it did not instantly work on my Cluster as downloaded. Make sure all the directories and links are correct and are set up on your Cluster. 
+
+I ran into an issue specific to the Julich Brain atlas (version 2.9): There are inconsistencies in the way that regions are labeled. Briefly explained, the create_subj_volume_parcellation.sh creates label files (e.g., /label/lh.AreaFG3 (FusG).label) with spaces, which is how the labels are stored in the Julich Brain annotation files. However, later in the pipeline, the annotation file expects the labels to be printed without spaces (.i.e., /label/lh.AreaFG3(FusG).label). Therefore, I added an if statement to the Barcelona pipeline to get rid of the spaces.
+```{bash, eval=F}
+# line 128
+if [ $annotation_file = "JulichBrain" ]
+then
+cd ${output_dir}/label_new
+for f in *\ *; do mv "$f" "${f// /}"; done
+fi
+
+```
+
+However, there is one region in the JulichBrain atlas that cannot be rescued with this fix: Area TPJ (STG/SMG). Linux and FreeSurfer cannot deal with a backslash in the directory name which is why this region is entirely missing in the final mapping of the atlas onto the individuals brain. I have contacted the developers of the annotation files to ask if they either knew of a tool that allowed me to edit annotation files, and output them in their binary format, or if they could provide a version of the annotation file without the backslash in the label (something like Area TPJ (STG_SMG)). They agreed it was not best practice to name their regions with backslashes, but also said there was nothing they could do for me. 
+I decided to proceed by excluding this one region. As I am assessing atlas performances as they are implemented in FS, I think this remains a genuine representation of atlas performance as provided by the developers. 
+
+With the JulichBrain processing so far, we end up with 137 in right hemisphere, 136 in left hemisphere, after we deleting unlabelled regions. This is one ROI less than pre-registered.
+
+
+<br>
+<br>
+
+
+## 5. Problems with Schaefer atlas
+
+Some of the individual's Schaefer output have glitches. I realised that if a participants size of the "Background+FreeSurfer_Defined_Medial_Wall" crosses a certain threshold, the output does not generate a space between the label (i.e. Background+FreeSurfer_Defined_Medial_Wall) and the first value. Consequently, my formatting scripts will not be able to read the Schaefer atlas files into R because there is an inconsistency of column names and actual columns. I added the following piece of code that checks whether that has happened, and fixes it.
+
+```{bash}
+	###################################################################################################
+	## LAZY FIX: Schaefer atlas produces some weird formatting in some participants 
+	## as a result of this, there is the wrong number of columns in the stats files, and Rscript fails
+	## the code below specifically targets this issue in the Schaefer atlas 
+	## (issue = missing space between "Background+FreeSurfer_Defined_Medial_Wall" label and NumVert)
+	## I only test for missing space between label and 1 & 2 because it's easier
+	## Most participants don't have enough NumVert in this area to be an issue, only some do
+	## It's unlikely that a participant would have double NumVert to the ones who already have largest NumVert 
+	## (fewer vertices wouldn't create this problem)
+	###################################################################################################
+	
+	for hemisphere in lh rh
+	do
+		if grep -q "Background+FreeSurfer_Defined_Medial_Wall1" ${wd}/${subjID}/stats/${hemisphere}.schaefer500-yeo17.stats
+		then
+			echo "Schaefer atlas had this weird error that rarely occurs (${hemisphere})"
+			sed -i -e 's/Background.FreeSurfer_Defined_Medial_Wall/Background.FreeSurfer_Defined_Medial_Wall /g' ${wd}/${subjID}/stats/${hemisphere}.schaefer500-yeo17.stats
+		else
+			echo "Schaefer atlas behaved in ${hemisphere} (1 of 2)"
+		fi
+		
+		if grep -q "Background+FreeSurfer_Defined_Medial_Wall2" ${wd}/${subjID}/stats/${hemisphere}.schaefer500-yeo17.stats
+		then
+			echo "Schaefer atlas had this weird error that rarely occurs (${hemisphere})"
+			sed -i -e 's/Background.FreeSurfer_Defined_Medial_Wall/Background.FreeSurfer_Defined_Medial_Wall /g' ${wd}/${subjID}/stats/${hemisphere}.schaefer500-yeo17.stats
+		else
+			echo "Schaefer atlas behaved in ${hemisphere} (2 of 2)"
+		fi
+	done
+
+```
+
+
+
+## 6. Test Barcelona pipeline
+As indicated above, I test the Barcelona pipeline by processing Desikan-Killiany and comparing the output with the Desikan-Killiany anatomical stats as they are provided by UKB. To get a sense of the accuracy, I have processed all subjects with the lh.aparc.annot files (re-named it to lh.test.aparc.annot so that files stats files don't overwrite each other). 
+
+Refer to [this site](Validating_Barcelona.html) for a comparison between the original UKB DK estimates, and estimates we get from processing data with .annot files. We used the original DK estimates in any subsequent analysis. 
+
+
+
+<br>
+<br>
+
+
+## 7. Get vertex-wise data from a subject
+```{bash}
+	######################################################################################################################## 
+	##### extract vertex-wise tables
+	##### convert .mgh format into .asc
+	##### and extract vertices
+	######################################################################################################################## 
+
+	for hemisphere in lh rh
+	do
+		for meas in area thickness volume
+		do
+		echo ${hemisphere}.${meas}
+
+			${fsdir}/bin/mris_convert -c ${wd}/${subjID}/surf/${hemisphere}.${meas}.fwhm0.fsaverage.mgh ${wd}/fsaverage/surf/${hemisphere}.orig ${wd}/${subjID}/tmp/${hemisphere}.${meas}.fwhm0.fsaverage.asc
+
+			touch ${wd}/${subjID}/tmp/${hemisphere}.${meas}.fwhm0.UKB.txt
+			awk '{print $1}' ${wd}/${subjID}/tmp/"${hemisphere}"."${meas}".fwhm0.fsaverage.asc >> ${wd}/${subjID}/tmp/"${hemisphere}"."${meas}".fwhm0.UKB.txt
+			awk '{print $5}' ${wd}/${subjID}/tmp/"${hemisphere}"."${meas}".fwhm0.fsaverage.asc >> ${wd}/${subjID}/tmp/"${hemisphere}"."${meas}".temp.lta
+			paste ${wd}/${subjID}/tmp/"${hemisphere}"."${meas}".fwhm0.UKB.txt ${wd}/${subjID}/tmp/"${hemisphere}"."${meas}".temp.lta > ${wd}/${subjID}/tmp/"${hemisphere}"."${meas}".temp2.lta
+			cp ${wd}/${subjID}/tmp/"${hemisphere}"."${meas}".temp2.lta ${od}/indiv_vertex_wise_output/"${subjID}"."${hemisphere}"."${meas}".fwhm0.UKB.txt
+
+		done
+	done
+
+```
+
+
+
+<br>
+<br>
+
+
+## 8. Extract vertex coordinates from a test subject
+The vertex coordinates should be the same across all participants, because they are mapped into fsaverage standard space. For a sanity check, I compared the vertex coordinates in my subjects with the ones used by [Baptiste](https://github.com/baptisteCD/Brain-Mapping-LMM/blob/main/atlas/lh.vertexCoordinates.asc) and they are identical.
+
+```{bash, vertexdata, eval=F}
+awk '{print $1 " " $2 " " $3 " " $4}' lh.area.fwhm0.fsaverage.asc > lh.fsaverage_vertex_coordinates
+mv lh.fsaverage_vertex_coordinates /mnt/lustre/datasets/ukbiobank/ukb40933/imaging/output/lh.fsaverage_vertex_coordinates
+# 163842 vertices
+
+awk '{print $1 " " $2 " " $3 " " $4}' rh.area.fwhm0.fsaverage.asc > rh.fsaverage_vertex_coordinates
+mv rh.fsaverage_vertex_coordinates /mnt/lustre/datasets/ukbiobank/ukb40933/imaging/output/rh.fsaverage_vertex_coordinates
+# 163842 vertices
+```
+
+
+<br>
+<br>
+
+
+
+## 9. The final pipeline 
+
+In addition to the individual bits of the script explained above, the final script also includes some sanity checks (e.g., whether download was successful), and it keeps a record of all successful and failed processes. This is because with 40.000 participants, it would be too much to double check every participant manually. 
+
+```{bash, eval=F}
+#!/bin/bash -l
+#SBATCH --job-name=FS_processing
+#SBATCH --output=~/datasets/ukbiobank/ukb40933/imaging/output/bash_output/FS_processing_%A_%a.out
+#SBATCH -D ~/datasets/ukbiobank/ukb40933/imaging/FS_processing
+#SBATCH --time=7-00:00
+#SBATCH --mem-per-cpu=2G 
+#SBATCH --array=1-20%20 ### later more something like 1-40000%300 which should finish within the 7day (168h) limit
+
+start_date=$(date)
+start=$(date +%s)
+
+
+	
+### setup dependencies
+module load utilities/use.dev
+export FREESURFER_HOME=/users/anna/freesurfer-6.0.0
+source $FREESURFER_HOME/SetUpFreeSurfer.sh
+
+FSLDIR=/opt/apps/apps/fsl/6.0.5
+. ${FSLDIR}/etc/fslconf/fsl.sh
+PATH=${FSLDIR}/bin:${PATH}
+export FSLDIR PATH
+
+
+# save directories
+download_dir="~/datasets/ukbiobank/ukb40933/imaging/download/"
+fsdir="~/freesurfer-6.0.0" # path to your FreeSurfer binary files 
+wd="~/datasets/ukbiobank/ukb40933/imaging/FS_processing" # Path to your freesurfer folders
+atlasFolder="~/datasets/ukbiobank/ukb40933/imaging/atlas_data" # Path to your atlas data downloaded above
+od="~/datasets/ukbiobank/ukb40933/imaging/output" # Output directory
+export SUBJECTS_DIR=${wd}
+
+
+# determine subjList from which we will take subjNUM and subjID
+cd ${download_dir}
+subjList=${download_dir}ukb46867_altered1.bulk
+
+
+### ${download_dir}only_IDs.bulk must exist and be named appropriately
+### will change with every re-submission
+
+subjNUM=$(awk "FNR==$SLURM_ARRAY_TASK_ID" ${download_dir}resubmitIDs_10122021.bulk)
+
+#### The following part of the script will run through each subjNUM and process every participant individually; using arrays it will iterate through all subjects saved in $subjList
+
+	echo $subjNUM
+	echo "output in ${od}/bash_output/FS_processing_"$SLURM_ARRAY_TASK_ID".out"
+
+	############################################
+	### download files
+	############################################
+	
+	## grep line in file corresponding to subjNUM
+	echo `grep "$subjNUM" $subjList` > ${download_dir}temp_downloadfile${subjNUM}
+	cd ${download_dir}
+	/scratch/datasets/ukbiobank/bin/ukbfetch -btemp_downloadfile${subjNUM} -ak40933r46867.key -osuccessfetches.out -m1
+	
+	# unzip file
+	unzip ${download_dir}${subjNUM}_20263_2_0.zip -d ${download_dir}sub_${subjNUM}
+	#All
+	# remove downloaded directory
+	rm ${download_dir}${subjNUM}_20263_2_0.zip
+	
+	# move sub_ to another folder
+	mv ${download_dir}sub_${subjNUM}/FreeSurfer ${wd}/sub_${subjNUM}
+
+	# remove temp_downloadfile and left-over directory
+	rm ${download_dir}temp_downloadfile${subjNUM}
+	rmdir ${download_dir}"sub_"${subjNUM}
+
+	subjID="sub_"${subjNUM}
+	echo "Done downloading" $subjID
+	
+	############################################
+	### Check if folder has been downloaded
+	### And if it's approx the right size
+	############################################
+	# save subjectName in error if directory doesn't exist and exit 
+	### touch ${od}/error/download_failed
+	### touch ${od}/error/download_success
+	# extract size, but this argument also writes directory, keep first 10 characters in case the directory is a lot bigger, then extract numbers only/ in test example this is 300M
+	
+	SIZE=$(du -hs ${wd}/${subjID} | sed -e 's/^\(.\{5\}\).*/\1/' | sed 's/[^0-9]*//g') 
+	echo "Downloaded folder size is $SIZE"
+	# -z string comparison operator used to check if a string is empty or not (line 84 will run but produce and empty SIZE object)
+	if [ ! -d "${wd}/sub_${subjNUM}" ] && [ $SIZE < 200 ] || [ -z $SIZE ] 
+	then
+		echo "directory $subjID missing or too small, this array will now exit"
+		echo $subjID >> ${od}/error/download_failed
+		exit 1
+	else
+		echo "directory $subjID exists and is larger than 200MB"
+		echo $subjID >> ${od}/error/download_success
+	fi
+
+
+	
+	############################################
+	### Process with qcache
+	############################################
+	cd ${wd}
+	# 1) run recon-all pipeline for extra processing AND to obtain vertex-wise files
+	${fsdir}/bin/recon-all -sd ${wd} -s ${subjID} -qcache
+
+	echo "Done qcache"
+	echo $subjID
+	
+	####################################################################################
+	### Process mris_ca_label script to obtain atlases from gcs files
+	### illustration of what it does here: https://surfer.nmr.mgh.harvard.edu/fswiki/SurfaceLabelAtlas
+	####################################################################################
+
+	for hemisphere in lh rh
+	do
+	for atlasName in schaefer500-yeo17 hcp-mmp-b gordon333dil
+	do
+
+		echo $hemisphere
+		echo $atlasName
+
+		# 2) create annot file for each subject
+		${fsdir}/bin/mris_ca_label -sdir ${wd} ${subjID} $hemisphere ${wd}/${subjID}/surf/$hemisphere.sphere.reg ${atlasFolder}/$atlasName/$hemisphere.${atlasName}_6p0.gcs ${wd}/${subjID}/${hemisphere}.${atlasName}.${subjID}.annot
+
+		# 3) create stat file 
+		${fsdir}/bin/mris_anatomical_stats -a ${wd}/${subjID}/${hemisphere}.${atlasName}.${subjID}.annot -f ${wd}/${subjID}/stats/$hemisphere.$atlasName.stats -b ${subjID} $hemisphere
+
+	done
+	done
+
+	echo "Done schaefer500-yeo17 hcp-mmp-b gordon333dil"
+
+	
+	###################################################################################################
+	## LAZY FIX: Schaefer atlas produces some weird formatting in some participants 
+	## as a result of this, there is the wrong number of columns in the stats files, and Rscript fails
+	## the code below specifically targets this issue in the Schaefer atlas 
+	## (issue = missing space between "Background+FreeSurfer_Defined_Medial_Wall" label and NumVert)
+	## I only test for missing space between label and 1 & 2 because it's easier
+	## Most participants don't have enough NumVert in this area to be an issue, only some do
+	## It's unlikely that a participant would have double NumVert to the ones who already have largest NumVert 
+	## (fewer vertices wouldn't create this problem)
+	###################################################################################################
+	
+	for hemisphere in lh rh
+	do
+		if grep -q "Background+FreeSurfer_Defined_Medial_Wall1" ${wd}/${subjID}/stats/${hemisphere}.schaefer500-yeo17.stats
+		then
+			echo "Schaefer atlas had this weird error that rarely occurs (${hemisphere})"
+			sed -i -e 's/Background.FreeSurfer_Defined_Medial_Wall/Background.FreeSurfer_Defined_Medial_Wall /g' ${wd}/${subjID}/stats/${hemisphere}.schaefer500-yeo17.stats
+		else
+			echo "Schaefer atlas behaved in ${hemisphere} (1 of 2)"
+		fi
+		
+		if grep -q "Background+FreeSurfer_Defined_Medial_Wall2" ${wd}/${subjID}/stats/${hemisphere}.schaefer500-yeo17.stats
+		then
+			echo "Schaefer atlas had this weird error that rarely occurs (${hemisphere})"
+			sed -i -e 's/Background.FreeSurfer_Defined_Medial_Wall/Background.FreeSurfer_Defined_Medial_Wall /g' ${wd}/${subjID}/stats/${hemisphere}.schaefer500-yeo17.stats
+		else
+			echo "Schaefer atlas behaved in ${hemisphere} (2 of 2)"
+		fi
+	done
+
+	#######################################################################################################################
+	### Process FS stats to get tables in OSCA format for atlases already provided by UKB or processed with mris_ca_label
+	#######################################################################################################################
+	module load apps/R/3.6.0
+	
+	Rscript ~/datasets/ukbiobank/ukb40933/imaging/scripts/save_FS_stats_in_OSCA_format.R ${wd} ${subjID} ${od}/indiv_output_OSCA
+
+	echo "Saved UKB atlases in OSCA format for "$subjID
+	
+	
+	####################################################################################################
+	### Run Barcelona pipeline for Yeo and Julich atlases
+	### https://cjneurolab.org/2016/11/22/hcp-mmp1-0-volumetric-nifti-masks-in-native-structural-space/
+	####################################################################################################
+	
+	# create file containing subjectname as input to pipeline
+	cd ${wd}
+	echo $subjID > ${wd}/target_${subjID}.txt
+
+	# start loop to process Julich and Yeo 
+	for atlasName in JulichBrain Yeo2011_17Networks test.aparc
+	do
+		echo ${atlasName}
+
+		bash create_subj_volume_parcellation.sh -L ${wd}/target_${subjID}.txt -f 1 -l 1 -a ${atlasName} -d ${wd}/${subjID} -s NO -m NO -t YES
+
+		# move into stats folder and rename
+		mv ${wd}/${subjID}/tables/lh.${atlasName}.${subjID}.txt ${wd}/${subjID}/stats/lh.${atlasName}.stats
+		mv ${wd}/${subjID}/tables/rh.${atlasName}.${subjID}.txt ${wd}/${subjID}/stats/rh.${atlasName}.stats
+	done
+
+	# remove subject_list created above 
+	rm ${wd}/target_${subjID}.txt
+
+	echo "Done Julich-Brain  & Yeo" $subjID
+
+	#######################################################################################
+	### Process FS stats to get tables in OSCA format for Yeo and Julich atlases
+	#######################################################################################
+	
+	module load apps/R/3.6.0
+
+	Rscript ~/datasets/ukbiobank/ukb40933/imaging/scripts/save_FS_stats_in_OSCA_format_Yeo_Julich.R ${wd} ${subjID} ${od}/indiv_output_OSCA
+
+	echo "Saved Julich-Brain  & Yeo UKB atlases in OSCA format for "$subjID
+	
+
+	############################################################
+	### Check if expected output files exist and are not empty
+	############################################################
+	# touch ${od}/error/results_present
+	# touch ${od}/error/results_missing
+	for atlasID in Yeo JulichBrain Gordon Schaefer Glasser DK Des
+	do
+	for measurement in ThickAvg SurfArea GrayVol
+	do
+		if [ -f ${od}/indiv_output_OSCA/${subjID}_${atlasID}_${measurement} ] && [ -s ${od}/indiv_output_OSCA/${subjID}_${atlasID}_${measurement} ]
+		then
+			echo "${subjID}_${atlasID}_${measurement} exists and is not zero, AWESOME"
+			echo ${subjID} ${atlasID} ${measurement} >> ${od}/error/results_present
+		else
+			echo "${subjID}_${atlasID}_${measurement} either doesn't exist or is zero - OH DEAR"
+			echo ${subjID} ${atlasID} ${measurement} >> ${od}/error/results_missing
+		fi
+	done
+	done
+	
+		
+	######################################################################################################################## 
+	##### extract vertex-wise tables
+	##### convert .mgh format into .asc
+	##### and extract vertices
+	######################################################################################################################## 
+
+	for hemisphere in lh rh
+	do
+		for meas in area thickness volume
+		do
+		echo ${hemisphere}.${meas}
+
+			${fsdir}/bin/mris_convert -c ${wd}/${subjID}/surf/${hemisphere}.${meas}.fwhm0.fsaverage.mgh ${wd}/fsaverage/surf/${hemisphere}.orig ${wd}/${subjID}/tmp/${hemisphere}.${meas}.fwhm0.fsaverage.asc
+
+			touch ${wd}/${subjID}/tmp/${hemisphere}.${meas}.fwhm0.UKB.txt
+			awk '{print $1}' ${wd}/${subjID}/tmp/"${hemisphere}"."${meas}".fwhm0.fsaverage.asc >> ${wd}/${subjID}/tmp/"${hemisphere}"."${meas}".fwhm0.UKB.txt
+			awk '{print $5}' ${wd}/${subjID}/tmp/"${hemisphere}"."${meas}".fwhm0.fsaverage.asc >> ${wd}/${subjID}/tmp/"${hemisphere}"."${meas}".temp.lta
+			paste ${wd}/${subjID}/tmp/"${hemisphere}"."${meas}".fwhm0.UKB.txt ${wd}/${subjID}/tmp/"${hemisphere}"."${meas}".temp.lta > ${wd}/${subjID}/tmp/"${hemisphere}"."${meas}".temp2.lta
+			cp ${wd}/${subjID}/tmp/"${hemisphere}"."${meas}".temp2.lta ${od}/indiv_vertex_wise_output/"${subjID}"."${hemisphere}"."${meas}".fwhm0.UKB.txt
+
+		done
+	done
+
+	################################################################################################################
+	## Check if all vertex-wise tables are there
+	###############################################################################################################
+
+	for meas in area thickness volume
+	do
+	for hemisphere in lh rh
+	do
+		if [ -f ${od}/indiv_vertex_wise_output/${subjID}.${hemisphere}.${meas}.fwhm0.UKB.txt ] && [ -s ${od}/indiv_vertex_wise_output/${subjID}.${hemisphere}.${meas}.fwhm0.UKB.txt ]
+		then
+			echo "${subjID}.${hemisphere}.${meas}.fwhm0.UKB.txt exists and is not zero, AWESOME"
+			echo ${subjID} vertices ${hemisphere}.${meas} >> ${od}/error/results_present
+		else
+			echo "${subjID}.${hemisphere}.${meas}.fwhm0.UKB.txt either doesn't exist or is zero - OH DEAR"
+			echo ${subjID} vertices ${hemisphere}.${meas} >> ${od}/error/results_missing
+		fi
+	done
+	done
+
+	# remove FS directory 
+	rm -rf ${wd}/sub_${subjNUM}
+	
+	###############################################################################################################
+	### Record how long it took
+	###############################################################################################################
+	end=$(date +%s)
+	end_date=$(date)
+
+	seconds=$(($end-$start))
+	echo "Elapsed Time: " `expr $seconds % 60` " minutes"
+
+	echo $subjID "successfully started" $start_date "and finished" $end_date
+
+	# get info on computational requirements
+	/usr/bin/sacct
+	/usr/bin/sacct --format="CPUTime,MaxRSS"
+	
+	
+######### Here I download, process and save the data we need for the morphometricity project
+######### sbatch -p brc,shared ~/datasets/ukbiobank/ukb40933/imaging/scripts/Serious_pipeline09122021.sh
+
+
+```
+
+

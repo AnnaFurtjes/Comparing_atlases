@@ -1,0 +1,10 @@
+name: "Anna E. Fürtjes"
+output_dir: "."
+navbar:
+  title: "Morphometricity"
+  type: inverse
+  left: 
+   - text: "Main pre-processing"
+     href: Serious_Pipeline.html
+   - text: "Tab 2"
+     href: index.html
