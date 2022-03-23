@@ -46,13 +46,15 @@ Neuroscientists working with structural magnetic resonance imaging (sMRI) must d
 
   1. [Phenotype cleaning]()
   
-  2. [Creating atlases](Serious_Pipeline.html)
+  2. [Creating empirical atlases](Serious_Pipeline.html)
   
-  2. [Morphometricity estimates]()
+  3. [Creating random atlases]()
   
-  3. [LASSO]()
+  4. [Morphometricity estimates]()
   
-  4. [Random parcellations]()
+  5. [LASSO]()
+  
+  6. [Random parcellations]()
   
   
 # Results
