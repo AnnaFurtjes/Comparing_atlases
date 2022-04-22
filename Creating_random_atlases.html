@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+<meta name="author" content="Anna Elisabeth Furtjes" />
+
+
+<title>Creating random atlases</title>
+
+<script src="site_libs/header-attrs-2.10/header-attrs.js"></script>
+<script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/spacelab.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<style>h1 {font-size: 34px;}
+       h1.title {font-size: 38px;}
+       h2 {font-size: 30px;}
+       h3 {font-size: 24px;}
+       h4 {font-size: 18px;}
+       h5 {font-size: 16px;}
+       h6 {font-size: 12px;}
+       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
+       pre:not([class]) { background-color: white }</style>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<script src="site_libs/navigation-1.1/codefolding.js"></script>
+<link href="site_libs/highlightjs-9.12.0/default.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+<style type="text/css">code{white-space: pre;}</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+
+
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+pre code {
+  padding: 0;
+}
+</style>
+
+
+<style type="text/css">
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #adb5bd;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script type="text/javascript">
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.tab('show');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+
+  // Navbar adjustments
+  var navHeight = $(".navbar").first().height() + 15;
+  var style = document.createElement('style');
+  var pt = "padding-top: " + navHeight + "px; ";
+  var mt = "margin-top: -" + navHeight + "px; ";
+  var css = "";
+  // offset scroll position for anchor links (for fixed navbar)
+  for (var i = 1; i <= 6; i++) {
+    css += ".section h" + i + "{ " + pt + mt + "}\n";
+  }
+  style.innerHTML = "body {" + pt + "padding-bottom: 40px; }\n" + css;
+  document.head.appendChild(style);
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+<style type="text/css">
+.code-folding-btn { margin-bottom: 4px; }
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+
+
+<div class="navbar navbar-inverse  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">Morphometricity</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="Serious_Pipeline.html">Neuroimaging pre-processing</a>
+</li>
+<li>
+  <a href="index.html">Tab 2</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div id="header">
+
+<div class="btn-group pull-right float-right">
+<button type="button" class="btn btn-default btn-xs btn-secondary btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span>Code</span> <span class="caret"></span></button>
+<ul class="dropdown-menu dropdown-menu-right" style="min-width: 50px;">
+<li><a id="rmd-show-all-code" href="#">Show All Code</a></li>
+<li><a id="rmd-hide-all-code" href="#">Hide All Code</a></li>
+</ul>
+</div>
+
+
+
+<h1 class="title toc-ignore">Creating random atlases</h1>
+<h4 class="author">Anna Elisabeth Furtjes</h4>
+
+</div>
+
+
+<p><br> <br></p>
+<hr />
+<div id="cluster-random-parcellation" class="section level1">
+<h1>Cluster random parcellation</h1>
+<p>First, we feed the fsaverage 3-dimensional coordinates of the ~300.000 vertices as input to a clustering algorithm (<code>vcgKDtree()</code> in Rvcg package).</p>
+<pre class="r"><code>####### create random vertices on Rosalind
+# We pre-registered atlases with 1.000, 5.000, 10.000 and 50.000 randon ROIs
+# Here we create the base files that contain the vertexIDs assigned to their random ROI and their allocated colors so we can plot the random ROIs
+# for now we don&#39;t worry about the random distributions
+
+
+########################################
+# get input from shell
+args = commandArgs(trailingOnly=TRUE)
+nseeds=as.numeric(args[1])
+array=args[2]
+# select 500 seed vertices for a parcellation of 1.000 ROIs across both hemispheres
+#nseeds=500 #nseeds=2500 # nseeds=5000
+
+#####################################
+### Right hemisphere
+#####################################
+
+## READ IN fsaverage data with vertex ID and X,Y,Z
+library(Rvcg)
+library(data.table)
+
+# read in vertex coordinates and name columns appropriately
+vertex_coord &lt;-fread(&quot;/mnt/lustre/datasets/ukbiobank/ukb40933/imaging/output/rh.fsaverage_vertex_coordinates&quot;,header=F)
+
+
+names(vertex_coord) &lt;- c(&quot;vertex_ID&quot;,&quot;X&quot;,&quot;Y&quot;,&quot;Z&quot;)
+
+vertex_coord$vertex_ID=paste0(&quot;rh_&quot;, vertex_coord$vertex_ID)
+
+# tested, this is the best to get contiguous areas
+k=6
+
+set.seed(as.numeric(array)*9876/30*22)
+select_vertex &lt;- sample(vertex_coord$vertex_ID, size=nseeds, replace=F) 
+#select_vertex
+
+vertex_coord$ROI=NA
+vertex_coord$ROI[which(vertex_coord$vertex_ID %in% select_vertex)]=1:nseeds
+table(vertex_coord$ROI) # non attributed vertices have a value of 0 otherwise the number is the ROI number/name
+
+# First plot (seeds)
+roisCols=viridis::viridis(n = nseeds, alpha = 1, option = &quot;H&quot;)
+#roisCols=rainbow(nseeds)
+#barplot(1:nseeds, col = roisCols)  # visualise colors
+
+vertex_coord$col &lt;- roisCols[vertex_coord$ROI]
+vertex_coord$col[which(is.na(vertex_coord$ROI))]=&quot;#D3D3D3&quot; # a lighter grey
+table(vertex_coord$col)
+
+vertex_coord$radius=1
+vertex_coord$radius[which(!is.na(vertex_coord$ROI))]=2
+
+# Start looping
+ jjj=1 
+ restot=NULL
+ ## keep looping as long as there are vertices that have not yet been assigned to a region
+while (sum(is.na(vertex_coord$ROI))&gt;1){
+gc()  
+# Start growing the ROIs from seeds
+for (roi in 1:nseeds){
+
+# query = seed
+query = as.matrix(vertex_coord[which(vertex_coord$ROI==roi), c(&quot;X&quot;, &quot;Y&quot;, &quot;Z&quot;)])
+
+# target = all vertices
+target &lt;- as.matrix(vertex_coord[,c(&quot;X&quot;, &quot;Y&quot;,&quot;Z&quot;)], rownames = vertex_coord$vertex_ID)
+
+# k = nbNearestNeighbors 
+cluster &lt;- vcgKDtree(target = target, query = query, k=k) 
+newVertNames=vertex_coord$vertex_ID[cluster$index]
+
+# attribute ROI name and colors
+vertex_coord$col[which(vertex_coord$vertex_ID %in% newVertNames &amp; is.na(vertex_coord$ROI) )]=roisCols[roi]
+vertex_coord$ROI[which(vertex_coord$vertex_ID %in% newVertNames &amp; is.na(vertex_coord$ROI) )]=roi
+
+# print(table(vertex_coord$col))
+
+}
+
+# Store progress
+res=c(table(vertex_coord$ROI), sum(is.na(vertex_coord$ROI)), jjj )
+restot=rbind(restot,res)
+# Plot everytime all the ROIs have grown
+#plotCorticalRois(vertex_coordDF = vertex_coord, iter = jjj)  
+print(paste0(jjj, &quot; iteration. &quot;, sum(is.na(vertex_coord$ROI)), &quot; vertices not yet allocated.&quot;))
+jjj=jjj+1
+#print(c(jjj, sum(is.na(vertex_coord$ROI))))
+}
+
+# Visualise the vertex without a ROI
+#vertex_coord$radius[which(is.na(vertex_coord$ROI))]=3
+
+# save vertex_coord
+setwd(paste0(&quot;/mnt/lustre/users/k1894405/morphometricity/data/null_distributions/&quot;,array))
+
+
+fwrite(vertex_coord, file=paste0(&quot;rh_vertex_coord_seed12345_ROIs&quot;,nseeds,&quot;_k&quot;,k), quote=F, col.names=T, sep=&quot;\t&quot;)
+
+# save info on iteration
+fwrite(as.data.frame(restot), file=paste0(&quot;rh_restot_seed12345_ROIs&quot;,nseeds,&quot;_k&quot;,k,&quot;.log&quot;), quote=F, col.names=T)
+
+rm(list = setdiff(ls(), c(&quot;nseeds&quot;,&quot;k&quot;,&quot;array&quot;)))
+
+#####################################
+### Left hemisphere
+#####################################
+
+
+# read in vertex coordinates and name columns appropriately
+vertex_coord &lt;-fread(&quot;/mnt/lustre/datasets/ukbiobank/ukb40933/imaging/output/lh.fsaverage_vertex_coordinates&quot;,header=F)
+
+
+names(vertex_coord) &lt;- c(&quot;vertex_ID&quot;,&quot;X&quot;,&quot;Y&quot;,&quot;Z&quot;)
+
+vertex_coord$vertex_ID=paste0(&quot;lh_&quot;, vertex_coord$vertex_ID)
+
+
+set.seed(as.numeric(array)*9876/30*22)
+
+select_vertex &lt;- sample(vertex_coord$vertex_ID, size=nseeds, replace=F) 
+#select_vertex
+
+vertex_coord$ROI=NA
+vertex_coord$ROI[which(vertex_coord$vertex_ID %in% select_vertex)]=1:nseeds
+table(vertex_coord$ROI) # non attributed vertices have a value of 0 otherwise the number is the ROI number/name
+
+# First plot (seeds)
+roisCols=viridis::viridis(n = nseeds, alpha = 1, option = &quot;H&quot;)
+#roisCols=rainbow(nseeds)
+#barplot(1:nseeds, col = roisCols)  # visualise colors
+
+vertex_coord$col &lt;- roisCols[vertex_coord$ROI]
+vertex_coord$col[which(is.na(vertex_coord$ROI))]=&quot;#D3D3D3&quot; # a lighter grey
+table(vertex_coord$col)
+
+vertex_coord$radius=1
+vertex_coord$radius[which(!is.na(vertex_coord$ROI))]=2
+
+# Start looping
+ jjj=1 
+ restot=NULL
+ ## keep looping as long as there are vertices that have not yet been assigned to a region
+while (sum(is.na(vertex_coord$ROI))&gt;1){
+gc()  
+# Start growing the ROIs from seeds
+for (roi in 1:nseeds){
+
+# query = seed
+query = as.matrix(vertex_coord[which(vertex_coord$ROI==roi), c(&quot;X&quot;, &quot;Y&quot;, &quot;Z&quot;)])
+
+# target = all vertices
+target &lt;- as.matrix(vertex_coord[,c(&quot;X&quot;, &quot;Y&quot;,&quot;Z&quot;)], rownames = vertex_coord$vertex_ID)
+
+# k = nbNearestNeighbors 
+cluster &lt;- vcgKDtree(target = target, query = query, k=k) 
+newVertNames=vertex_coord$vertex_ID[cluster$index]
+
+# attribute ROI name and colors
+vertex_coord$col[which(vertex_coord$vertex_ID %in% newVertNames &amp; is.na(vertex_coord$ROI) )]=roisCols[roi]
+vertex_coord$ROI[which(vertex_coord$vertex_ID %in% newVertNames &amp; is.na(vertex_coord$ROI) )]=roi
+
+# print(table(vertex_coord$col))
+
+}
+
+# Store progress
+res=c(table(vertex_coord$ROI), sum(is.na(vertex_coord$ROI)), jjj )
+restot=rbind(restot,res)
+ 
+print(paste0(jjj, &quot; iteration. &quot;, sum(is.na(vertex_coord$ROI)), &quot; vertices not yet allocated.&quot;))
+jjj=jjj+1
+#print(c(jjj, sum(is.na(vertex_coord$ROI))))
+}
+ 
+
+# Visualise the vertex without a ROI
+#vertex_coord$radius[which(is.na(vertex_coord$ROI))]=3
+
+setwd(paste0(&quot;/mnt/lustre/users/k1894405/morphometricity/data/null_distributions/&quot;,as.numeric(array)))
+
+fwrite(vertex_coord, file=paste0(&quot;lh_vertex_coord_seed12345_ROIs&quot;,nseeds,&quot;_k&quot;,k), quote=F, col.names=T, sep=&quot;\t&quot;)     
+    
+fwrite(as.data.frame(restot), file=paste0(&quot;lh_restot_seed12345_ROIs&quot;,nseeds,&quot;_k&quot;,k,&quot;.log&quot;), quote=F, col.names=T)  </code></pre>
+<p><br> <br></p>
+<hr />
+</div>
+<div id="apply-random-atlas-to-individual-vertex-wise-data" class="section level1">
+<h1>Apply random atlas to individual vertex-wise data</h1>
+<p>Second, we apply the random parcellation to the vertex-wise data to get a random atlas representation for each individual. This script successively reads in chunks of individuals, and averages the vertex-wise measures across random ROIs.</p>
+<pre class="r"><code>###### calculate morph for random atlases
+## Analysis steps:
+## 1. Read in data (not whole but in chunks)
+## 2. Read in random atlas allocation
+## 3. Get colSums for each participant across random vertices
+## 4. Format output which shouldn&#39;t be a transposed file
+
+
+
+
+##### Run this using shell script to get reference for subjnames
+## line=$(head -n 1 lh.volume_all_vertices_47602)
+## echo $line | tr &quot; &quot; &quot;\n&quot; &gt;&gt; header_${mod}
+
+# Load arguments
+args = commandArgs(trailingOnly=TRUE)
+mod=args[1]
+nchunks=args[2] # for 43.000, 40 repitiions, where 1075 are handled simultaneously
+nchunks=as.numeric(nchunks)
+randomROIs=as.numeric(args[3])
+
+headerName=paste0(&quot;header_&quot;,mod)
+
+print(mod)
+print(nchunks)
+print(randomROIs)
+print(headerName)
+###########################################################################
+# PART 1: Create tempfiles
+###########################################################################
+
+# dependencies
+library(data.table)
+library(stringr)
+library(dplyr)
+
+setwd(&quot;/mnt/lustre/users/k1894405/morphometricity/&quot;)
+data_dir &lt;- &quot;/mnt/lustre/users/k1894405/morphometricity/data/vertices&quot;
+random_dir &lt;- &quot;/mnt/lustre/users/k1894405/morphometricity/data/Random_parcellation&quot;
+
+# read in header to figure out unique columns, e.g., header_lh.volume
+headerNames&lt;-fread(paste0(random_dir,&quot;/&quot;,headerName), header=T)
+headerNames&lt;-as.vector(unlist(append(names(headerNames), headerNames)))
+
+# identify unique subjectNames
+## because subjNames are numbers, the input files HAVE to be cleaned beforehand and only contain unique subjNames 
+#subjNames &lt;- as.vector(unique(headerNames))
+
+    
+# work out if we&#39;re  in lh or rh
+hemi &lt;- substring(mod, 1,2)
+    
+# read in coordinates for random atlas
+vertex_coord &lt;- fread(paste0(random_dir, &quot;/&quot;, hemi, &quot;_vertex_coord_seed12345_ROIs&quot;, randomROIs, &quot;_k6&quot;))
+    
+# only need the vertex_IDs and allocated ROI
+vertex_coord &lt;- vertex_coord[,c(&quot;vertex_ID&quot;, &quot;ROI&quot;)]
+
+    
+# loop through nchunks to use less RAM
+# with this input we get steps that tells us how many participants are loaded through each iteration 
+steps=ceiling(length(headerNames)/nchunks)
+
+print(paste(&quot;Processing vertex-wise files in steps of&quot;, steps,&quot;.&quot;))
+
+for(n in 0:nchunks){
+    
+    # check if tempfiles already exist
+    out_files &lt;- list.files(path=random_dir, pattern=paste0(&quot;temp_&quot;,mod,&quot;_&quot;,randomROIs))
+    if(length(out_files) == 40){print(&quot;Tempfiles already exist&quot;); break}
+
+    print(paste(&quot;Starting iteration no. &quot;,n))
+    
+    # create structure of desired output
+    output &lt;- vector(mode = &quot;list&quot;, length = randomROIs)
+
+    # work out columns we want depending on n input (steps of 1000) 
+    counter1=2+(n*steps)
+    counter2=counter1+(steps-1)
+    # if last iteration exceeds dimensions of the file, chose last headerName as last column to read in 
+    if(counter2 &gt; length(headerNames)){counter2=length(headerNames)}
+    if(counter1 &gt; length(headerNames)){next}
+    
+    # find appropriate file
+    file &lt;- list.files(path=data_dir, pattern=paste0(mod,&quot;_all_&quot;))
+    #file &lt;- list.files(path=data_dir, pattern=paste0(mod,&quot;_output_NaN_remains&quot;))
+    
+    # read in all vertices for 1000 participants at a time
+    vertex_wise &lt;- fread(paste0(data_dir,&quot;/&quot;,file), header=T, select = c(1,counter1:counter2))
+
+
+    # merge vertex_wise values with vertex_coord
+    names(vertex_coord)[1] &lt;- names(vertex_wise)[1]
+    vertex_wise &lt;- plyr::join(vertex_coord, vertex_wise, by = names(vertex_wise)[1])
+    
+        ## get measurement per ROI
+        # loop through each ROI
+        for(j in 1:randomROIs){
+            output[[j]]&lt;-colSums(vertex_wise[which(vertex_wise$ROI == j),3:length(vertex_wise)], na.rm=TRUE)
+        }
+        
+    
+    # format output
+    output &lt;- as.data.frame(output)
+    output$IID &lt;- row.names(as.data.frame(output))
+    # get ID columnas first column
+    output &lt;- output[,c(&quot;IID&quot;, names(output)[1:(length(names(output))-1)])]
+    names(output)&lt;-c(&quot;IID&quot;,paste0(hemi,&quot;.ROI&quot;,1:randomROIs))
+    
+    # save this in a tempfile
+    fwrite(output, file=paste0(random_dir,&quot;/temp_&quot;,mod, &quot;_&quot;, randomROIs,&quot;randomROIs_iter&quot;,n), sep=&quot;\t&quot;, col.names=T, row.names=F, quote=F)
+    
+    # clean up 
+    rm(vertex_wise)
+}
+
+print(&quot;Created and saved all temp files&quot;)
+
+
+###########################################################################
+# PART 2: Combine tempfiles
+###########################################################################
+
+
+# save file names from all iterations
+out_files &lt;- list.files(path=random_dir, pattern=paste0(&quot;temp_&quot;,mod,&quot;_&quot;,randomROIs))
+
+output &lt;- NULL
+
+setwd(random_dir)
+
+for(i in 1:length(out_files)){
+    
+    # read in tempfile
+    randomAtlas &lt;- fread(paste0(random_dir,&quot;/&quot;,out_files[i]), header=T)
+    
+    # merge with outputfile
+    output &lt;- rbind(output, randomAtlas)
+}
+
+### remove any duplicated IIDs
+print(paste(sum(duplicated(output$IID)),&quot;duplicated IIDs.&quot;))
+output&lt;-output[!duplicated(output$IID),]
+print(paste(&quot;After removing duplicates, we have &quot;, nrow(output), &quot;participants left.&quot;))
+
+fwrite(output, file=paste0(random_dir,&quot;/&quot;,mod, &quot;_&quot;, randomROIs,&quot;randomROIs&quot;), sep=&quot;\t&quot;, col.names=T, row.names=F, quote=F)
+
+print(paste(&quot;Merged and saved final output file&quot;, mod, randomROIs, &quot;random ROIs&quot;))
+
+# clean up 
+rm(list = setdiff(ls(), c(&quot;random_dir&quot;,&quot;mod&quot;, &quot;randomROIs&quot;,&quot;out_files&quot;)))
+
+###########################################################################
+# PART 3: Delete tempfiles
+###########################################################################
+
+# clean up temp files, do it at very end in case job gets killed 
+for(k in out_files){
+
+    file.remove(paste0(random_dir,&quot;/&quot;,k))
+
+}
+
+print(&quot;Cleaned tempfiles&quot;)
+###########################################################################
+# PART 4: Combine with other hemisphere if exists 
+###########################################################################
+current &lt;- paste0(random_dir,&quot;/&quot;,mod, &quot;_&quot;, randomROIs,&quot;randomROIs&quot;)
+
+if(grepl(&quot;lh.&quot;,current,fixed = TRUE)){
+    alternative &lt;- str_replace(current, pattern=&quot;lh.&quot;, replacement=&quot;rh.&quot;)
+}else if(grepl(&quot;rh.&quot;,current,fixed = TRUE)){
+    alternative &lt;- str_replace(current, pattern=&quot;rh.&quot;, replacement=&quot;lh.&quot;)
+}
+
+# check if counterpart in other hemisphere exists
+if(file.exists(alternative)){
+    print(&quot;Counterpart already exists. Merging two hemispheres.&quot;)
+    
+    # read in both files
+    hemi1&lt;-fread(current, header=T)
+    hemi2&lt;-fread(alternative, header=T)
+    
+    # check that colnames are denoted lh and rh
+    if(names(hemi1)[2] == names(hemi2)[2]){print(&quot;Lh and Rh have same labelling.&quot;); break}
+    
+    # merge both hemispheres by maintaining order
+    both_hemi &lt;- plyr::join(hemi1, hemi2, by = &quot;IID&quot;)
+    
+    # clean up 
+    rm(&quot;hemi1&quot;)
+    rm(&quot;hemi2&quot;)
+    
+    # save 
+    meas&lt;-substring(mod, 4)
+    fwrite(both_hemi, file=paste0(random_dir,&quot;/both_hemi_&quot;,meas, &quot;_&quot;, (2*randomROIs),&quot;randomROIs&quot;), sep=&quot;\t&quot;, col.names=T, row.names=F, quote=F)
+    
+    # clean up &amp; remove indiv hemi files
+    file.remove(current)
+    file.remove(alternative)
+    
+    
+    print(paste0(&quot;Done creating random atlas with &quot;, (2*randomROIs),&quot; randomROIs for &quot;, meas))
+
+}else{print(paste(&quot;Counterpart for &quot;, mod, &quot;does not yet exist.&quot;))}</code></pre>
+<p><br> <br></p>
+<p>Example of running this last script:</p>
+<pre class="bash"><code>#!/bin/bash -l
+
+#SBATCH --output=~/morphometricity/output/get_random_atlases_%A_%a.out
+#SBATCH --job-name=random_atlases
+#SBATCH --time=2-00:00
+#SBATCH --mem-per-cpu=80G 
+#SBATCH --array=1-3 ## we have rh/ lh and area/ thickness/ volume 
+
+scripts_dir=&quot;~/morphometricity/scripts&quot;
+data_dir=&quot;~/morphometricity/data/vertices&quot;
+out_dir=&quot;~/morphometricity/data/Random_parcellation&quot;
+
+refList=${scripts_dir}/ref_meas.txt
+meas=$(awk &quot;FNR==$SLURM_ARRAY_TASK_ID&quot; $refList)
+
+# indicate number of ROis to be included in random atlas
+nroi=25000
+
+module load apps/R/3.6.0
+
+for hemi in rh lh
+do
+    # create reference list for  subjIDs
+    line=$(head -n 1 ${data_dir}/${hemi}.${meas}_all_*)
+    echo $line | tr &quot; &quot; &quot;\n&quot; &gt;&gt; ${out_dir}/header_${hemi}.${meas}
+    
+    # args = mod &amp; nchunks &amp; randomROIs
+    Rscript ~/morphometricity/scripts/get_random_atlases.R ${hemi}.${meas} 40 $nroi
+    
+    
+    rm ${out_dir}/header_${hemi}.${meas}
+done
+
+#/usr/bin/sacct --format=&quot;CPUTime,MaxRSS&quot;
+
+#### sbatch -p shared,brc ~/morphometricity/scripts/Run_get_random_atlases.sh</code></pre>
+</div>
+
+&nbsp;
+<hr />
+<a href = "https://www.kcl.ac.uk/">
+<p style="text-align: center"><img src="KCL_logo.jpg" href="https://www.kcl.ac.uk/" style="width:70px;height:50px"> 
+</a>
+</p>
+
+<a href = "https://www.kcl.ac.uk/people/anna-furtjes">
+<p style="text-align: center;">By Anna Elisabeth Fürtjes</a></p>
+<p style="text-align: center;"><span style="color: #808080;"><em>anna.furtjes@kcl.ac.uk</em></span></p>
+
+<!-- Add icon library -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+<!-- Add font awesome icons -->
+<p style="text-align: center;">
+    <a href="https://twitter.com/Anna_Furtjes" class="fa fa-twitter"></a>
+</p>
+
+&nbsp;
+
+
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.odd').parent('tbody').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open');
+  });
+});
+</script>
+
+<!-- code folding -->
+<script>
+$(document).ready(function () {
+  window.initializeCodeFolding("hide" === "show");
+});
+</script>
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

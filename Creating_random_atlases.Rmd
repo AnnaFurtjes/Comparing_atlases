@@ -1,0 +1,619 @@
+---
+title: "Creating random atlases"
+author: "Anna Elisabeth Furtjes"
+highlighter: prettify
+output: 
+  html_document:
+    code_folding: hide
+    theme: spacelab
+    includes:
+      after_body: footer.html
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE, eval = FALSE)
+```
+
+
+<br>
+<br>
+
+
+***
+
+
+# Cluster random parcellation
+
+First, we feed the fsaverage 3-dimensional coordinates of the ~300.000 vertices as input to a clustering algorithm (`vcgKDtree()` in Rvcg package).
+
+```{r Create_random_atlases_tested.R}
+####### create random vertices on Rosalind
+# We pre-registered atlases with 1.000, 5.000, 10.000 and 50.000 randon ROIs
+# Here we create the base files that contain the vertexIDs assigned to their random ROI and their allocated colors so we can plot the random ROIs
+# for now we don't worry about the random distributions
+
+
+########################################
+# get input from shell
+args = commandArgs(trailingOnly=TRUE)
+nseeds=as.numeric(args[1])
+array=args[2]
+# select 500 seed vertices for a parcellation of 1.000 ROIs across both hemispheres
+#nseeds=500 #nseeds=2500 # nseeds=5000
+
+#####################################
+### Right hemisphere
+#####################################
+
+## READ IN fsaverage data with vertex ID and X,Y,Z
+library(Rvcg)
+library(data.table)
+
+# read in vertex coordinates and name columns appropriately
+vertex_coord <-fread("/mnt/lustre/datasets/ukbiobank/ukb40933/imaging/output/rh.fsaverage_vertex_coordinates",header=F)
+
+
+names(vertex_coord) <- c("vertex_ID","X","Y","Z")
+
+vertex_coord$vertex_ID=paste0("rh_", vertex_coord$vertex_ID)
+
+# tested, this is the best to get contiguous areas
+k=6
+
+set.seed(as.numeric(array)*9876/30*22)
+select_vertex <- sample(vertex_coord$vertex_ID, size=nseeds, replace=F) 
+#select_vertex
+
+vertex_coord$ROI=NA
+vertex_coord$ROI[which(vertex_coord$vertex_ID %in% select_vertex)]=1:nseeds
+table(vertex_coord$ROI) # non attributed vertices have a value of 0 otherwise the number is the ROI number/name
+
+# First plot (seeds)
+roisCols=viridis::viridis(n = nseeds, alpha = 1, option = "H")
+#roisCols=rainbow(nseeds)
+#barplot(1:nseeds, col = roisCols)  # visualise colors
+
+vertex_coord$col <- roisCols[vertex_coord$ROI]
+vertex_coord$col[which(is.na(vertex_coord$ROI))]="#D3D3D3" # a lighter grey
+table(vertex_coord$col)
+
+vertex_coord$radius=1
+vertex_coord$radius[which(!is.na(vertex_coord$ROI))]=2
+
+# Start looping
+ jjj=1 
+ restot=NULL
+ ## keep looping as long as there are vertices that have not yet been assigned to a region
+while (sum(is.na(vertex_coord$ROI))>1){
+gc()  
+# Start growing the ROIs from seeds
+for (roi in 1:nseeds){
+
+# query = seed
+query = as.matrix(vertex_coord[which(vertex_coord$ROI==roi), c("X", "Y", "Z")])
+
+# target = all vertices
+target <- as.matrix(vertex_coord[,c("X", "Y","Z")], rownames = vertex_coord$vertex_ID)
+
+# k = nbNearestNeighbors 
+cluster <- vcgKDtree(target = target, query = query, k=k) 
+newVertNames=vertex_coord$vertex_ID[cluster$index]
+
+# attribute ROI name and colors
+vertex_coord$col[which(vertex_coord$vertex_ID %in% newVertNames & is.na(vertex_coord$ROI) )]=roisCols[roi]
+vertex_coord$ROI[which(vertex_coord$vertex_ID %in% newVertNames & is.na(vertex_coord$ROI) )]=roi
+
+# print(table(vertex_coord$col))
+
+}
+
+# Store progress
+res=c(table(vertex_coord$ROI), sum(is.na(vertex_coord$ROI)), jjj )
+restot=rbind(restot,res)
+# Plot everytime all the ROIs have grown
+#plotCorticalRois(vertex_coordDF = vertex_coord, iter = jjj)  
+print(paste0(jjj, " iteration. ", sum(is.na(vertex_coord$ROI)), " vertices not yet allocated."))
+jjj=jjj+1
+#print(c(jjj, sum(is.na(vertex_coord$ROI))))
+}
+
+# Visualise the vertex without a ROI
+#vertex_coord$radius[which(is.na(vertex_coord$ROI))]=3
+
+# save vertex_coord
+setwd(paste0("~/morphometricity/data/null_distributions/",array))
+
+
+fwrite(vertex_coord, file=paste0("rh_vertex_coord_seed12345_ROIs",nseeds,"_k",k), quote=F, col.names=T, sep="\t")
+
+# save info on iteration
+fwrite(as.data.frame(restot), file=paste0("rh_restot_seed12345_ROIs",nseeds,"_k",k,".log"), quote=F, col.names=T)
+
+rm(list = setdiff(ls(), c("nseeds","k","array")))
+
+#####################################
+### Left hemisphere
+#####################################
+
+
+# read in vertex coordinates and name columns appropriately
+vertex_coord <-fread("/mnt/lustre/datasets/ukbiobank/ukb40933/imaging/output/lh.fsaverage_vertex_coordinates",header=F)
+
+
+names(vertex_coord) <- c("vertex_ID","X","Y","Z")
+
+vertex_coord$vertex_ID=paste0("lh_", vertex_coord$vertex_ID)
+
+
+set.seed(as.numeric(array)*9876/30*22)
+
+select_vertex <- sample(vertex_coord$vertex_ID, size=nseeds, replace=F) 
+#select_vertex
+
+vertex_coord$ROI=NA
+vertex_coord$ROI[which(vertex_coord$vertex_ID %in% select_vertex)]=1:nseeds
+table(vertex_coord$ROI) # non attributed vertices have a value of 0 otherwise the number is the ROI number/name
+
+# First plot (seeds)
+roisCols=viridis::viridis(n = nseeds, alpha = 1, option = "H")
+#roisCols=rainbow(nseeds)
+#barplot(1:nseeds, col = roisCols)  # visualise colors
+
+vertex_coord$col <- roisCols[vertex_coord$ROI]
+vertex_coord$col[which(is.na(vertex_coord$ROI))]="#D3D3D3" # a lighter grey
+table(vertex_coord$col)
+
+vertex_coord$radius=1
+vertex_coord$radius[which(!is.na(vertex_coord$ROI))]=2
+
+# Start looping
+ jjj=1 
+ restot=NULL
+ ## keep looping as long as there are vertices that have not yet been assigned to a region
+while (sum(is.na(vertex_coord$ROI))>1){
+gc()  
+# Start growing the ROIs from seeds
+for (roi in 1:nseeds){
+
+# query = seed
+query = as.matrix(vertex_coord[which(vertex_coord$ROI==roi), c("X", "Y", "Z")])
+
+# target = all vertices
+target <- as.matrix(vertex_coord[,c("X", "Y","Z")], rownames = vertex_coord$vertex_ID)
+
+# k = nbNearestNeighbors 
+cluster <- vcgKDtree(target = target, query = query, k=k) 
+newVertNames=vertex_coord$vertex_ID[cluster$index]
+
+# attribute ROI name and colors
+vertex_coord$col[which(vertex_coord$vertex_ID %in% newVertNames & is.na(vertex_coord$ROI) )]=roisCols[roi]
+vertex_coord$ROI[which(vertex_coord$vertex_ID %in% newVertNames & is.na(vertex_coord$ROI) )]=roi
+
+# print(table(vertex_coord$col))
+
+}
+
+# Store progress
+res=c(table(vertex_coord$ROI), sum(is.na(vertex_coord$ROI)), jjj )
+restot=rbind(restot,res)
+ 
+print(paste0(jjj, " iteration. ", sum(is.na(vertex_coord$ROI)), " vertices not yet allocated."))
+jjj=jjj+1
+#print(c(jjj, sum(is.na(vertex_coord$ROI))))
+}
+ 
+
+# Visualise the vertex without a ROI
+#vertex_coord$radius[which(is.na(vertex_coord$ROI))]=3
+
+setwd(paste0("~/morphometricity/data/null_distributions/",as.numeric(array)))
+
+fwrite(vertex_coord, file=paste0("lh_vertex_coord_seed12345_ROIs",nseeds,"_k",k), quote=F, col.names=T, sep="\t")     
+    
+fwrite(as.data.frame(restot), file=paste0("lh_restot_seed12345_ROIs",nseeds,"_k",k,".log"), quote=F, col.names=T)  
+```
+
+
+
+<br>
+<br>
+
+
+***
+
+
+
+# Apply random atlas to individual vertex-wise data
+
+Second, we apply the random parcellation to the vertex-wise data to get a random atlas representation for each individual. This script successively reads in chunks of individuals, and averages the vertex-wise measures across random ROIs.
+
+
+
+
+```{r get_random_atlases.R}
+###### calculate morph for random atlases
+## Analysis steps:
+## 1. Read in data (not whole but in chunks)
+## 2. Read in random atlas allocation
+## 3. Get colSums for each participant across random vertices
+## 4. Format output which shouldn't be a transposed file
+
+
+
+
+##### Run this using shell script to get reference for subjnames
+## line=$(head -n 1 lh.volume_all_vertices_47602)
+## echo $line | tr " " "\n" >> header_${mod}
+
+# Load arguments
+args = commandArgs(trailingOnly=TRUE)
+mod=args[1]
+nchunks=args[2] # for 43.000, 40 repitiions, where 1075 are handled simultaneously
+nchunks=as.numeric(nchunks)
+randomROIs=as.numeric(args[3])
+
+headerName=paste0("header_",mod)
+
+print(mod)
+print(nchunks)
+print(randomROIs)
+print(headerName)
+###########################################################################
+# PART 1: Create tempfiles
+###########################################################################
+
+# dependencies
+library(data.table)
+library(stringr)
+library(dplyr)
+
+setwd("~/morphometricity/")
+data_dir <- "~/morphometricity/data/vertices"
+random_dir <- "~/morphometricity/data/Random_parcellation"
+
+# read in header to figure out unique columns, e.g., header_lh.volume
+headerNames<-fread(paste0(random_dir,"/",headerName), header=T)
+headerNames<-as.vector(unlist(append(names(headerNames), headerNames)))
+
+# identify unique subjectNames
+## because subjNames are numbers, the input files HAVE to be cleaned beforehand and only contain unique subjNames 
+#subjNames <- as.vector(unique(headerNames))
+
+	
+# work out if we're  in lh or rh
+hemi <- substring(mod, 1,2)
+	
+# read in coordinates for random atlas
+vertex_coord <- fread(paste0(random_dir, "/", hemi, "_vertex_coord_seed12345_ROIs", randomROIs, "_k6"))
+	
+# only need the vertex_IDs and allocated ROI
+vertex_coord <- vertex_coord[,c("vertex_ID", "ROI")]
+
+	
+# loop through nchunks to use less RAM
+# with this input we get steps that tells us how many participants are loaded through each iteration 
+steps=ceiling(length(headerNames)/nchunks)
+
+print(paste("Processing vertex-wise files in steps of", steps,"."))
+
+for(n in 0:nchunks){
+	
+	# check if tempfiles already exist
+	out_files <- list.files(path=random_dir, pattern=paste0("temp_",mod,"_",randomROIs))
+	if(length(out_files) == 40){print("Tempfiles already exist"); break}
+
+	print(paste("Starting iteration no. ",n))
+	
+	# create structure of desired output
+	output <- vector(mode = "list", length = randomROIs)
+
+	# work out columns we want depending on n input (steps of 1000) 
+	counter1=2+(n*steps)
+	counter2=counter1+(steps-1)
+	# if last iteration exceeds dimensions of the file, chose last headerName as last column to read in 
+	if(counter2 > length(headerNames)){counter2=length(headerNames)}
+	if(counter1 > length(headerNames)){next}
+	
+	# find appropriate file
+	file <- list.files(path=data_dir, pattern=paste0(mod,"_all_"))
+	#file <- list.files(path=data_dir, pattern=paste0(mod,"_output_NaN_remains"))
+	
+	# read in all vertices for 1000 participants at a time
+	vertex_wise <- fread(paste0(data_dir,"/",file), header=T, select = c(1,counter1:counter2))
+
+
+	# merge vertex_wise values with vertex_coord
+	names(vertex_coord)[1] <- names(vertex_wise)[1]
+	vertex_wise <- plyr::join(vertex_coord, vertex_wise, by = names(vertex_wise)[1])
+	
+		## get measurement per ROI
+		# loop through each ROI
+		for(j in 1:randomROIs){
+			output[[j]]<-colSums(vertex_wise[which(vertex_wise$ROI == j),3:length(vertex_wise)], na.rm=TRUE)
+		}
+		
+	
+	# format output
+	output <- as.data.frame(output)
+	output$IID <- row.names(as.data.frame(output))
+	# get ID columnas first column
+	output <- output[,c("IID", names(output)[1:(length(names(output))-1)])]
+	names(output)<-c("IID",paste0(hemi,".ROI",1:randomROIs))
+	
+	# save this in a tempfile
+	fwrite(output, file=paste0(random_dir,"/temp_",mod, "_", randomROIs,"randomROIs_iter",n), sep="\t", col.names=T, row.names=F, quote=F)
+	
+	# clean up 
+	rm(vertex_wise)
+}
+
+print("Created and saved all temp files")
+
+
+###########################################################################
+# PART 2: Combine tempfiles
+###########################################################################
+
+
+# save file names from all iterations
+out_files <- list.files(path=random_dir, pattern=paste0("temp_",mod,"_",randomROIs))
+
+output <- NULL
+
+setwd(random_dir)
+
+for(i in 1:length(out_files)){
+	
+	# read in tempfile
+	randomAtlas <- fread(paste0(random_dir,"/",out_files[i]), header=T)
+	
+	# merge with outputfile
+	output <- rbind(output, randomAtlas)
+}
+
+### remove any duplicated IIDs
+print(paste(sum(duplicated(output$IID)),"duplicated IIDs."))
+output<-output[!duplicated(output$IID),]
+print(paste("After removing duplicates, we have ", nrow(output), "participants left."))
+
+fwrite(output, file=paste0(random_dir,"/",mod, "_", randomROIs,"randomROIs"), sep="\t", col.names=T, row.names=F, quote=F)
+
+print(paste("Merged and saved final output file", mod, randomROIs, "random ROIs"))
+
+# clean up 
+rm(list = setdiff(ls(), c("random_dir","mod", "randomROIs","out_files")))
+
+###########################################################################
+# PART 3: Delete tempfiles
+###########################################################################
+
+# clean up temp files, do it at very end in case job gets killed 
+for(k in out_files){
+
+	file.remove(paste0(random_dir,"/",k))
+
+}
+
+print("Cleaned tempfiles")
+###########################################################################
+# PART 4: Combine with other hemisphere if exists 
+###########################################################################
+current <- paste0(random_dir,"/",mod, "_", randomROIs,"randomROIs")
+
+if(grepl("lh.",current,fixed = TRUE)){
+	alternative <- str_replace(current, pattern="lh.", replacement="rh.")
+}else if(grepl("rh.",current,fixed = TRUE)){
+	alternative <- str_replace(current, pattern="rh.", replacement="lh.")
+}
+
+# check if counterpart in other hemisphere exists
+if(file.exists(alternative)){
+	print("Counterpart already exists. Merging two hemispheres.")
+	
+	# read in both files
+	hemi1<-fread(current, header=T)
+	hemi2<-fread(alternative, header=T)
+	
+	# check that colnames are denoted lh and rh
+	if(names(hemi1)[2] == names(hemi2)[2]){print("Lh and Rh have same labelling."); break}
+	
+	# merge both hemispheres by maintaining order
+	both_hemi <- plyr::join(hemi1, hemi2, by = "IID")
+	
+	# clean up 
+	rm("hemi1")
+	rm("hemi2")
+	
+	# save 
+	meas<-substring(mod, 4)
+	fwrite(both_hemi, file=paste0(random_dir,"/both_hemi_",meas, "_", (2*randomROIs),"randomROIs"), sep="\t", col.names=T, row.names=F, quote=F)
+	
+	# clean up & remove indiv hemi files
+	file.remove(current)
+	file.remove(alternative)
+	
+	
+	print(paste0("Done creating random atlas with ", (2*randomROIs)," randomROIs for ", meas))
+
+}else{print(paste("Counterpart for ", mod, "does not yet exist."))}
+
+
+```
+
+
+
+
+
+<br>
+<br>
+
+
+Example of running this last script:
+
+```{bash}
+#!/bin/bash -l
+
+#SBATCH --output=~/morphometricity/output/get_random_atlases_%A_%a.out
+#SBATCH --job-name=random_atlases
+#SBATCH --time=2-00:00
+#SBATCH --mem-per-cpu=80G 
+#SBATCH --array=1-3 ## we have rh/ lh and area/ thickness/ volume 
+
+scripts_dir="~/morphometricity/scripts"
+data_dir="~/morphometricity/data/vertices"
+out_dir="~/morphometricity/data/Random_parcellation"
+
+refList=${scripts_dir}/ref_meas.txt
+meas=$(awk "FNR==$SLURM_ARRAY_TASK_ID" $refList)
+
+# indicate number of ROis to be included in random atlas
+nroi=25000
+
+module load apps/R/3.6.0
+
+for hemi in rh lh
+do
+	# create reference list for  subjIDs
+	line=$(head -n 1 ${data_dir}/${hemi}.${meas}_all_*)
+	echo $line | tr " " "\n" >> ${out_dir}/header_${hemi}.${meas}
+	
+	# args = mod & nchunks & randomROIs
+	Rscript ~/morphometricity/scripts/get_random_atlases.R ${hemi}.${meas} 40 $nroi
+	
+	
+	rm ${out_dir}/header_${hemi}.${meas}
+done
+
+#/usr/bin/sacct --format="CPUTime,MaxRSS"
+
+#### sbatch -p shared,brc ~/morphometricity/scripts/Run_get_random_atlases.sh
+```
+
+
+
+# Null distributions
+
+The following script generates morphometricity estimates for random atlases.
+
+```{bash}
+#!/bin/bash -l
+#SBATCH --job-name=eff_null_morph
+#SBATCH --output=~/morphometricity/output/area_null_morph_%A_%a.out
+#SBATCH -D ~/morphometricity
+#SBATCH --mem-per-cpu=80G 
+#SBATCH --time=2-00:00
+#SBATCH --array=1-100 # 100 distributions
+
+
+pheno_dir="/mnt/lustre/datasets/ukbiobank/ukb40933/phenotypes"
+wd="~/morphometricity/data/null_distributions/$SLURM_ARRAY_TASK_ID"
+ref_dir="~/morphometricity/data"
+scripts_dir="~/morphometricity/scripts"
+results_dir="~/morphometricity/results/morph_est_nulldistr"
+
+nroi=68
+mod="area"
+
+cd $wd
+
+for pheno in sex_pheno bmi_pheno edu_pheno alc_pheno cig_pheno gpheno age_pheno
+do
+	
+	# only calculate BRM if it doesn't already exist (if a previous job ran out of time, it won't have deleted the BRM, so we don't have to re-calculate it) OR if we already have a morph estimate
+	if [ ! -f ${wd}/BRM/BRM_${mod}_${nroi}randomROIs_${SLURM_ARRAY_TASK_ID}.orm.bin ] && [ ! -f ${results_dir}/morph_est_${nroi}randomROIs_${mod}_${pheno}_${SLURM_ARRAY_TASK_ID}.rsq ]
+	then
+	
+	mkdir -p ${wd}/bod_files
+
+		############################################################################
+		# MAKE BOD FILES
+		# Make binary input files for LMM analyses
+		# delete all vertices with a SD of zero
+		############################################################################
+			
+		/users/k1894405/osca_Linux \
+		--efile ${wd}/both_hemi_${mod}_${nroi}randomROIs \
+		--make-bod \
+		--sd-min 0.000001 \
+		--no-fid \
+		--out ${wd}/bod_files/Bod_${mod}_${nroi}randomROIs_${SLURM_ARRAY_TASK_ID}
+		
+		###########################################################################
+		## OSCA analyses: 
+		## manage bod files to include subset of individuals that all atlases & vertices have in common
+		## Saved in indi.list
+		############################################################################
+
+		/users/k1894405/osca_Linux \
+		--befile ${wd}/bod_files/Bod_${mod}_${nroi}randomROIs_${SLURM_ARRAY_TASK_ID} \
+		--keep ${ref_dir}/indi.list.fid \
+		--make-bod \
+		--out ${wd}/bod_files/Bod_${mod}_${nroi}randomROIs_${SLURM_ARRAY_TASK_ID}
+		
+		echo "Created bod files for $mod $nroi random areas"
+
+	echo "Calculating BRM for $nroi random ROIs $mod"
+	mkdir -p ${wd}/BRM
+	
+			############################################################################
+			# CALCULATE BRAIN-RELATEDNESS-MATRIX
+			############################################################################
+			
+			/users/k1894405/osca_Linux \
+			--befile ${wd}/bod_files/Bod_${mod}_${nroi}randomROIs_${SLURM_ARRAY_TASK_ID} \
+			--make-orm \
+			--out ${wd}/BRM/BRM_${mod}_${nroi}randomROIs_${SLURM_ARRAY_TASK_ID}
+			
+			echo "Calculated BRMs for ${mod} ${nroi} randomROIs"
+			
+			#####################################
+			## Clean up bod files to make space
+			#####################################
+			rm ${wd}/bod_files/Bod_${mod}_${nroi}randomROIs_*
+					
+			echo "Cleaned up bod files"
+
+
+	else
+		echo "BRM already exists"
+	fi
+
+
+		# only calculate morph est if it doesn't already exist
+		if [ ! -f ${results_dir}/morph_est_${nroi}randomROIs_${mod}_${pheno}_${SLURM_ARRAY_TASK_ID}.rsq ]
+		then
+		
+				#####################################
+				## Get morph estimate
+				#####################################		
+				/users/k1894405/osca_Linux \
+				--reml \
+				--orm ${wd}/BRM/BRM_${mod}_${nroi}randomROIs_${SLURM_ARRAY_TASK_ID} \
+				--pheno ${pheno_dir}/${pheno}_nofid.txt \
+				--covar ${pheno_dir}/bcovariates_nofid.txt \
+				--qcovar ${pheno_dir}/qcovariates_nofid.txt \
+				--out ${results_dir}/morph_est_${nroi}randomROIs_${mod}_${pheno}_${SLURM_ARRAY_TASK_ID} \
+				--reml-est-fix \
+				--reml-maxit 10000
+
+			echo "Calculated morph estimate for $nroi $mod $pheno ${SLURM_ARRAY_TASK_ID}" 	
+
+	else
+		echo "Morph results already exist for $nroi $mod $pheno ${SLURM_ARRAY_TASK_ID}. Skipping"
+	fi
+
+done
+
+
+
+		
+#####################################
+## Clean up BRM files to make space
+#####################################
+rm ${wd}/BRM/BRM_${mod}_${nroi}randomROIs_*
+		
+
+################ sbatch -p brc,shared ~/morphometricity/scripts/Efficient_null_distrib_morph_area.sh
+```
+

@@ -23,17 +23,6 @@ knitr::opts_chunk$set(echo = TRUE, warning = F, message = F)
 <br>
 <br>
 
-***
-
-<br>
-
-
-# Abstract
-
-Neuroscientists working with structural magnetic resonance imaging (sMRI) must decide how to represent their participants’ brains. Many rely on brain atlases to subdivide the cortex into dozens or hundreds of regions-of-interest (ROIs). Others consider hundreds of thousands of “vertex-wise” measurements across the cortex. To date, there is no data-driven guideline about which atlas is most suitable to maximise associations between brain and non-brain traits when running prediction models. By calculating morphometricity estimates—which index the proportion of variance explained by a given atlas—previous work suggested that hundreds of thousands of vertex-wise measurements captured more interindividual variance in an age variable (as well as many other variables) than the much coarser 68 ROI-averaged measures in the Desikan-Killiany atlas. Our study will compare morphometricity estimates of vertex-wise measurements, seven empirical atlases (Desikan-Killiany, Destrieux, Glasser, Gordon, Schaefer, Yeo, Jülich-Brain), and multiple randomly generated parcellations to determine whether empirical data represented in one or the other brain atlas is superior in capturing interindividual variance across a variety of morphometric traits, including age, body-mass index, cognitive abilities, and alcohol consumption. We hypothesise that more fine-grained brain representations will yield larger morphometricity estimates than coarser atlases, since explanatory variance is lost when averaging across ROIs. It is also reasonable to expect that sufficiently highly-resolved atlases will capture about the same or more variance as vertex-wise measurements, because they should be less effected by anatomical variability. Our findings will provide a basis for future studies to choose a brain atlas that maximises the relationship between brain and non-brain traits.
-
-<br>
-<br>
 
 ***
 
@@ -44,20 +33,25 @@ Neuroscientists working with structural magnetic resonance imaging (sMRI) must d
 
 <br>
 
-  1. [Phenotype cleaning]()
+  1. [Phenotype cleaning](Phenotype_cleaning.html)
   
   2. [Creating empirical atlases](Serious_Pipeline.html)
   
-  3. [Creating random atlases]()
+  3. [Creating random atlases](Creating_random_atlases.html)
   
-  4. [Morphometricity estimates]()
+  4. [Morphometricity estimates](morph_est.html)
   
   5. [LASSO]()
   
-  6. [Random parcellations]()
+
   
-  
+
+
+<br>  
+
+
 # Results
+
 
 <br>
 
@@ -66,3 +60,20 @@ Neuroscientists working with structural magnetic resonance imaging (sMRI) must d
   2. [Likelihood ratio test]()
   
   3. [LASSO]()
+  
+  
+
+
+
+***
+
+
+<br>
+
+
+# Abstract
+
+Neuroscientists working with structural magnetic resonance imaging (sMRI) must decide how to represent their participants’ brains. Many rely on brain atlases to subdivide the cortex into dozens or hundreds of regions-of-interest (ROIs). Others consider hundreds of thousands of “vertex-wise” measurements across the cortex. To date, there is no data-driven guideline about which atlas is most suitable to maximise associations between brain and non-brain traits when running prediction models. By calculating morphometricity estimates—which index the proportion of variance explained by a given atlas—previous work suggested that hundreds of thousands of vertex-wise measurements captured more interindividual variance in an age variable (as well as many other variables) than the much coarser 68 ROI-averaged measures in the Desikan-Killiany atlas. Our study will compare morphometricity estimates of vertex-wise measurements, seven empirical atlases (Desikan-Killiany, Destrieux, Glasser, Gordon, Schaefer, Yeo, Jülich-Brain), and multiple randomly generated parcellations to determine whether empirical data represented in one or the other brain atlas is superior in capturing interindividual variance across a variety of morphometric traits, including age, body-mass index, cognitive abilities, and alcohol consumption. We hypothesise that more fine-grained brain representations will yield larger morphometricity estimates than coarser atlases, since explanatory variance is lost when averaging across ROIs. It is also reasonable to expect that sufficiently highly-resolved atlases will capture about the same or more variance as vertex-wise measurements, because they should be less effected by anatomical variability. Our findings will provide a basis for future studies to choose a brain atlas that maximises the relationship between brain and non-brain traits.
+
+<br>
+<br>

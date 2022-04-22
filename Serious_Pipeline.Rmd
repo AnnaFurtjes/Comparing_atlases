@@ -1186,3 +1186,4 @@ subjNUM=$(awk "FNR==$SLURM_ARRAY_TASK_ID" ${download_dir}resubmitIDs_10122021.bu
 ```
 
 
+#### add detect outliers script

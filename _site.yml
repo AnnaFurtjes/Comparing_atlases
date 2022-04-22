@@ -4,7 +4,7 @@ navbar:
   title: "Morphometricity"
   type: inverse
   left: 
-   - text: "Main pre-processing"
+   - text: "Neuroimaging pre-processing"
      href: Serious_Pipeline.html
    - text: "Tab 2"
      href: index.html

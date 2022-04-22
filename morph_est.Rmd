@@ -1,0 +1,460 @@
+---
+title: "Morphometricity estimates"
+author: "Anna Elisabeth Furtjes"
+highlighter: prettify
+output: 
+  html_document:
+    code_folding: hide
+    toc: yes
+    toc_depth: 2
+    toc_float: yes
+    theme: spacelab
+    includes:
+      after_body: footer.html
+---
+
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE, eval = FALSE)
+```
+
+
+<br>
+<br>
+
+
+***
+
+
+# Example script empirical and random atlases
+
+<br>
+<br>
+
+
+## Make bod files
+
+```{bash}
+#!/bin/bash -l
+#SBATCH --job-name=make_bod
+#SBATCH --output=~/morphometricity/output/make_bod_%A_%a.out
+#SBATCH -D /mnt/lustre/datasets/ukbiobank/ukb40933/imaging/output
+#SBATCH --mem-per-cpu=3G 
+#SBATCH --array=1-7 # 7 atlases
+
+wd="~/morphometricity"
+pheno_dir="/mnt/lustre/datasets/ukbiobank/ukb40933/phenotypes"
+results_dir="~/morphometricity/results/morph_results"
+scripts_dir="~/morphometricity/scripts"
+
+refList=${scripts_dir}/ref_atlases.txt
+atlasName=$(awk "FNR==$SLURM_ARRAY_TASK_ID" $refList)
+
+##################################################
+### OSCA analyses for brain atlases
+### The processing works with the formatting from combine_atlas_output.R
+##################################################
+
+for mod in ThickAvg SurfArea GrayVol
+do
+
+		############################################################################
+		# MAKE BOD FILES
+		# Make binary input files for LMM analyses
+		# delete all ROIs/vertices with a SD of zero
+		############################################################################
+			
+		/users/k1894405/osca_Linux \
+		--efile ${wd}/data/atlases/${atlasName}_${mod}_all_* \
+		--sd-min 0.000001 \
+		--no-fid \
+		--make-bod \
+		--out ${wd}/data/bod_files/Bod_${atlasName}_${mod}
+		#--keep ${wd}/data/indi.list.fid \
+		#
+			
+		echo "Created bod files for $atlasName $mod"
+		
+		###########################################################################
+		## OSCA analyses: 
+		## manage bod files to include subset of individuals that all atlases & vertices have in common
+		## Saved in indi.list
+		############################################################################
+
+
+		/users/k1894405/osca_Linux \
+		--befile ${wd}/data/bod_files/Bod_${atlasName}_${mod} \
+		--keep ${wd}/data/indi.list.fid \
+		--make-bod \
+		--out ${wd}/data/bod_files/Bod_${atlasName}_${mod}
+		
+		echo "Created bod files for $atlasName $mod"
+		
+done
+
+
+
+
+
+##### sbatch -p shared,brc ~/morphometricity/scripts/make_bod_files.sh
+
+### This is the first script needed for morphometricity estimates (second is calculate BRM)
+```
+
+<br>
+
+## Calculate Brain-Relatedness-Matrix
+
+```{bash}
+#!/bin/bash -l
+#SBATCH --job-name=calculate_BRM
+#SBATCH --output=~/morphometricity/output/calculate_BRM_%A_%a.out
+#SBATCH -D /mnt/lustre/datasets/ukbiobank/ukb40933/imaging/output
+#SBATCH --mem-per-cpu=40G 
+#SBATCH --array=1-7 # 7 atlases
+
+wd="~/morphometricity"
+pheno_dir="/mnt/lustre/datasets/ukbiobank/ukb40933/phenotypes"
+results_dir="~/morphometricity/results/morph_results"
+scripts_dir="~/morphometricity/scripts"
+
+refList=${scripts_dir}/ref_atlases.txt
+atlasName=$(awk "FNR==$SLURM_ARRAY_TASK_ID" $refList)
+
+echo "Processing " $atlasName
+
+for mod in ThickAvg SurfArea GrayVol
+do
+
+		############################################################################
+		# CALCULATE BRAIN-RELATEDNESS-MATRIX
+		# orm-alg correspond to algorithm used to estimate BRM: 1 = standardized data of each ROI
+		# potentially make-orm-bin or make-orm-gz to save space
+		############################################################################
+		
+		/users/k1894405/osca_Linux \
+		--befile ${wd}/data/bod_files/Bod_${atlasName}_${mod} \
+		--make-orm \
+		--out ${wd}/data/BRM/BRM_${atlasName}_${mod}
+		
+		echo "Calculated BRMs for $atlasName $mod"
+		
+		############################################################################
+		# GET MEAN AND VARIANCE FOR EACH ROI
+		############################################################################
+		
+		/users/k1894405/osca_Linux \			
+		--befile ${wd}/data/bod_files/Bod_${atlasName}_${mod} \
+		--get-mean \
+		--get-variance \
+		--out ${wd}/bod_files/${atlasName}_${mod}_mean_var
+		
+		echo "Calculated mean and variances for $atlasName $mod"
+		
+done
+
+/usr/bin/sacct --format="CPUTime, MaxRSS"
+
+##### sbatch -p brc,shared ~/morphometricity/scripts/calculate_BRM.sh
+
+
+
+##### This is the second step to get morphometricity estimates (after making bod files, before calculating morph estimates)
+```
+
+<br>
+
+## Get morphometricity estimate
+
+```{bash}
+#!/bin/bash -l
+#SBATCH --job-name=DK_morph_est
+#SBATCH --output=~/morphometricity/output/upd_morph_est_DK_%A_%a.out
+#SBATCH --mem=80G 
+#SBATCH --cpus-per-task=10
+#SBATCH --time=2-00:00
+#SBATCH --array=1-7 # parallel analysis for 7 phenos
+
+module load apps/R/3.6.0
+
+
+wd="~/morphometricity"
+pheno_dir="/mnt/lustre/datasets/ukbiobank/ukb40933/phenotypes"
+results_dir="~/morphometricity/results/morp_results_update"
+scripts_dir="~/morphometricity/scripts"
+
+
+atlasName="DK"
+
+echo "Starting morph estimates for " $atlasName
+
+refList=${scripts_dir}/ref_pheno.txt
+pheno=$(awk "FNR==$SLURM_ARRAY_TASK_ID" $refList)
+
+
+for mod in ThickAvg SurfArea GrayVol
+do
+
+			# exclude analyses that were already performed
+			if [ -f morph_est_${atlasName}_${mod}_${pheno}.rsq ]
+			then
+
+				echo "Now executing " $mod $pheno
+				
+				/users/k1894405/osca_Linux \
+				--reml \
+				--orm ${wd}/data/BRM/BRM_${atlasName}_${mod} \
+				--pheno ${pheno_dir}/${pheno}_nofid.txt \
+				--covar ${pheno_dir}/bcovariates_nofid.txt \
+				--qcovar ${pheno_dir}/qcovariates_nofid.txt \
+				--out ${results_dir}/morph_est_${atlasName}_${mod}_${pheno} \
+				--reml-est-fix \
+				--reml-maxit 10000
+				
+				echo "Calculated morph estimate for $atlasName $mod $pheno"
+			else
+				echo "This already exists. Not running analysis." $mod $pheno
+				continue
+			fi
+done
+
+##### sbatch -p brc,shared ~/morphometricity/scripts/DK_calculate_morph_est_up.sh
+
+```
+
+
+***
+
+<br>
+<br>
+
+
+# Example script vertices
+
+<br>
+
+## Make bod files
+
+```{bash}
+#!/bin/bash -l
+#SBATCH --job-name=vertex_bod
+#SBATCH --output=~/morphometricity/output/vertices_make_bod_%A_%a.out
+#SBATCH -D /mnt/lustre/datasets/ukbiobank/ukb40933/imaging/output
+#SBATCH --mem-per-cpu=70G 
+#SBATCH --array=1-3 # 3 modalities
+
+wd="~/morphometricity"
+pheno_dir="/mnt/lustre/datasets/ukbiobank/ukb40933/phenotypes"
+results_dir="~/morphometricity/results/morph_results"
+scripts_dir="~/morphometricity/scripts"
+
+refList=${scripts_dir}/ref_meas.txt
+meas=$(awk "FNR==$SLURM_ARRAY_TASK_ID" $refList)
+
+
+##################################################
+### OSCA analyses for brain vertices
+### Step 1: get bod files
+### Transposed format --tefile
+##################################################
+for hemi in rh lh
+do
+
+/users/k1894405/osca_Linux \
+	--tefile ${wd}/data/vertices/${hemi}.${meas}_all_nodup_42999 \
+	--make-bod \
+	--no-fid \
+	--sd-min 0.000001 \
+	--out ${wd}/data/bod_files/Bod_vertices_${hemi}.${meas}
+		
+	
+		###########################################################################
+		## OSCA analyses: 
+		## manage bod files to include subset of individuals that all atlases & vertices have in common
+		## Saved in indi.list
+		############################################################################
+
+		/users/k1894405/osca_Linux \
+		--befile ${wd}/data/bod_files/Bod_vertices_${hemi}.${meas} \
+		--keep ${wd}/data/indi.list.fid \
+		--make-bod \
+		--out ${wd}/data/bod_files/Bod_vertices_${hemi}.${meas}
+		
+done
+
+
+### sbatch -p shared,brc ~/morphometricity/scripts/vertices_make_bod.sh 
+```
+
+<br>
+
+## Calculate Brain-Relatedness-Matrix per hemisphere
+
+
+```{bash}
+#!/bin/bash -l
+#SBATCH --job-name=vertex_BRM
+#SBATCH --output=~/morphometricity/output/vertex_calculate_BRM_%A_%a.out
+#SBATCH -D ~/morphometricity
+#SBATCH --mem-per-cpu=200G 
+#SBATCH --array=1-3 # 3 measurement types
+
+wd="~/morphometricity"
+pheno_dir="/mnt/lustre/datasets/ukbiobank/ukb40933/phenotypes"
+results_dir="~/morphometricity/results/morph_results"
+scripts_dir="~/morphometricity/scripts"
+
+refList=${scripts_dir}/ref_meas.txt
+meas=$(awk "FNR==$SLURM_ARRAY_TASK_ID" $refList)
+
+echo "Processing " $meas
+
+for hemi in lh rh
+do
+	if [ ! -f ${wd}/data/BRM/BRM_vertices_${hemi}.${meas}.orm.bin ]
+	then
+		############################################################################
+		# CALCULATE BRAIN-RELATEDNESS-MATRIX
+		############################################################################
+		
+		/users/k1894405/osca_Linux \
+		--befile ${wd}/data/bod_files/Bod_vertices_${hemi}.${meas} \
+		--make-orm \
+		--out ${wd}/data/BRM/BRM_vertices_${hemi}.${meas}
+		
+		echo "Calculated BRMs for ${hemi}.${meas}"
+		
+		############################################################################
+		# GET MEAN AND VARIANCE FOR EACH ROI
+		############################################################################
+		
+		/users/k1894405/osca_Linux \			
+		--befile ${wd}/data/bod_files/Bod_vertices_${hemi}.${meas} \
+		--get-mean \
+		--get-variance \
+		--out ${wd}/bod_files/${hemi}.${meas}_mean_var
+		
+		echo "Calculated mean and variances for ${hemi}.${meas}"
+	else
+		echo ${hemi}.${meas} " BRM already exists. Skipping."
+	fi
+done
+
+
+
+#/usr/bin/sacct --format="CPUTime, MaxRSS"
+
+##### sbatch -p brc,shared ~/morphometricity/scripts/vertices_calculate_BRM.sh
+
+
+
+##### This is the second step to get morphometricity estimates (after making bod files, before calculating morph estimates)
+```
+
+<br>
+
+## Merge Brain-Relatedness-Matrix
+
+```{r}
+#!/bin/bash -l
+#SBATCH --job-name=merge_vertexBRM
+#SBATCH --output=~/morphometricity/output/merge_orm_vertex_%A_%a.out
+#SBATCH -D ~/morphometricity
+#SBATCH --mem=380
+#SBATCH --exclusive
+#SBATCH --array=1-3 # 3 ref files to merge
+
+wd="~/morphometricity"
+pheno_dir="/mnt/lustre/datasets/ukbiobank/ukb40933/phenotypes"
+results_dir="~/morphometricity/results/morp_results_update"
+scripts_dir="~/morphometricity/scripts"
+
+refList=${scripts_dir}/ref_meas.txt
+meas=$(awk "FNR==$SLURM_ARRAY_TASK_ID" $refList)
+
+
+
+/users/k1894405/osca_Linux \
+--befile-flist ${scripts_dir}/merge_${meas}.txt \
+--make-bod \
+--out ${wd}/data/bod_files/Bod_vertices_bothhemi_${meas}
+
+echo "Merging " $meas
+
+###########################################################################
+# Keep participants of interest
+##########################################################################
+/users/k1894405/osca_Linux \
+--befile ${wd}/data/bod_files/Bod_vertices_bothhemi_${meas} \
+--keep ${wd}/data/indi.list.fid \
+--make-bod \
+--out ${wd}/data/bod_files/Bod_vertices_both.${meas}
+
+############################################################################
+# CALCULATE BRAIN-RELATEDNESS-MATRIX
+############################################################################
+		
+	/users/k1894405/osca_Linux \
+	--befile ${wd}/data/bod_files/Bod_vertices_bothhemi_${meas} \
+	--make-orm \
+	--out ${wd}/data/BRM/BRM_vertices_both.${meas}
+		
+	echo "Calculated BRMs for ${meas}"
+		
+
+```
+
+<br>
+
+## Get morphometricity estimate
+
+```{bash}
+#!/bin/bash -l
+#SBATCH --job-name=vertex_morph
+#SBATCH --output=~/morphometricity/output/vertex_morph_%A_%a.out
+#SBATCH -D ~/morphometricity
+#####SBATCH --mem-per-cpu=300G
+#SBATCH --mem=300G
+#SBATCH --exclusive
+#SBATCH --array=1-7 # 7 phenotypes
+
+wd="~/morphometricity"
+pheno_dir="/mnt/lustre/datasets/ukbiobank/ukb40933/phenotypes"
+results_dir="~/morphometricity/results/morp_results_update"
+scripts_dir="~/morphometricity/scripts"
+
+refList=${scripts_dir}/ref_pheno.txt
+pheno=$(awk "FNR==$SLURM_ARRAY_TASK_ID" $refList)
+
+
+
+for meas in area volume thickness
+do
+
+echo "Starting morph estimate $meas $pheno"
+
+if [ ! -f ${results_dir}/morph_est_vertices_${meas}_${pheno}.rsq ]
+then
+	#########################################
+	### Merge hemispheres for vertex BRM
+	#########################################
+
+	/users/k1894405/osca_Linux \
+	--reml \
+	--orm ${wd}/data/BRM/BRM_vertices_bothhemi_${meas} \
+	--pheno ${pheno_dir}/${pheno}_nofid.txt \
+	--covar ${pheno_dir}/bcovariates_nofid.txt \
+	--qcovar ${pheno_dir}/qcovariates_nofid.txt \
+	--out ${results_dir}/morph_est_vertices_${meas}_${pheno} \
+	--reml-est-fix \
+	--reml-maxit 10000
+
+fi 
+
+done 
+
+
+##### sbatch -p brc,shared ~/morphometricity/scripts/vertices_get_morph_est.sh
+```
+

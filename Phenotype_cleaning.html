@@ -1,0 +1,1300 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+
+
+<title>Phenotype cleaning</title>
+
+<script src="site_libs/header-attrs-2.10/header-attrs.js"></script>
+<script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/spacelab.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<style>h1 {font-size: 34px;}
+       h1.title {font-size: 38px;}
+       h2 {font-size: 30px;}
+       h3 {font-size: 24px;}
+       h4 {font-size: 18px;}
+       h5 {font-size: 16px;}
+       h6 {font-size: 12px;}
+       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
+       pre:not([class]) { background-color: white }</style>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<script src="site_libs/navigation-1.1/codefolding.js"></script>
+<link href="site_libs/highlightjs-9.12.0/default.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+<style type="text/css">code{white-space: pre;}</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+
+
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+pre code {
+  padding: 0;
+}
+</style>
+
+
+<style type="text/css">
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #adb5bd;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script type="text/javascript">
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.tab('show');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+
+  // Navbar adjustments
+  var navHeight = $(".navbar").first().height() + 15;
+  var style = document.createElement('style');
+  var pt = "padding-top: " + navHeight + "px; ";
+  var mt = "margin-top: -" + navHeight + "px; ";
+  var css = "";
+  // offset scroll position for anchor links (for fixed navbar)
+  for (var i = 1; i <= 6; i++) {
+    css += ".section h" + i + "{ " + pt + mt + "}\n";
+  }
+  style.innerHTML = "body {" + pt + "padding-bottom: 40px; }\n" + css;
+  document.head.appendChild(style);
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+<style type="text/css">
+.code-folding-btn { margin-bottom: 4px; }
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+
+
+<div class="navbar navbar-inverse  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">Morphometricity</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="Serious_Pipeline.html">Main pre-processing</a>
+</li>
+<li>
+  <a href="index.html">Tab 2</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div id="header">
+
+<div class="btn-group pull-right float-right">
+<button type="button" class="btn btn-default btn-xs btn-secondary btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span>Code</span> <span class="caret"></span></button>
+<ul class="dropdown-menu dropdown-menu-right" style="min-width: 50px;">
+<li><a id="rmd-show-all-code" href="#">Show All Code</a></li>
+<li><a id="rmd-hide-all-code" href="#">Hide All Code</a></li>
+</ul>
+</div>
+
+
+
+<h1 class="title toc-ignore">Phenotype cleaning</h1>
+
+</div>
+
+
+<p><br> <br> <br></p>
+<p>The following scripts defines my UKB phenotypes for the analyses.</p>
+<p>The script refers to a file named <code>var_name.lis</code> which stored the variable names used for analysis. It can be found <a href="">here</a>.</p>
+<p><br></p>
+<pre class="r"><code>#### this script defines phenotypes used in our morphometricity study
+##########################
+# Exclusion criteria are:
+# 1. Must have at least one non-missing phenotypic values 
+# 2. MRI data must have been determined in addition to T2-Flair
+# 3. Outliers outside of 4SD in the pheno variables will be removed (also for brain variables but we must process them first to know)
+
+# This script follows theses steps:
+# Read in pheno data
+# Merge two datasets
+# work out criteria and exclude people if needed
+
+# Output:
+# 1. File containing participant IDs to include
+# 2. File with cleaned phenotypes
+# 3. File with cleaned covariates 
+##################################################################################
+
+# set wd to where pheno files are saved
+setwd(&quot;/mnt/lustre/datasets/ukbiobank/ukb40933/phenotypes&quot;)
+
+# load dependencies
+library(data.table)
+library(stringr)
+
+# read in pheno data file 1
+#pheno1 &lt;- fread(&quot;ukb_40K_for_anna_final.csv&quot;, header=T, data.table=F)
+pheno1 &lt;- fread(&quot;ukb_40K_for_anna.csv&quot;, header=T, data.table=F)
+
+# read in pheno data file 2
+pheno2 &lt;- fread(&quot;ukb46867.csv&quot;, header=T, data.table=F)
+
+# merge pheno1 and pheno2
+pheno &lt;- merge(pheno1, pheno2, by=&quot;eid&quot;)
+rm(list=c(&quot;pheno1&quot;, &quot;pheno2&quot;))
+
+# harmonise column names (R doesn&#39;t like -)
+names(pheno) &lt;- str_replace_all(names(pheno), pattern=&quot;-&quot;, replacement=&quot;_&quot;)
+
+
+# pheno[,grep(pattern = &quot;1239&quot;, x=names(pheno))]
+# names(pheno)[grep(pattern = &quot;date_of_attending_assessment&quot;, x=names(pheno))]
+# is.na(pheno$qualifications_f6138_2_0)
+## Note: edu6138_2_0 has 267 missing participants, test if we can recover from other 6138 vars
+## But they all have an education in edu6138_1_0 which we will use instead
+## missing_edu&lt;-pheno[is.na(pheno$qualifications_f6138_2_0),grep(pattern = &quot;6138&quot;, x=names(pheno))]
+## cigarettes daily: -10 stands for less than 1 a day
+
+
+
+# read in list with variables that we want
+ref_list &lt;- read.table(&quot;/mnt/lustre/datasets/ukbiobank/ukb40933/imaging/scripts/pheno/var_name.lis&quot;, header=F, sep=&quot;\t&quot;)
+names(ref_list) &lt;- c(&quot;var&quot;,&quot;name&quot;)
+
+# find pattern in names(pheno) and name accordingly (as stored in ref)
+for(i in 1:nrow(ref_list)){
+    names(pheno)[grep(as.character(ref_list[i,&quot;var&quot;]), colnames(pheno))] &lt;- as.character(ref_list[i,&quot;name&quot;])
+}
+
+# only keep variables from the list to reduce object size 
+keep &lt;- append(&quot;eid&quot;,as.character(ref_list$name))
+pheno &lt;- pheno[,names(pheno) %in% keep]
+
+
+# identify participants who have been analysed with T2-Flair
+table(pheno$T2_FLAIR26500_2.0)
+dim(pheno)
+pheno[which(pheno$T2_FLAIR26500_2.0 ==0),]&lt;-NA
+# keep participants who have been analysed with T2Flair
+pheno &lt;- pheno[which(!is.na(pheno$eid)),]
+table(pheno$T2_FLAIR26500_2.0)
+dim(pheno)
+# we lose 1300 participants -&gt; 39277 remaining
+
+########################################################################################################
+## Build phenotypic variables
+########################################################################################################
+
+#################################################################################
+## age 
+#################################################################################
+# keep variables that contribute to age 
+age_pheno &lt;- pheno[,c(&quot;eid&quot;,&quot;date_neuroimaging53_2_0&quot;,&quot;birth_monthf52_0_0&quot;,&quot;age21003_2_0&quot;,&quot;datefirstvisitf53_0_0&quot;)]
+
+# work out month in which participant attended imaging
+age_pheno$attendance_month&lt;-as.numeric(substr(age_pheno$date_neuroimaging53_2_0,6,7))
+
+# birth month is stored in writing, change to numerical values
+
+age_pheno$birth_monthf52_0_0[which(age_pheno$birth_monthf52_0_0 == &quot;January&quot;)] &lt;- 1
+age_pheno$birth_monthf52_0_0[which(age_pheno$birth_monthf52_0_0 == &quot;February&quot;)] &lt;- 2
+age_pheno$birth_monthf52_0_0[which(age_pheno$birth_monthf52_0_0 == &quot;March&quot;)] &lt;- 3
+age_pheno$birth_monthf52_0_0[which(age_pheno$birth_monthf52_0_0 == &quot;April&quot;)] &lt;- 4
+age_pheno$birth_monthf52_0_0[which(age_pheno$birth_monthf52_0_0 == &quot;May&quot;)] &lt;- 5
+age_pheno$birth_monthf52_0_0[which(age_pheno$birth_monthf52_0_0 == &quot;June&quot;)] &lt;- 6
+age_pheno$birth_monthf52_0_0[which(age_pheno$birth_monthf52_0_0 == &quot;July&quot;)] &lt;- 7
+age_pheno$birth_monthf52_0_0[which(age_pheno$birth_monthf52_0_0 == &quot;August&quot;)] &lt;- 8
+age_pheno$birth_monthf52_0_0[which(age_pheno$birth_monthf52_0_0 == &quot;September&quot;)] &lt;- 9
+age_pheno$birth_monthf52_0_0[which(age_pheno$birth_monthf52_0_0 == &quot;October&quot;)] &lt;- 10
+age_pheno$birth_monthf52_0_0[which(age_pheno$birth_monthf52_0_0 == &quot;November&quot;)] &lt;- 11
+age_pheno$birth_monthf52_0_0[which(age_pheno$birth_monthf52_0_0 == &quot;December&quot;)] &lt;- 12
+
+table(age_pheno$birth_monthf52_0_0)
+age_pheno$birth_monthf52_0_0 &lt;- as.numeric(age_pheno$birth_monthf52_0_0)
+
+
+# time difference/ lag between attendance and birth month (to work out how old in months they will have been at time of assessment)
+age_pheno$add_months&lt;-(age_pheno$attendance_month)-(age_pheno$birth_monthf52_0_0)
+
+# this variable had integers between 11 and -11
+# for example: -11 could mean I attended the center in January (1) but was born in December (12) -&gt; we would want to add 1 month to age at assessment
+# -6 would mean I attended in February (2) but was born in August (8) -&gt; we would want to add 6 months to age at assessment
+# 11 would mean I attended in December (12) but was born in January (1) -&gt; we would want to add 11 months
+# To obtain the number of months to add for the negative values, we add the negative value to 12 -&gt; 12+(-6) = 6 or 12+(-11) = 1
+# which is what the next line of code is doing
+# if a value is below 0, add 12+(add_months), if not keep the value
+age_pheno$add_months&lt;-ifelse(age_pheno$add_months&lt;0,(12+age_pheno$add_months),ifelse(age_pheno$add_months==0,0,age_pheno$add_months))
+# there should only be positive (or 0) values left
+summary(age_pheno$add_months)
+
+
+# add extra months to age in months
+age_pheno$age_in_months&lt;-(age_pheno$age21003_2_0*12)+age_pheno$add_months
+summary(age_pheno$age_in_months)
+#   Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
+#  542.0   700.0   776.0   769.9   841.0   987.0
+summary((age_pheno$age_in_months/12))
+#   Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
+#  45.17   58.33   64.67   64.16   70.08   82.25
+
+# there are no missing values left in age_in_months
+sum(is.na(age_pheno$age_in_months))
+
+# only keep non-missing participants
+age_pheno &lt;- age_pheno[!is.na(age_pheno$age_in_months),]
+
+age_pheno &lt;- age_pheno[,c(&quot;eid&quot;,&quot;age_in_months&quot;)]
+
+### realised later OSCA wants IID FID value/ no col.names
+age_pheno$FID &lt;- age_pheno$eid
+age_pheno &lt;- age_pheno[,c(&quot;eid&quot;,&quot;FID&quot;,&quot;age_in_months&quot;)]
+
+print(summary(age_pheno))
+
+
+##### remove outliers outside of 4SDs
+mean&lt;-mean(age_pheno[,2], na.rm=T)
+sd&lt;-sd(age_pheno[,2], na.rm=T)
+age_pheno[,3][which(age_pheno[,3] &lt; mean - (sd*4) | age_pheno[,3] &gt; mean + (sd*4))]&lt;-NA
+
+
+fwrite(age_pheno, file=&quot;/mnt/lustre/datasets/ukbiobank/ukb40933/phenotypes/age_pheno_nofid.txt&quot;, na = &quot;NA&quot;, quote = F, sep = &quot;\t&quot;, row.names=F, col.names=F)
+
+rm(&quot;age_pheno&quot;)
+
+#################################################################################
+## sex
+#################################################################################
+
+sex_pheno &lt;- pheno[,c(&quot;eid&quot;,&quot;sex31&quot;)]
+
+table(sex_pheno$sex)
+# Female   Male
+# 20674  18603
+
+print(&quot;This is the number of non-missing entries in sex variable&quot;)
+sum(!is.na(sex_pheno$sex))
+#39277
+
+# we want binary coding: 0 Female, 1 Male
+sex_pheno$sex[which(sex_pheno$sex == &quot;Female&quot;)] &lt;- 0
+sex_pheno$sex[which(sex_pheno$sex == &quot;Male&quot;)] &lt;- 1
+
+sex_pheno &lt;- sex_pheno[,c(&quot;eid&quot;, &quot;sex&quot;)]
+
+# only keep non-missing participants
+sex_pheno &lt;- sex_pheno[!is.na(sex_pheno$sex),]
+
+print(table(sex_pheno$sex))
+
+### realised later OSCA wants IID FID value/ no col.names
+sex_pheno$FID &lt;- sex_pheno$eid
+sex_pheno &lt;- sex_pheno[,c(&quot;eid&quot;,&quot;FID&quot;, &quot;sex&quot;)]
+
+print(summary(sex_pheno))
+
+
+fwrite(sex_pheno, file=&quot;/mnt/lustre/datasets/ukbiobank/ukb40933/phenotypes/sex_pheno_nofid.txt&quot;, na = &quot;NA&quot;, quote = F, sep = &quot;\t&quot;, row.names=F, col.names=F, logical01 = T)
+
+rm(&quot;sex_pheno&quot;)
+
+#################################################################################
+## BMI
+#################################################################################
+# for BMI we use the most recent available measurement (the one closest to neuroimaging visit)
+
+bmi_pheno &lt;- pheno[,c(&quot;eid&quot;,&quot;bmi21001_0_0&quot;,&quot;bmi21001_1_0&quot;,&quot;bmi21001_2_0&quot;)]
+
+summary(bmi_pheno$bmi21001_2_0)
+#   Min. 1st Qu.  Median    Mean 3rd Qu.    Max.    NA&#39;s
+#  13.39   23.49   25.87   26.50   28.80   58.04    1315
+
+# if participant is missing from neuroimaging] visit, take from earlier visits
+bmi_pheno$bmi &lt;- ifelse(!is.na(bmi_pheno$bmi21001_2_0), bmi_pheno$bmi21001_2_0, bmi_pheno$bmi21001_1_0)
+summary(bmi_pheno$bmi)
+#   Min. 1st Qu.  Median    Mean 3rd Qu.    Max.    NA&#39;s
+ # 13.39   23.49   25.87   26.50   28.80   58.04    1252
+
+bmi_pheno$bmi &lt;- ifelse(!is.na(bmi_pheno$bmi), bmi_pheno$bmi, bmi_pheno$bmi21001_0_0)
+summary(bmi_pheno$bmi)
+#   Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
+ # 13.39   23.48   25.86   26.50   28.80   58.04
+
+# only keep the relevant columns
+bmi_pheno &lt;- bmi_pheno[,c(&quot;eid&quot;,&quot;bmi&quot;)]
+
+# only keep non-missing participants
+bmi_pheno &lt;- bmi_pheno[!is.na(bmi_pheno$bmi),]
+
+print(summary(bmi_pheno))
+
+### realised later OSCA wants IID FID value/ no col.names
+bmi_pheno$FID &lt;- bmi_pheno$eid
+bmi_pheno &lt;- bmi_pheno[,c(&quot;eid&quot;,&quot;FID&quot;, &quot;bmi&quot;)]
+
+#print(summary(bmi_pheno))
+
+##### remove outliers outside of 4SDs
+mean&lt;-mean(bmi_pheno[,3], na.rm=T)
+sd&lt;-sd(bmi_pheno[,3], na.rm=T)
+bmi_pheno[,3][which(bmi_pheno[,3] &lt; mean - (sd*4) | bmi_pheno[,3] &gt; mean + (sd*4))]&lt;-NA
+
+print(summary(bmi_pheno))
+
+# save table
+fwrite(bmi_pheno, file=&quot;/mnt/lustre/datasets/ukbiobank/ukb40933/phenotypes/bmi_pheno_nofid.txt&quot;, na = &quot;NA&quot;, quote = F, sep = &quot;\t&quot;, row.names=F, col.names=F)
+
+rm(&quot;bmi_pheno&quot;)
+
+#################################################################################
+## Education
+#################################################################################
+
+edu_pheno &lt;- pheno[,c(&quot;eid&quot;,&quot;edu6138_0_0&quot;,&quot;edu6138_0_1&quot;,&quot;edu6138_0_2&quot;,&quot;edu6138_0_3&quot;,&quot;edu6138_0_4&quot;,&quot;edu6138_0_5&quot;,&quot;edu6138_1_0&quot;,&quot;edu6138_1_1&quot;,&quot;edu6138_1_2&quot;,&quot;edu6138_1_3&quot;,&quot;edu6138_1_4&quot;,&quot;edu6138_1_5&quot;,&quot;edu6138_2_0&quot;,&quot;edu6138_2_1&quot;,&quot;edu6138_2_2&quot;,&quot;edu6138_2_3&quot;,&quot;edu6138_2_4&quot;,&quot;edu6138_2_5&quot;)]
+
+
+table(edu_pheno$edu6138_2_0)
+
+ #                      A levels/AS levels or equivalent
+ #                                                  4748
+ #                          College or University degree
+ #                                                 18985
+ #                                    CSEs or equivalent
+ #                                                  1467
+ #                                     None of the above
+ #                                                  2427
+ #                       NVQ or HND or HNC or equivalent
+ #                                                  2339
+ #                          O levels/GCSEs or equivalent
+ #                                                  6950
+#Other professional qualifications eg: nursing, teaching
+ #                                                  1972
+ #                                  Prefer not to answer
+ #                                                   131
+
+# here we use coding where an increasing category stands for higher education (easier to interpret)
+for(j in 0:2){
+    for(i in 0:5){
+        row &lt;- paste0(&quot;edu6138_&quot;,j,&quot;_&quot;,i)
+        print(row)
+        
+        edu_pheno[,row] &lt;- str_replace_na(edu_pheno[,row], replacement = &quot;-999&quot;)
+        
+        edu_pheno[,row] &lt;- gsub(&quot;College or University degree&quot;, &quot;6&quot;, edu_pheno[,row])
+        edu_pheno[,row] &lt;- gsub(&quot;A levels/AS levels or equivalent&quot;, &quot;5&quot;, edu_pheno[,row])
+        edu_pheno[,row] &lt;- gsub(&quot;O levels/GCSEs or equivalent&quot;, &quot;4&quot;, edu_pheno[,row])
+        edu_pheno[,row] &lt;- gsub(&quot;CSEs or equivalent&quot;, &quot;3&quot;, edu_pheno[,row])
+        edu_pheno[,row] &lt;- gsub(&quot;NVQ or HND or HNC or equivalent&quot;, &quot;2&quot;, edu_pheno[,row])
+        edu_pheno[,row] &lt;- gsub(&quot;Other professional qualifications eg: nursing, teaching&quot;, &quot;1&quot;, edu_pheno[,row])
+        edu_pheno[,row] &lt;- gsub(&quot;None of the above&quot;, &quot;0&quot;, edu_pheno[,row])
+        edu_pheno[,row] &lt;- gsub(&quot;Prefer not to answer&quot;, &quot;-999&quot;, edu_pheno[,row])
+        
+        #print(head(edu_pheno))
+        
+        # store as numeric vector
+        before &lt;- sum(is.na(edu_pheno[,row]),na.rm=T)
+        edu_pheno[,row] &lt;- as.numeric(edu_pheno[,row])
+        after &lt;- sum(is.na(edu_pheno[,row]),na.rm=T)
+        if(before != after){print(&quot;Lost entries in as.numeric argument&quot;); break}
+        
+        #print(table(edu_pheno[,row]))
+    }
+}
+
+
+
+# now we&#39;re looking for the row-wise maximum to determine a participants highest indicated educational status
+# found this: https://www.datasciencemadesimple.com/row-wise-maximum-row-maximum-in-dataframe-r-2/
+# with this function I can figure out which the highest number is across a participant as indicated at second time point
+library(matrixStats)
+edu_pheno$max_edu_2 = rowMaxs(as.matrix(edu_pheno[,c(&quot;edu6138_2_0&quot;,&quot;edu6138_2_1&quot;,&quot;edu6138_2_2&quot;,&quot;edu6138_2_3&quot;,&quot;edu6138_2_4&quot;,&quot;edu6138_2_5&quot;)]),na.rm=T)
+
+## with the rowMaxs function, we still get some participants with -999 who either prefered not to answer, or had missing values at the neuroimaging visit (389 participants)
+# this is why we obtain rowMaxs for all other visits as well
+edu_pheno$max_edu_1 = rowMaxs(as.matrix(edu_pheno[,c(&quot;edu6138_1_0&quot;,&quot;edu6138_1_1&quot;,&quot;edu6138_1_2&quot;,&quot;edu6138_1_3&quot;,&quot;edu6138_1_4&quot;,&quot;edu6138_1_5&quot;)]),na.rm=T)
+edu_pheno$max_edu_0 = rowMaxs(as.matrix(edu_pheno[,c(&quot;edu6138_0_0&quot;,&quot;edu6138_0_1&quot;,&quot;edu6138_0_2&quot;,&quot;edu6138_0_3&quot;,&quot;edu6138_0_4&quot;,&quot;edu6138_0_5&quot;)]),na.rm=T)
+
+## we will delete participants who didn&#39;t answer in any of these three instances (20 participants)
+edu_pheno[which(edu_pheno$max_edu_2 == -999 &amp; edu_pheno$max_edu_1 == -999 &amp; edu_pheno$max_edu_0 == -999),] &lt;- NA
+edu_pheno &lt;- edu_pheno[!is.na(edu_pheno$eid),]
+
+# we will prioritise later time points, closer to actual neuroimaging visit, they may have gotten a qualitification since their first assessment
+edu_pheno$edu &lt;- edu_pheno$max_edu_2
+edu_pheno$edu[which(edu_pheno$edu == &quot;-999&quot;)] &lt;- edu_pheno$max_edu_1[which(edu_pheno$edu == &quot;-999&quot;)] # through this step we gain 44 participants
+edu_pheno$edu[which(edu_pheno$edu == &quot;-999&quot;)] &lt;- edu_pheno$max_edu_0[which(edu_pheno$edu == &quot;-999&quot;)] # we gain 325 participants
+# none missing by the end of this
+
+table(edu_pheno$edu)
+#     0     1     3     4     5     6     7
+# 2513  1993  2370  1485  7011  4789 19096
+
+edu_pheno &lt;- edu_pheno[,c(&quot;eid&quot;,&quot;edu&quot;)]
+
+# only keep non-missing participants
+edu_pheno &lt;- edu_pheno[!is.na(edu_pheno$edu),]
+
+print(summary(edu_pheno))
+
+### realised later OSCA wants IID FID value/ no col.names
+edu_pheno$FID &lt;- edu_pheno$eid
+edu_pheno &lt;- edu_pheno[,c(&quot;eid&quot;,&quot;FID&quot;, &quot;edu&quot;)]
+
+
+##### remove outliers outside of 4SDs
+mean&lt;-mean(edu_pheno[,3], na.rm=T)
+sd&lt;-sd(edu_pheno[,3], na.rm=T)
+edu_pheno[,3][which(edu_pheno[,3] &lt; mean - (sd*4) | edu_pheno[,3] &gt; mean + (sd*4))]&lt;-NA
+
+
+print(summary(edu_pheno))
+
+
+
+fwrite(edu_pheno, file=&quot;/mnt/lustre/datasets/ukbiobank/ukb40933/phenotypes/edu_pheno_nofid.txt&quot;, na = &quot;NA&quot;, quote = F, sep = &quot;\t&quot;, row.names=F, col.names=F)
+
+rm(&quot;edu_pheno&quot;)
+
+#################################################################################
+## Cigarettes (waiting for variables 1249 and 1239 to determine)
+#################################################################################
+# first UKB asked currentsmokerf1239, if yes, get asked pastsmokerf1249
+# then they asked how many cigarettes_dailyf2887
+
+cig_pheno &lt;- pheno[,c(&quot;eid&quot;,&quot;cigarettes_dailyf2887_2_0&quot;,&quot;cigarettes_dailyf2887_1_0&quot;,&quot;cigarettes_dailyf2887_0_0&quot;,&quot;currentsmokerf1239_2_0&quot;,&quot;currentsmokerf1239_1_0&quot;,&quot;currentsmokerf1239_0_0&quot;,&quot;pastsmokerf1249_0_0&quot;,&quot;pastsmokerf1249_1_0&quot;,&quot;pastsmokerf1249_2_0&quot;)]
+
+## set all &quot;Prefer not to answer&quot; entries to missing
+
+for(i in 0:2){
+    var_name &lt;- paste0(&quot;currentsmokerf1239_&quot;,i,&quot;_0&quot;)
+    cig_pheno[which(cig_pheno[,var_name] ==&quot;Prefer not to answer&quot;),var_name] &lt;- NA
+    
+    var_name &lt;- paste0(&quot;pastsmokerf1249_&quot;,i,&quot;_0&quot;)
+    cig_pheno[which(cig_pheno[,var_name] ==&quot;Prefer not to answer&quot;),var_name] &lt;- NA
+}
+
+# delete participants who didn&#39;t answer anywhere 
+
+cig_pheno[which(is.na(cig_pheno$currentsmokerf1239_2_0) &amp; 
+                is.na(cig_pheno$currentsmokerf1239_1_0) &amp; 
+                is.na(cig_pheno$currentsmokerf1239_0_0) &amp; 
+                is.na(cig_pheno$pastsmokerf1249_0_0) &amp; 
+                is.na(cig_pheno$pastsmokerf1249_1_0) &amp; 
+                is.na(cig_pheno$pastsmokerf1249_2_0)),] &lt;- NA
+
+# make new variable
+cig_pheno$smoking &lt;- NA 
+
+## find participants who have been occasional smoked (many people have indicated that and some will later fall into other categories)
+cig_pheno$smoking[which(cig_pheno$pastsmokerf1249_0_0 == &quot;Smoked occasionally&quot; | cig_pheno$pastsmokerf1249_0_0 == &quot;I have never smoked&quot; | cig_pheno$pastsmokerf1249_0_0 == &quot;Just tried once or twice&quot; &amp; 
+                        cig_pheno$pastsmokerf1249_1_0 == &quot;Smoked occasionally&quot; | cig_pheno$pastsmokerf1249_1_0 == &quot;I have never smoked&quot; | cig_pheno$pastsmokerf1249_1_0 == &quot;Just tried once or twice&quot; &amp; 
+                        cig_pheno$pastsmokerf1249_2_0 == &quot;Smoked occasionally&quot; | cig_pheno$pastsmokerf1249_2_0 == &quot;I have never smoked&quot; | cig_pheno$pastsmokerf1249_2_0 == &quot;Just tried once or twice&quot; &amp; 
+                        cig_pheno$currentsmokerf1239_2_0 == &quot;Only occasionally&quot; | cig_pheno$currentsmokerf1239_2_0 == &quot;No&quot; &amp;
+                        cig_pheno$currentsmokerf1239_1_0 == &quot;Only occasionally&quot; | cig_pheno$currentsmokerf1239_1_0 == &quot;No&quot; &amp; 
+                        cig_pheno$currentsmokerf1239_0_0 == &quot;Only occasionally&quot; | cig_pheno$currentsmokerf1239_0_0 == &quot;No&quot; )] &lt;- &quot;Occasionally&quot;
+                        
+
+                        
+
+                
+
+# find participants who indicate at all time points that they are not current smokers AND who indicated at all time points that they have not smoked in the past
+cig_pheno$smoking[which(cig_pheno$currentsmokerf1239_2_0 == &quot;No&quot; &amp; cig_pheno$currentsmokerf1239_1_0 == &quot;No&quot; &amp; cig_pheno$currentsmokerf1239_0_0 == &quot;No&quot; &amp; cig_pheno$pastsmokerf1249_0_0 == &quot;I have never smoked&quot; &amp; cig_pheno$pastsmokerf1249_1_0 == &quot;I have never smoked&quot; &amp; cig_pheno$pastsmokerf1249_2_0 == &quot;I have never smoked&quot;)] &lt;- &quot;Never_smoked&quot;
+
+
+## find participants who only tried once or twice (pastsmoker) but then indicated at all time points that they are no current smokers
+cig_pheno$smoking[which(cig_pheno$pastsmokerf1249_0_0 == &quot;Just tried once or twice&quot; | 
+                        cig_pheno$pastsmokerf1249_1_0 == &quot;Just tried once or twice&quot; | 
+                        cig_pheno$pastsmokerf1249_2_0 == &quot;Just tried once or twice&quot; &amp; 
+                        cig_pheno$currentsmokerf1239_2_0 == &quot;No&quot; &amp; 
+                        cig_pheno$currentsmokerf1239_1_0 == &quot;No&quot; &amp; 
+                        cig_pheno$currentsmokerf1239_0_0 == &quot;No&quot;)]&lt;- &quot;Tried&quot;
+                        
+                        
+# most people have indicated at some point that they occasionally smoked
+# now we try to find the people who said at least once that they smoke more regularly
+cig_pheno$smoking[which(cig_pheno$pastsmokerf1249_0_0 == &quot;Smoked on most or all days&quot; | 
+                        cig_pheno$pastsmokerf1249_1_0 == &quot;Smoked on most or all days&quot; | 
+                        cig_pheno$pastsmokerf1249_2_0 == &quot;Smoked on most or all days&quot; | 
+                        cig_pheno$currentsmokerf1239_2_0 == &quot;Yes, on most or all days&quot; | 
+                        cig_pheno$currentsmokerf1239_1_0 == &quot;Yes, on most or all days&quot; | 
+                        cig_pheno$currentsmokerf1239_0_0 == &quot;Yes, on most or all days&quot;)]&lt;- &quot;Ever_Regularly&quot;                     
+
+# we have 5 participants left who have mostly missing data, but indicate at one time point that they either smoked occasionally or tried once or twice
+# this is not an ideal way of doing it because it relies on manually checking the data but it&#39;s quicker 
+
+cig_pheno$smoking[which(is.na(cig_pheno$smoking) &amp; cig_pheno$currentsmokerf1239_2_0 == &quot;Only occasionally&quot;)] &lt;- &quot;Occasionally&quot;
+
+cig_pheno$smoking[which(is.na(cig_pheno$smoking) &amp; cig_pheno$pastsmokerf1249_2_0 == &quot;Just tried once or twice&quot;)] &lt;- &quot;Tried&quot;
+
+table(cig_pheno$smoking)
+#Ever_Regularly   Never_smoked   Occasionally          Tried
+#         11162           2470          18198           7446
+
+# use cigarettes_dailyf2887_2_0 variable to find out if we can refine the smokers groups more 
+## -10 is less than 1 a day -&gt; 1
+## -1 is do not know -&gt; NA
+
+for(i in 0:2){
+    var_name &lt;- paste0(&quot;cigarettes_dailyf2887_&quot;,i,&quot;_0&quot;)
+    cig_pheno[which(cig_pheno[,var_name] == -10),var_name] &lt;- 1
+    cig_pheno[which(cig_pheno[,var_name] == -1),var_name] &lt;- NA
+}
+
+
+
+# get an average of smoked cigarettes across three time points
+cig_pheno$cigarettes_daily &lt;- rowMeans(cig_pheno[,c(&quot;cigarettes_dailyf2887_2_0&quot;,&quot;cigarettes_dailyf2887_1_0&quot;,&quot;cigarettes_dailyf2887_0_0&quot;)],na.rm=T)
+
+# check that non-smokers and &quot;Tried&quot; have not answered this question
+if(nrow(cig_pheno[which(cig_pheno$smoking == &quot;Tried&quot; &amp; !is.na(cig_pheno$cigarettes_daily)),]) !=0){print(&quot;We have someone who&#39;s only tried a cigarette once or twice who indicates amounts of cigarettes smoked&quot;); break}
+
+if(nrow(cig_pheno[which(cig_pheno$smoking == &quot;Never_smoked&quot; &amp; !is.na(cig_pheno$cigarettes_daily)),]) !=0){print(&quot;We have someone who&#39;s never smoked who indicates amounts of cigarettes smoked&quot;); break}
+
+# check that the ones who didn&#39;t answer the daily cigarettes question are only occasional smokers 
+nrow(cig_pheno[which(cig_pheno$smoking == &quot;Occasionally&quot; &amp; !is.na(cig_pheno$cigarettes_daily)),]) # none either 
+
+# split regular smokers into quantiles based on their daily cigarettes indication
+cig_pheno$smoking[which(cig_pheno$cigarettes_daily &lt;= quantile(cig_pheno$cigarettes_daily,0.25, na.rm=T))] &lt;- &quot;Regular_bottomquantile&quot;
+cig_pheno$smoking[which(cig_pheno$cigarettes_daily &gt; quantile(cig_pheno$cigarettes_daily,0.25, na.rm=T) &amp; cig_pheno$cigarettes_daily &lt;= quantile(cig_pheno$cigarettes_daily,0.5, na.rm=T))] &lt;- &quot;Regular_2ndquantile&quot;
+cig_pheno$smoking[which(cig_pheno$cigarettes_daily &gt; quantile(cig_pheno$cigarettes_daily,0.5, na.rm=T) &amp; cig_pheno$cigarettes_daily &lt;= quantile(cig_pheno$cigarettes_daily,0.75, na.rm=T))] &lt;- &quot;Regular_3rdquantile&quot;
+cig_pheno$smoking[which(cig_pheno$cigarettes_daily &gt; quantile(cig_pheno$cigarettes_daily,0.75, na.rm=T) &amp; cig_pheno$cigarettes_daily &lt;= quantile(cig_pheno$cigarettes_daily,1, na.rm=T))] &lt;- &quot;Regular_4thquantile&quot;
+
+# If I define it this way I will have to get rid of the regular smokers who didn&#39;t indicate how many cigarettes they use :(
+cig_pheno$smoking &lt;- ifelse(cig_pheno$smoking == &quot;Ever_Regularly&quot; &amp; is.na(cig_pheno$cigarettes_daily), NA, cig_pheno$smoking)
+
+
+## use numeric values instead of categories
+cig_pheno$smoking[which(cig_pheno$smoking == &quot;Never_smoked&quot;)] &lt;- 0
+cig_pheno$smoking[which(cig_pheno$smoking == &quot;Tried&quot;)] &lt;- 1
+cig_pheno$smoking[which(cig_pheno$smoking == &quot;Occasionally&quot;)] &lt;- 2
+cig_pheno$smoking[which(cig_pheno$smoking == &quot;Regular_bottomquantile&quot;)] &lt;- 3
+cig_pheno$smoking[which(cig_pheno$smoking == &quot;Regular_2ndquantile&quot;)] &lt;- 4
+cig_pheno$smoking[which(cig_pheno$smoking == &quot;Regular_3rdquantile&quot;)] &lt;- 5
+cig_pheno$smoking[which(cig_pheno$smoking == &quot;Regular_4thquantile&quot;)] &lt;- 6
+
+
+cig_pheno$smoking &lt;- as.numeric(cig_pheno$smoking)
+
+summary(cig_pheno$smoking)
+
+
+cig_pheno &lt;- cig_pheno[,c(&quot;eid&quot;, &quot;smoking&quot;)]
+# only keep non-missing participants
+cig_pheno &lt;- cig_pheno[!is.na(cig_pheno$smoking),]
+
+
+### realised later OSCA wants IID FID value/ no col.names
+cig_pheno$FID &lt;- cig_pheno$eid
+cig_pheno &lt;- cig_pheno[,c(&quot;eid&quot;,&quot;FID&quot;, &quot;smoking&quot;)]
+
+print(summary(cig_pheno))
+
+##### remove outliers outside of 4SDs
+mean&lt;-mean(cig_pheno[,3], na.rm=T)
+sd&lt;-sd(cig_pheno[,3], na.rm=T)
+cig_pheno[,3][which(cig_pheno[,3] &lt; mean - (sd*4) | cig_pheno[,3] &gt; mean + (sd*4))]&lt;-NA
+
+
+
+print(summary(cig_pheno))
+
+fwrite(cig_pheno, file=&quot;/mnt/lustre/datasets/ukbiobank/ukb40933/phenotypes/cig_pheno_nofid.txt&quot;, na = &quot;NA&quot;, quote = F, sep = &quot;\t&quot;, row.names=F, col.names=F)
+
+rm(&quot;cig_pheno&quot;)
+
+#################################################################################
+## Alcohol
+#################################################################################
+
+alc_pheno &lt;- pheno[,c(&quot;eid&quot;,&quot;frequency_alcohol20414_0.0&quot;,&quot;former_drinkers20406_0.0&quot;)]
+
+#-818   Prefer not to answer
+#0  Never
+#1  Monthly or less
+#2  2 to 4 times a month
+#3  2 to 3 times a week
+#4  4 or more times a week
+
+# we have many missing values here: 12049
+sum(is.na(alc_pheno$frequency_alcohol20414_0.0))
+
+# we have 21 cases that prefered not to say, we can&#39;t recover them 
+sum(alc_pheno$frequency_alcohol20414_0.0 == -818, na.rm=T)
+
+# the following command seems to remove both missing and the 21 (-818) cases
+alc_pheno &lt;- alc_pheno[which(alc_pheno$frequency_alcohol20414_0.0 != -818),]
+sum(is.na(alc_pheno$frequency_alcohol20414_0.0))
+sum(alc_pheno$frequency_alcohol20414_0.0 == -818)
+
+## find out how many ex-drinker there are and remove them too
+table(alc_pheno$former_drinkers20406_0.0)
+
+#-818   Prefer not to answer (remove)
+#-121   Do not know (remove)
+#0  No (keep)
+#1  Yes (remove)
+
+# https://www.tandfonline.com/doi/full/10.1080/16066350500497983
+# Former drinkers had an elevated mortality risk compared with both ‘abstainers’ and light drinkers in the pooled model
+# Is it reasonable to assume that drinkers are at a category above heavy drinkers?
+# I think it&#39;s safer to remove them, there are only 543 former drinkers (and they were only asked this question if they previously indicated that they have ever been addicted to any substance or behavior)
+# also remove the ones who don&#39;t know: 114 participants
+
+# add category to former_drinkers20406_0.0 that indicates that NA stands for not ever having been addicted
+# give those value 2
+alc_pheno$former_drinkers20406_0.0[which(is.na(alc_pheno$former_drinkers20406_0.0))] &lt;- 2
+
+# remove the ones who prefered not to answer (6 participants)
+alc_pheno &lt;- alc_pheno[which(alc_pheno$former_drinkers20406_0.0 != -818),]
+
+# remove the ones who didn&#39;t know (114 participnats)
+alc_pheno &lt;- alc_pheno[which(alc_pheno$former_drinkers20406_0.0 != -121),]
+
+# remove the ones who admit to having been former drinkers (543 participnats)
+alc_pheno &lt;- alc_pheno[which(alc_pheno$former_drinkers20406_0.0 != 1),]
+
+# now we have 860 who answered that they were never addicted to alcohol
+# and 377754 who haven&#39;t been asked this question because they never were addicted to alcohol
+
+table(alc_pheno$frequency_alcohol20414_0.0)
+#    0    1    2    3    4
+#   1770 3282 5072 8467 7953
+# it&#39;s massively skewed
+
+
+alc_pheno &lt;- alc_pheno[,c(&quot;eid&quot;,&quot;frequency_alcohol20414_0.0&quot;)]
+names(alc_pheno) &lt;- c(&quot;IID&quot;, &quot;alc_freq&quot;)
+
+# only keep non-missing participants
+alc_pheno &lt;- alc_pheno[!is.na(alc_pheno$alc_freq),]
+
+print(summary(alc_pheno))
+
+### realised later OSCA wants IID FID value/ no col.names
+alc_pheno$FID &lt;- alc_pheno$IID
+alc_pheno &lt;- alc_pheno[,c(&quot;IID&quot;,&quot;FID&quot;, &quot;alc_freq&quot;)]
+
+
+##### remove outliers outside of 4SDs
+mean&lt;-mean(alc_pheno[,3], na.rm=T)
+sd&lt;-sd(alc_pheno[,3], na.rm=T)
+alc_pheno[,3][which(alc_pheno[,3] &lt; mean - (sd*4) | alc_pheno[,3] &gt; mean + (sd*4))]&lt;-NA
+
+
+
+fwrite(alc_pheno, file=&quot;/mnt/lustre/datasets/ukbiobank/ukb40933/phenotypes/alc_pheno_nofid.txt&quot;, na = &quot;NA&quot;, quote = F, sep = &quot;\t&quot;, row.names=F, col.names=F)
+
+rm(&quot;alc_pheno&quot;)
+
+
+#################
+## Covariates 
+#################
+#center_f54_2_0 
+#x_position_scannerf25756_2_0
+#y_position_scannerf25757_2_0
+#z_position_scannerf25758_2_0
+
+cov_pheno &lt;- pheno[,c(&quot;eid&quot;,&quot;center_f54_2_0&quot;,&quot;x_position_scannerf25756_2_0&quot;,&quot;y_position_scannerf25757_2_0&quot;,&quot;z_position_scannerf25758_2_0&quot;)]
+
+cov_pheno$FID &lt;- cov_pheno$eid
+
+
+names(cov_pheno)&lt;-c(&quot;eid&quot;,&quot;center&quot;,&quot;x_position_scanner&quot;,&quot;y_position_scanner&quot;,&quot;z_position_scanner&quot;,&quot;IID&quot;)
+
+### realised later OSCA wants IID FID value/ no col.names
+#cov_pheno$FID &lt;- cov_pheno$IID
+qcov_pheno &lt;- cov_pheno[,c(&quot;eid&quot;,&quot;IID&quot;,&quot;x_position_scanner&quot;,&quot;y_position_scanner&quot;,&quot;z_position_scanner&quot;)]
+
+
+
+summary(qcov_pheno)
+fwrite(qcov_pheno, file=&quot;/mnt/lustre/datasets/ukbiobank/ukb40933/phenotypes/qcovariates_nofid.txt&quot;, na = &quot;NA&quot;, quote = F, sep = &quot;\t&quot;, row.names=F, col.names=F)
+
+bcov_pheno &lt;- cov_pheno[,c(&quot;eid&quot;,&quot;IID&quot;,&quot;center&quot;)]
+
+bcov_pheno$center[bcov_pheno$center==11025]&lt;-&quot;center1&quot;
+bcov_pheno$center[bcov_pheno$center==11026]&lt;-&quot;center2&quot;
+bcov_pheno$center[bcov_pheno$center==11027]&lt;-&quot;center3&quot;
+
+
+summary(bcov_pheno)
+fwrite(bcov_pheno, file=&quot;/mnt/lustre/datasets/ukbiobank/ukb40933/phenotypes/bcovariates_nofid.txt&quot;, na = &quot;NA&quot;, quote = F, sep = &quot;\t&quot;, row.names=F, col.names=F)
+
+#################################################################################
+## Cog
+#################################################################################
+# Strategy to derive cog variables
+# 1. Standardise vars 
+# 2. Get composite mean values across multiple time points and variables
+# 3. factor analyse them and extract factor scores 
+
+
+# names(pheno)[grep(pattern = &quot;23324&quot;, x=names(pheno))]
+
+## as we want to get closest to the time point where brain was measured, we will go with all variables that have been assessed during neuroimaging visit
+## They are: verbal_numerical_reasoning_f20016_2_0 TrailMakingB_6350_2_0 Matrix_f6373_2_0  Tower21004_2_0 Symbol_Digit23324_2_0 RT_20023_2_0 Pairs_Matchingf399_2_1/2/3
+## If anything is missing, replace with:
+# 1 # verbal_numerical_reasoning_f20016_2_0 with verbal_numerical_reasoning_f20016_1_0, if also missing then verbal_numerical_reasoning_f20016_0_0, then verbal_numerical_reasoning_f20191_0_0
+# 2 # TrailMakingB_6350_2_0, if missing then TrailMakingB_20157_0_0 -&gt; totally different scale but there is no earlier occasion!!
+# 3 # Matrix_f6373_2_0 and also Matrix_f6373_3_0
+# 4 # Symbol_Digit23324_2_0 and Symbol_Digit23324_3_0 and Symbol_Digit20159_0_0
+# 5 # Pairs Matching 3 occurences at each assessment Pairs_Matchingf399_2_? Pairs_Matchingf399_1_? Pairs_Matchingf399_0_?
+# 6 # RT_20023_2_0 RT_20023_1_0 RT_20023_0_0
+# 7 # Tower21004_2_0 Tower21004_3_0
+
+# name cog vars of interest
+VNR_vars &lt;- c(&quot;verbal_numerical_reasoning_f20016_2_0&quot;,&quot;verbal_numerical_reasoning_f20016_1_0&quot;,&quot;verbal_numerical_reasoning_f20016_0_0&quot;, &quot;verbal_numerical_reasoning_f20191_0_0&quot;)
+
+Matrix_vars &lt;-c(&quot;Matrix_f6373_2_0&quot;,&quot;Matrix_f6373_3_0&quot;)
+
+SymbolDigit_vars &lt;- c(&quot;Symbol_Digit23324_2_0&quot;,&quot;Symbol_Digit23324_3_0&quot;,&quot;Symbol_Digit20159_0_0&quot;)
+
+PairMatching_vars &lt;- c(&quot;Pairs_Matchingf399_2_1&quot;,&quot;Pairs_Matchingf399_2_2&quot;,&quot;Pairs_Matchingf399_2_3&quot;,&quot;Pairs_Matchingf399_1_1&quot;,&quot;Pairs_Matchingf399_1_2&quot;,&quot;Pairs_Matchingf399_1_3&quot;,&quot;Pairs_Matchingf399_0_1&quot;,&quot;Pairs_Matchingf399_0_2&quot;,&quot;Pairs_Matchingf399_0_3&quot;)
+
+RT_vars &lt;-c(&quot;RT_20023_2_0&quot;,&quot;RT_20023_1_0&quot;,&quot;RT_20023_0_0&quot;)
+
+Tower_vars &lt;-c(&quot;Tower21004_2_0&quot;,&quot;Tower21004_3_0&quot;)
+
+TrailMaking_vars &lt;- c(&quot;TrailMakingB_6350_2_0&quot;,&quot;TrailMakingB_20157_0_0&quot;)
+# item 6350: entry of zero means not completed 
+pheno$TrailMakingB_6350_2_0 &lt;- ifelse(pheno$TrailMakingB_6350_2_0 &lt;= 0.0, NA, pheno$TrailMakingB_6350_2_0)
+
+all_vars &lt;- c(VNR_vars,Matrix_vars,SymbolDigit_vars,PairMatching_vars,RT_vars,Tower_vars,TrailMaking_vars)
+
+#######
+# In some tests a higher value means better cognitive ability (more puzzles solved)
+# But in others a lower value means better cognitive ability (longer time spent to solve task)
+# We will scale the variables so that higher scores always mean better cognitive ability
+
+## Pairs Matching: Number of incorrect matches -&gt; the fewer the better
+reverse=function(a){
+    a * (-1)
+}
+
+pheno[,c(PairMatching_vars,TrailMaking_vars,RT_vars)] &lt;- apply(pheno[,c(PairMatching_vars,TrailMaking_vars,RT_vars)],2,FUN=reverse)
+
+
+# Standardise variables
+normFunc &lt;- function(x){(x-mean(x, na.rm = T))/sd(x, na.rm = T)}
+
+pheno[,all_vars] &lt;- apply(pheno[,all_vars],2,normFunc)
+summary(pheno[,all_vars])
+
+
+##############################
+## 1 Verbal-numerical reasoning
+##############################
+
+pheno$mean_VNR &lt;- rowMeans(pheno[,VNR_vars],na.rm=T)
+
+summary(pheno$mean_VNR)
+
+#   Min. 1st Qu.  Median    Mean 3rd Qu.    Max.    NA&#39;s
+#-3.2657 -0.7896  0.1822 -0.0202  0.6681  3.1312    1065
+
+##############################
+## 2 Matrix 
+##############################
+
+pheno$mean_Matrix &lt;- rowMeans(pheno[,Matrix_vars],na.rm=T)
+summary(pheno$mean_Matrix)
+#   Min. 1st Qu.  Median    Mean 3rd Qu.    Max.    NA&#39;s
+# -3.929  -0.462   0.008  -0.009   0.478   3.296   12723
+
+
+##############################
+## 3 Symbol Digit
+##############################
+
+pheno$mean_SymbolDigit &lt;- rowMeans(pheno[,SymbolDigit_vars],na.rm=T)
+summary(pheno$mean_SymbolDigit)
+#   Min. 1st Qu.  Median    Mean 3rd Qu.    Max.    NA&#39;s
+# -4.077  -0.658   0.010  -0.034   0.644   6.798    5898
+
+##############################
+## 4 Pairs Matching
+##############################
+pheno$mean_PairMatching &lt;- rowMeans(pheno[,PairMatching_vars],na.rm=T)
+summary(pheno$mean_PairMatching)
+
+#    Min.  1st Qu.   Median     Mean  3rd Qu.     Max.     NA&#39;s
+#-0.83428 -0.32487 -0.11068  0.01629  0.21788  9.07155       33
+
+
+##############################
+## 5 Reaction Time 
+##############################
+#RT_vars
+
+pheno$mean_RT &lt;- rowMeans(pheno[,RT_vars],na.rm=T)
+summary(pheno$mean_RT)
+
+
+##############################
+## 6 Tower 
+##############################
+# Tower_vars
+
+pheno$mean_Tower &lt;- rowMeans(pheno[,Tower_vars],na.rm=T)
+
+summary(pheno$mean_Tower)
+#  Min. 1st Qu.  Median    Mean 3rd Qu.    Max.    NA&#39;s
+# -3.190  -0.590   0.028  -0.009   0.646   2.500   12920
+
+
+##############################
+## 7 TrailMaking
+##############################
+# TrailMaking_vars
+## 0 represents &quot;Trail not completed
+
+
+pheno$mean_TrailMaking &lt;- rowMeans(pheno[,TrailMaking_vars],na.rm=T)
+summary(pheno$mean_TrailMaking)
+#   Min. 1st Qu.  Median    Mean 3rd Qu.    Max.    NA&#39;s
+# -1.702  -0.589  -0.183   0.034   0.385  20.288    7437
+
+
+##################################################
+## Create Factor Scores
+##################################################
+library(lavaan)
+
+gpheno &lt;- pheno[,c(&quot;eid&quot;,&quot;mean_VNR&quot;, &quot;mean_Matrix&quot;, &quot;mean_SymbolDigit&quot;, &quot;mean_PairMatching&quot;, &quot;mean_RT&quot;, &quot;mean_Tower&quot;, &quot;mean_TrailMaking&quot;)]
+
+
+#### remove all participants who have missing values in all cog vars 
+if(sum(rowSums(is.na(gpheno)) == 7) == 0){print(&quot;Each participant has at least one cognitive measurement - woop&quot;)}
+
+# remove outliers for each cognitive variable
+colSums(!is.na(gpheno))
+
+for(i in c(&quot;mean_VNR&quot;, &quot;mean_Matrix&quot;, &quot;mean_SymbolDigit&quot;, &quot;mean_PairMatching&quot;, &quot;mean_RT&quot;, &quot;mean_Tower&quot;, &quot;mean_TrailMaking&quot;)){
+    # calculate volume specific mean 
+        mean_var&lt;-mean(gpheno[,i],na.rm = T)
+    # calculate volume specific sd
+        sd_var &lt;- sd(gpheno[,i], na.rm=T)
+    # remove values that are beyond 4 SDs
+        gpheno[,i][which(gpheno[,i] &lt; mean_var - (sd_var*4) | gpheno[,i] &gt; mean_var + (sd_var*4))]&lt;-NA
+}
+colSums(!is.na(gpheno))
+
+
+
+# build SEM model
+gmodel &lt;- &quot;Cog =~ mean_VNR + mean_Matrix + mean_SymbolDigit + mean_PairMatching + mean_RT + mean_Tower + mean_TrailMaking&quot; 
+
+
+
+# fit SEM model 
+fit&lt;-cfa(gmodel, data = gpheno,missing = &quot;ML&quot;)
+save(fit, file = &quot;/mnt/lustre/datasets/ukbiobank/ukb40933/phenotypes/model_fit.RData&quot;)
+print(summary(fit))
+
+# predict individual-level factor scores 
+test_gpheno &lt;- as.data.frame(lavPredict(fit, newdata = gpheno, type = &quot;lv&quot;, append.data = T))
+
+# merge with gpheno to get correct eid&#39;s
+
+gpheno &lt;- merge(test_gpheno, gpheno, by=c(&quot;mean_VNR&quot;, &quot;mean_Matrix&quot;, &quot;mean_SymbolDigit&quot;, &quot;mean_PairMatching&quot;, &quot;mean_RT&quot;, &quot;mean_Tower&quot;, &quot;mean_TrailMaking&quot;))
+
+gpheno &lt;- gpheno[,c(&quot;eid&quot;, &quot;Cog&quot;)]
+
+# only keep non-missing participants
+gpheno &lt;- gpheno[!is.na(gpheno$Cog),]
+
+### realised later OSCA wants IID FID value/ no col.names
+gpheno$FID &lt;- gpheno$eid
+
+gpheno &lt;- gpheno[,c(&quot;eid&quot;,&quot;FID&quot;,&quot;Cog&quot;)]
+
+##### remove outliers outside of 4SDs
+mean&lt;-mean(gpheno$Cog, na.rm=T)
+sd&lt;-sd(gpheno$Cog, na.rm=T)
+gpheno$Cog[which(gpheno$Cog &lt; mean - (sd*4) | gpheno$Cog &gt; mean + (sd*4))]&lt;-NA
+
+print(summary(gpheno))
+
+fwrite(gpheno, file=&quot;/mnt/lustre/datasets/ukbiobank/ukb40933/phenotypes/gpheno_nofid.txt&quot;, na = &quot;NA&quot;, quote = F, sep = &quot;\t&quot;, row.names=F, col.names=F)</code></pre>
+<div id="general-cognitive-ability" class="section level2">
+<h2>General cognitive ability</h2>
+<p>Above, we run a structural equation model (SEM) to get a common factor of general cognitive ability from seven cognitive traits measured in UKB. Below, we display fit statistics for this factor.</p>
+<p>Code used for plotting was adapted based on this <a href="https://www.r-bloggers.com/2018/04/statistics-sunday-using-semplot/">blog</a>.</p>
+<pre class="r"><code>library(lavaan)
+library(semPlot)
+
+load(&quot;model_fit_reverse.RData&quot;)
+
+## fit_reserve gives the same results as fit but with fully positive factor loadings 
+
+labels &lt;- c(&quot;VNR&quot;, &quot;Matrix&quot;, &quot;Symbol\nDigit&quot;, &quot;Pair\nMatching&quot;, &quot;RT&quot;, &quot;Tower&quot;, &quot;Trail\nMaking&quot;,&quot;Cog&quot;)
+
+#setwd(&quot;C:/Users/k1894405/OneDrive - King&#39;s College London/PhD/Projects/Comparing labelling protocols/analysis/Rmarkdown&quot;)
+#tiff(&quot;sem_reverse.tiff&quot;, width = 10, height = 3, units = &#39;in&#39;, res=1000)
+#https://www.r-graph-gallery.com/74-margin-and-oma-cheatsheet
+#grid &lt;- par(mfrow=c(1, 2), oma=c(0,0,3,0), mar=c(0,0,0,0))
+
+          semPaths(fit_reverse,
+                           what = &quot;paths&quot;,
+                           whatLabels=&quot;est&quot;, 
+                           intercepts=FALSE, 
+                           style=&quot;OpenMx&quot;,
+                           layout = &quot;tree&quot;,
+                           nodeLabels=labels,
+                           curvePivot=TRUE, 
+                           edge.color=&quot;black&quot;, 
+                           sizeMan = 8, 
+                           pastel=TRUE, 
+                           rainbowStart = 0.5,
+                           nDigits = 2, 
+                            title = TRUE)</code></pre>
+<p><img src="Phenotype_cleaning_files/figure-html/unnamed-chunk-1-1.png" width="672" /></p>
+<pre class="r"><code>          #title(main=&quot;General cognitive ability\nUnstandardised and standardised factor loadings&quot;, outer = T, cex.main = 0.7)
+
+
+#par(grid)
+#dev.off()
+          
+summary(fit_reverse, rsq = TRUE, fit.measures=T)</code></pre>
+<pre><code>## lavaan 0.6-7 ended normally after 30 iterations
+## 
+##   Estimator                                         ML
+##   Optimization method                           NLMINB
+##   Number of free parameters                         21
+##                                                       
+##   Number of observations                         39277
+##   Number of missing patterns                        56
+##                                                       
+## Model Test User Model:
+##                                                       
+##   Test statistic                              1415.623
+##   Degrees of freedom                                14
+##   P-value (Chi-square)                           0.000
+## 
+## Model Test Baseline Model:
+## 
+##   Test statistic                             43270.123
+##   Degrees of freedom                                21
+##   P-value                                        0.000
+## 
+## User Model versus Baseline Model:
+## 
+##   Comparative Fit Index (CFI)                    0.968
+##   Tucker-Lewis Index (TLI)                       0.951
+## 
+## Loglikelihood and Information Criteria:
+## 
+##   Loglikelihood user model (H0)            -263294.880
+##   Loglikelihood unrestricted model (H1)    -262587.068
+##                                                       
+##   Akaike (AIC)                              526631.759
+##   Bayesian (BIC)                            526811.905
+##   Sample-size adjusted Bayesian (BIC)       526745.167
+## 
+## Root Mean Square Error of Approximation:
+## 
+##   RMSEA                                          0.050
+##   90 Percent confidence interval - lower         0.048
+##   90 Percent confidence interval - upper         0.053
+##   P-value RMSEA &lt;= 0.05                          0.354
+## 
+## Standardized Root Mean Square Residual:
+## 
+##   SRMR                                           0.024
+## 
+## Parameter Estimates:
+## 
+##   Standard errors                             Standard
+##   Information                                 Observed
+##   Observed information based on                Hessian
+## 
+## Latent Variables:
+##                    Estimate  Std.Err  z-value  P(&gt;|z|)
+##   Cog =~                                              
+##     mean_VNR          1.000                           
+##     mean_Matrix       1.132    0.014   80.486    0.000
+##     mean_SymbolDgt    1.171    0.014   85.197    0.000
+##     mean_ParMtchng    0.372    0.006   64.932    0.000
+##     mean_RT           0.551    0.010   55.067    0.000
+##     mean_Tower        1.065    0.014   75.198    0.000
+##     mean_TrailMkng    1.167    0.013   91.204    0.000
+## 
+## Intercepts:
+##                    Estimate  Std.Err  z-value  P(&gt;|z|)
+##    .mean_VNR         -0.067    0.005  -14.267    0.000
+##    .mean_Matrix      -0.021    0.006   -3.578    0.000
+##    .mean_SymbolDgt   -0.044    0.005   -8.632    0.000
+##    .mean_ParMtchng    0.003    0.002    1.412    0.158
+##    .mean_RT           0.008    0.004    1.842    0.066
+##    .mean_Tower       -0.024    0.006   -3.991    0.000
+##    .mean_TrailMkng   -0.023    0.005   -4.861    0.000
+##     Cog               0.000                           
+## 
+## Variances:
+##                    Estimate  Std.Err  z-value  P(&gt;|z|)
+##    .mean_VNR          0.546    0.005  111.624    0.000
+##    .mean_Matrix       0.617    0.006   96.418    0.000
+##    .mean_SymbolDgt    0.503    0.005   99.524    0.000
+##    .mean_ParMtchng    0.175    0.001  127.191    0.000
+##    .mean_RT           0.603    0.005  131.979    0.000
+##    .mean_Tower        0.654    0.007   99.654    0.000
+##    .mean_TrailMkng    0.321    0.004   82.629    0.000
+##     Cog               0.297    0.005   54.118    0.000
+## 
+## R-Square:
+##                    Estimate
+##     mean_VNR          0.353
+##     mean_Matrix       0.382
+##     mean_SymbolDgt    0.447
+##     mean_ParMtchng    0.190
+##     mean_RT           0.130
+##     mean_Tower        0.340
+##     mean_TrailMkng    0.558</code></pre>
+</div>
+
+&nbsp;
+<hr />
+<a href = "https://www.kcl.ac.uk/">
+<p style="text-align: center"><img src="KCL_logo.jpg" href="https://www.kcl.ac.uk/" style="width:70px;height:50px"> 
+</a>
+</p>
+
+<a href = "https://www.kcl.ac.uk/people/anna-furtjes">
+<p style="text-align: center;">By Anna Elisabeth Fürtjes</a></p>
+<p style="text-align: center;"><span style="color: #808080;"><em>anna.furtjes@kcl.ac.uk</em></span></p>
+
+<!-- Add icon library -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+<!-- Add font awesome icons -->
+<p style="text-align: center;">
+    <a href="https://twitter.com/Anna_Furtjes" class="fa fa-twitter"></a>
+</p>
+
+&nbsp;
+
+
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.odd').parent('tbody').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open');
+  });
+});
+</script>
+
+<!-- code folding -->
+<script>
+$(document).ready(function () {
+  window.initializeCodeFolding("hide" === "show");
+});
+</script>
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
