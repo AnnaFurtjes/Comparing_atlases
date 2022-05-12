@@ -1,0 +1,536 @@
+---
+title: "Running LASSO regressions"
+author: "Anna Elisabeth Furtjes"
+highlighter: prettify
+output: 
+  html_document:
+    code_folding: hide
+    theme: spacelab
+    includes:
+      after_body: footer.html
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE, eval = FALSE)
+```
+
+
+<br>
+<br>
+
+
+***
+
+Here, we perform LASSO models to obtain ROI-specific effect sizes that can be used to predict individual-level non-brain traits in an independent prediction dataset. 
+We obtain absolute errors as the difference between observed and predicted values for a non-brain trait. 
+To test whether one atlas yielded better prediction accuracy than another, we tested whether there was a statistical difference in absolute errors between two atlases using the Wilcoxon Sign Rank test. 
+
+
+
+<br>
+<br>
+
+
+# LASSO regression 
+
+The code below is an R script (`LASSO_bigstatsr.R`) we use to calculate LASSO models and from which we get individual-level prediction into the phenotype. This script outputs text files with participant IIDs (validation only) and predicted phenotypic values. 
+
+
+```{r}
+### Calculate LASSO models
+### Script adapted from 
+### https://github.com/baptisteCD/Brain-LMM/blob/master/RR_9.0_PenalisedRegressionFunction_bigstatsr.R
+### 250GB RAM
+# Load environment
+library(readr)
+library(bigmemory)
+library(doMC)
+library(bigstatsr)
+library(stringr)
+
+
+# Load arguments
+arg = commandArgs(trailingOnly=TRUE)
+
+# Arguments are
+# 1) working directory - where files are located
+# 2) file of vertex wise values/ or atlas file name
+# 3) output folder (in working directory)
+# 4) variable (to predict) name
+#### calling it in shell with eg: Rscript LASSO_bigstatsr.R /working/directory /atlases/JulichBrain_ThickAvg $pheno
+
+
+wd = arg[1]
+
+vertexFile = arg[2] ## bod file processed through OSCA
+
+
+pheno = arg[3]
+
+outFolder = arg[4]
+
+
+# Working directory
+setwd(wd)
+
+print("Finished set-up.")
+
+# Big statsr approach - attache previously created FBM
+st=Sys.time()
+
+
+dat=read.big.matrix(paste0(wd,"/", vertexFile), sep = " ", header = T, type="double") 
+
+et=Sys.time()
+openingTime=et-st
+
+# Write time
+print(paste("Finished reading in brain data."))
+openingTime
+
+# Check dimensions
+print(dim(dat))
+nfeatures = ncol(dat)
+
+# Open phenotype and order according to the ids list
+phenoVar = read.table(paste0("~/phenotypes/", pheno, ".txt"), sep = "\t", header = F)
+names(phenoVar) = c("IID","FID","pheno")
+
+print(paste("Finished reading in pheno data."))
+
+
+# create table that holds info on this analysis 
+log = data.frame(matrix(ncol=2,nrow=11))
+names(log) = c("measure", "info")
+
+####################################################################
+#### Define discovery and replication data set
+####################################################################
+
+## implement random sampling in script
+all_brain_subj = as.data.frame(dat[,1])
+names(all_brain_subj)=c("IID")
+
+all_subj = merge(phenoVar, all_brain_subj, by="IID")
+
+## restrict to participants who were included in the previous morph estimates 
+print("Reading in restrict table")
+restrict = read.table("~/morphometricity/data/indi.list.fid")
+names(restrict)=c("IID","FID")
+all_subj = merge(all_subj, restrict, by="IID")
+
+# only keep unique participants (no duplicates)
+all_subj = unique(all_subj$IID)
+
+
+# randomly sample
+set.seed(12345)
+disco = sample(all_subj, size = 0.8*length(all_subj), replace=FALSE)
+# none of these participants have missing phenotypes as there are no missing values in my phenos
+repli = setdiff(all_subj, disco)
+
+print(paste0("This analysis is for atlas ", vertexFile, " and phenotype: ",pheno,", including ", length(disco)," participants in the discovery data set, and ", length(repli), " in the replication data set (Ntotal = ",length(all_subj),")."))
+
+# save this info in log object
+log[1,] =c("atlas: ",vertexFile)
+log[2,] =c("pheno: ",pheno)
+log[3,] =c("Ndisco: ",length(disco))
+log[4,] =c("Nrepli: ",length(repli))
+log[5,] =c("Ntotal: ",length(all_subj))
+
+
+print(paste("Finished splitting sample into discovery and replication."))
+
+
+
+####################################################################
+#### LASSO 
+####################################################################
+
+print("Starting to apply split to big matrix")
+# split brain data set
+datD = dat[which(dat[,1] %in% disco),]
+datR = dat[which(dat[,1] %in% repli),]
+print("Finished applying split to big matrix")
+
+# Check dimensions of subsets
+print(dim(datD))
+print(str(datD))
+
+print(dim(datR))
+
+print("Transforming as_FBM")
+# Format for bigstatsr
+datD_FBM = as_FBM(datD) 
+datR_FBM = as_FBM(datR) 
+print("Finished transforming as_FBM")
+
+
+print(pheno)
+print("Opening phenotype file")
+
+# Re order and match IDs with phenotypes
+phenoM=phenoVar[match(datD[,1], phenoVar[,1], nomatch = NULL),c("IID","pheno")]
+
+# check that IDs from brain & pheno file match
+cor(datD[,1], phenoM[,1])
+cbind(datD[1:10,1], phenoM[1:10,1])
+
+print("Cross validation using bigstatsr (NB not real CV)")
+st1=Sys.time()
+
+# Specifications:
+# X = An object of class FBM. (brain pheno)
+# y.train = Vector of responses (behavioral pheno)
+# ind.col = Vector of the column indices that are used (all but IID column, brain and pheno frames should have same order)
+# alphas = lasso penalty is 1 
+# nlambda = The number of lambda values. Default is 200
+# K = Number of sets used in the Cross-Model Selection and Averaging (CMSA) procedure. (ten-fold cross-valid)
+
+print(paste("Now starting ten-fold cross-validation."))
+
+
+cv.bstatsr <- big_spLinReg(X = datD_FBM, y.train = phenoM[,2], ind.col = 2:nfeatures, alphas = 1, nlambda = 100, K = 10)
+et1=Sys.time()
+cvRunTime=et1-st1
+# Write time
+print(paste("Finished running cross-validation using bigstatsr"))
+cvRunTime
+
+# Print lasso details
+summary(cv.bstatsr)
+
+# save this info in log object
+log[6,] =c("nfeatures: ",summary(cv.bstatsr)$nb_var)
+log[7,] =c("alpha: ",summary(cv.bstatsr)$alpha)
+log[8,] =c("power_adaptive: ",summary(cv.bstatsr)$power_adaptive)
+log[9,] =c("power_scale: ",summary(cv.bstatsr)$power_scale)
+log[10,] =c("validation_loss: ",summary(cv.bstatsr)$validation_loss)
+log[11,] =c("intercept: ",summary(cv.bstatsr)$intercept)
+
+#log[12:(11+summary(cv.bstatsr)$nb_var),"measure"]=paste0("beta",1:summary(cv.bstatsr)$nb_var)
+#log[12:(11+summary(cv.bstatsr)$nb_var),"info"]=unlist(summary(cv.bstatsr)$beta)
+
+print(paste("Stored results in log."))
+
+
+# Store predictor
+# this should have nrow = repli
+res=cbind(datR[,1], as.vector(predict(cv.bstatsr, datR_FBM )) )
+
+# get atlas name to print
+atlas=strsplit(vertexFile, "_")[[1]][1]
+meas=strsplit(vertexFile, "_")[[1]][3]
+
+write.table(res, paste0(outFolder, "/", "lasso", "_pred_", atlas,"_",meas, "_", pheno,".txt"), col.names = F, row.names = F, quote=F)
+write.table(log, paste0(outFolder, "/", "lasso", "_pred_", atlas,"_",meas, "_", pheno,".log"), col.names = F, row.names = F, quote=F)
+
+print(paste("Saved output in ",outFolder))
+
+```
+
+
+<br>
+
+
+
+The code below is used to initiate the Rscript above.
+
+```{bash}
+#!/bin/bash -l
+#SBATCH --job-name=LASSO_atlases
+#SBATCH --output=~/morphometricity/output/LASSO_atlases_%A_%a.out
+#SBATCH -D ~/imaging/output
+#SBATCH --mem=100G 
+#SBATCH --cpus-per-task=10
+#SBATCH --time=2-00:00
+#SBATCH --array=1-7 ## one per meas
+
+wd="~/morphometricity/data/atlases"
+bod_dir="~/morphometricity/data/bod_files"
+out_dir="~/morphometricity/results/LASSO"
+scripts_dir="~/morphometricity/scripts"
+
+
+refList=${scripts_dir}/ref_atlases.txt
+atlas=$(awk "FNR==$SLURM_ARRAY_TASK_ID" $refList)
+
+
+module load apps/R/3.6.0
+
+for meas in ThickAvg SurfArea GrayVol
+do
+
+for pheno in sex_pheno bmi_pheno edu_pheno alc_pheno cig_pheno gpheno age_pheno
+do
+
+	if [ ! -f ${out_dir}/lasso_pred_${atlas}_${meas}_${pheno}.txt ]
+	then
+	
+		
+		atlasFile=${wd}/${atlas}_${meas}_*
+		
+		echo "Now starting LASSO model for ${atlasFile} and $pheno"
+		
+		Rscript ${scripts_dir}/LASSO_bigstatsr.R ${atlasFile} $pheno $out_dir
+	fi
+	
+done
+
+done
+
+#### sbatch -p brc,shared ~/morphometricity/scripts/Run_LASSO_atlases.sh
+```
+
+
+<br>
+<br>
+
+
+***
+
+
+
+# Wilcoxon Sign Ranked tests
+
+The Rscript below (`Wilcoxon_sign_rank.R`) reads in the output obtained from the LASSO models above, calculates absolute errors as the difference between observed and predicted values, and calculates a Wilcoxon sigh rank test to compare prediction accuracies of one atlas versus another atlas. 
+
+  - *H0* = there is no median difference in absolute error between atlas1 and atlas2 (i.e., `atlas1$abs_err - atlas2$abs_err = 0`)
+  
+  - *H1* = there is a difference in absolute error and it's either positive or negative (two.sided test)
+
+
+A non-significant result with a small effect size tells us that we have no evidence to conclude that atlas 1 performed any better than atlas 2. 
+
+
+```{r}
+## Wilcoxon Signed Rank test to compare prediction accuracies obtained from different atlases 
+
+# Analysis steps
+# 1. Read in output created by LASSO predictions, eg., "lasso_pred_Yeo_GrayVol_sex.txt"
+# 2. Merge predictions with actual measured phenotypes. Resulting table will have columns: eid, pheno, LASSOpredictions. End up with subset of replication sample
+# 3. Calculate absolute errors: observed - averaged predictions
+# 4. Perform wilcoxon test to contrast absolute errors by two atlases = absolute error atlas 1 vs. absolute error atlas2
+
+# Load arguments
+arg = commandArgs(trailingOnly=TRUE)
+
+lasso_dir = arg[1]
+# eg lasso_dir = "~/morphometricity/results/LASSO"
+
+atlas1_name = arg[2]
+# eg. atlas1_name = "Yeo"
+
+atlas2_name = arg[3]
+#eg. atlas2_name = "DK"
+
+meas = arg[4]
+# eg. meas = "ThickAvg"
+
+pheno_name = arg[5]
+# eg. pheno_name = "bmi_pheno"
+
+
+# load dependencies
+library(data.table)
+library(stringr)
+library(rstatix)
+library(reshape2)
+
+
+########################################################################
+## read in LASSO predictions
+########################################################################
+
+# read in prediction atlas 1
+atlas1_file = list.files(path = lasso_dir, pattern = paste0("lasso_pred_", atlas1_name, "_", meas, "_", pheno_name, ".txt"))
+atlas1_pred = fread(paste0(lasso_dir, "/", atlas1_file), header=F)
+
+names(atlas1_pred) = c("IID", "pred")
+
+# read in prediction atlas 2
+# if vertices, change the way atlas is referenced
+
+if(atlas2_name == "vertices"){
+
+	# change meas naming
+	if(meas == "GrayVol"){meas_vertex = "volume"}
+	if(meas == "ThickAvg"){meas_vertex = "thickness"}
+	if(meas == "SurfArea"){meas_vertex = "area"}
+	
+	atlas2_file = list.files(path = lasso_dir, pattern=paste0("lasso_pred_vertices_", meas_vertex,".txt_",pheno_name,".txt"))
+	atlas2_pred = fread(paste0(lasso_dir, "/", atlas2_file), header=F)
+	
+}else{
+	atlas2_file = list.files(path = lasso_dir, pattern = paste0("lasso_pred_", atlas2_name, "_", meas, "_", pheno_name, ".txt"))
+	atlas2_pred = fread(paste0(lasso_dir, "/", atlas2_file), header=F)
+}
+names(atlas2_pred) = c("IID", "pred")
+
+########################################################################
+## read in actual observed phenotype
+########################################################################
+
+pheno_dir = "/mnt/lustre/datasets/ukbiobank/ukb40933/phenotypes"
+
+# read in atlas 1
+pheno_name.txt = list.files(path = pheno_dir, pattern=paste0(pheno_name, ".txt"))
+pheno = fread(paste0(pheno_dir, "/", pheno_name.txt))
+
+# keep only one IID column
+pheno = pheno[,2:3]
+
+# name columns
+names(pheno) = c("IID", "obs")
+
+
+########################################################################
+## merge observed and predicted
+########################################################################
+
+# merge predicted and observed values, this function will only retain overlap (i.e., replication dataset)
+atlas1 = merge(atlas1_pred, pheno, by = "IID")
+atlas2 = merge(atlas2_pred, pheno, by = "IID")
+
+########################################################################
+## calculate absolute errors
+## difference between predicted and observed measures 
+########################################################################
+
+atlas1$abs_err1 = atlas1$pred - atlas1$obs
+atlas2$abs_err2 = atlas2$pred - atlas2$obs
+
+
+########################################################################
+## reshape data 
+########################################################################
+
+both = merge(atlas1, atlas2, by = "IID")
+
+both = melt(both[,c("IID", "abs_err1", "abs_err2")], id.vars = c("IID"))
+names(both)=c("IID", "atlas", "abs_err")
+both$atlas = ifelse(both$atlas == "abs_err1", "atlas1", "atlas2")
+
+########################################################################
+## calculate Wilcoxon Sign rank test: observed and predicted
+########################################################################
+## H0 = there is no difference in absolute error in the difference between observed & predicted values (i.e., atlas1$abs_err - atlas2$abs_err = 0)
+## H1 = There is a difference, the median difference is positive or negative (two.sided test)
+## The test statistic for the Wilcoxon Signed Rank Test is W, defined as the smaller of W+ (sum of the positive ranks) and W- (sum of the negative ranks). If the null hypothesis is true, we expect to see similar numbers of lower and higher ranks that are both positive and negative (i.e., W+ and W- would be similar). If the research hypothesis is true we expect to see more higher and positive ranks (in this example, more children with substantial improvement in repetitive behavior after treatment as compared to before, i.e., W+ much larger than W-). https://sphweb.bumc.bu.edu/otlt/MPH-Modules/BS/BS704_Nonparametric/BS704_Nonparametric6.html?msclkid=62a38d40c49b11ecb22117b019c6db2b
+
+test = wilcox_test(data = both, abs_err ~ atlas, paired = TRUE, p.adjust.method = "bonferroni", alternative = "two.sided", detailed=TRUE)
+eff_size = wilcox_effsize(data = both, abs_err ~ atlas, paired = TRUE, p.adjust.method = "bonferroni", alternative = "two.sided", detailed=TRUE)
+ 
+# create frame to store data
+results = data.frame(matrix(ncol = 8, nrow = 1))
+names(results) = c("atlas1", "atlas2","meas","pheno", "N", "statistic", "p", "effsize")
+
+# store data 
+results[1,] = as.vector(c(atlas1_name, atlas2_name, meas, str_remove(pheno_name, pattern=".txt"), nrow(atlas1), test$statistic, test$p, eff_size$effsize))
+
+
+## a non-significant results with a small effect size tells us that we don;t have evidence to conclude that atlas 1 performed any better than atlas 2
+
+
+
+write.table(results, paste0("~/morphometricity/results/Wilcoxon/", atlas1_name, "_", atlas2_name, "_", meas, "_", str_remove(pheno_name, pattern=".txt"), "_wilcoxon_results.txt"), quote=F, col.names=T, row.names=F, sep="\t")
+```
+
+
+The Rscript above (`Wilcoxon_sign_rank.R`) can be initiated by the following shell script. 
+
+```{bash}
+#!/bin/bash -l
+#SBATCH --job-name=Wilcoxon
+#SBATCH --output=~/morphometricity/output/Wilcoxon_atlases_%A_%a.out
+#SBATCH -D ~/imaging/output
+#SBATCH --mem=10G 
+#SBATCH --time=2-00:00
+#SBATCH --array=1-7 ## one per meas
+
+lasso_dir="~/morphometricity/results/LASSO"
+scripts_dir="~/morphometricity/scripts"
+results_dir="~/morphometricity/results/Wilcoxon"
+
+refList=${scripts_dir}/ref_atlases.txt
+atlas1=$(awk "FNR==$SLURM_ARRAY_TASK_ID" $refList)
+
+atlas2_num=$(($SLURM_ARRAY_TASK_ID+1))
+
+module load apps/R/3.6.0
+
+for atlas2_find in $(seq $atlas2_num 8)
+do
+refList2=${scripts_dir}/ref_brain_rep.txt
+atlas2=$(awk "FNR==$atlas2_find" $refList2)
+
+	for meas in ThickAvg SurfArea GrayVol
+	do
+
+	for pheno in sex_pheno bmi_pheno edu_pheno alc_pheno cig_pheno gpheno age_pheno
+	do
+
+		if [ ! -f ${results_dir}/${atlas1}_${atlas2}_${pheno}_wilcoxon_results.txt ]
+		then
+		
+						
+			echo "Now starting Wilcoxon test for ${atlas1}_${atlas2}_${pheno}"
+			
+			Rscript ${scripts_dir}/Wilcoxon_sign_rank.R ${lasso_dir} ${atlas1} ${atlas2} ${meas} ${pheno}
+		fi
+		
+	done
+
+	done
+
+done
+
+#### sbatch -p brc,shared ~/morphometricity/scripts/Wilcoxon.sh
+```
+
+
+
+
+<br>
+
+
+Format output by these scripts using the following Rscript. 
+
+```{r}
+##### format Wilcoxon results 
+
+setwd("~/morphometricity/results/Wilcoxon")
+
+# create object to hold results
+results = data.frame(matrix(ncol = 8, nrow = 0))
+names(results) = c("atlas1", "atlas2","meas","pheno", "N", "statistic", "p", "effsize")
+
+
+output = list.files(pattern="wilcoxon_results.txt")
+### expecting (28*3*7) results
+for(i in 1:length(output)){
+	line = read.table(output[i], header=T)
+	
+	results = rbind(results, line)
+
+}
+
+print(paste("Obtained results for", nrow(results), "Wilcoxon models."))
+
+write.table(results, "~/morphometricity/results/Wilcoxon/Wilcoxon_results.table", col.names=T, row.names=T, quote=F, sep="\t")
+```
+
+
+
+
+<br>
+
+***
+
+
+This table is included in the supplementary materials of the manuscript. It is displayed in an Excel document that was formatted using the code below. 
+```{r}
+library()
+```
+

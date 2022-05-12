@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+<meta name="author" content="Anna Elisabeth Furtjes" />
+
+
+<title>Results: Random atlases</title>
+
+<script src="site_libs/header-attrs-2.10/header-attrs.js"></script>
+<script src="site_libs/jquery-3.5.1/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/spacelab.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<style>h1 {font-size: 34px;}
+       h1.title {font-size: 38px;}
+       h2 {font-size: 30px;}
+       h3 {font-size: 24px;}
+       h4 {font-size: 18px;}
+       h5 {font-size: 16px;}
+       h6 {font-size: 12px;}
+       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
+       pre:not([class]) { background-color: white }</style>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<script src="site_libs/navigation-1.1/codefolding.js"></script>
+<link href="site_libs/highlightjs-9.12.0/default.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+<script src="site_libs/htmlwidgets-1.5.3/htmlwidgets.js"></script>
+<link href="site_libs/datatables-css-0.0.0/datatables-crosstalk.css" rel="stylesheet" />
+<script src="site_libs/datatables-binding-0.15/datatables.js"></script>
+<link href="site_libs/dt-core-1.10.20/css/jquery.dataTables.min.css" rel="stylesheet" />
+<link href="site_libs/dt-core-1.10.20/css/jquery.dataTables.extra.css" rel="stylesheet" />
+<script src="site_libs/dt-core-1.10.20/js/jquery.dataTables.min.js"></script>
+<link href="site_libs/nouislider-7.0.10/jquery.nouislider.min.css" rel="stylesheet" />
+<script src="site_libs/nouislider-7.0.10/jquery.nouislider.min.js"></script>
+<link href="site_libs/selectize-0.12.0/selectize.bootstrap3.css" rel="stylesheet" />
+<script src="site_libs/selectize-0.12.0/selectize.min.js"></script>
+<link href="site_libs/crosstalk-1.1.1/css/crosstalk.css" rel="stylesheet" />
+<script src="site_libs/crosstalk-1.1.1/js/crosstalk.min.js"></script>
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+<style type="text/css">code{white-space: pre;}</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+
+
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+pre code {
+  padding: 0;
+}
+</style>
+
+
+<style type="text/css">
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #adb5bd;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script type="text/javascript">
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.tab('show');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+
+  // Navbar adjustments
+  var navHeight = $(".navbar").first().height() + 15;
+  var style = document.createElement('style');
+  var pt = "padding-top: " + navHeight + "px; ";
+  var mt = "margin-top: -" + navHeight + "px; ";
+  var css = "";
+  // offset scroll position for anchor links (for fixed navbar)
+  for (var i = 1; i <= 6; i++) {
+    css += ".section h" + i + "{ " + pt + mt + "}\n";
+  }
+  style.innerHTML = "body {" + pt + "padding-bottom: 40px; }\n" + css;
+  document.head.appendChild(style);
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+<style type="text/css">
+.code-folding-btn { margin-bottom: 4px; }
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+
+
+<div class="navbar navbar-inverse  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">Morphometricity</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="Serious_Pipeline.html">Neuroimaging pre-processing</a>
+</li>
+<li>
+  <a href="index.html">Tab 2</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div id="header">
+
+<div class="btn-group pull-right float-right">
+<button type="button" class="btn btn-default btn-xs btn-secondary btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span>Code</span> <span class="caret"></span></button>
+<ul class="dropdown-menu dropdown-menu-right" style="min-width: 50px;">
+<li><a id="rmd-show-all-code" href="#">Show All Code</a></li>
+<li><a id="rmd-hide-all-code" href="#">Hide All Code</a></li>
+</ul>
+</div>
+
+
+
+<h1 class="title toc-ignore">Results: Random atlases</h1>
+<h4 class="author">Anna Elisabeth Furtjes</h4>
+
+</div>
+
+
+<pre class="r"><code># create data.frame to store results
+results = data.frame(matrix(nrow = 7*3*3, ncol = 8))
+names(results) = c(&quot;num_ROIs&quot;, &quot;meas&quot;,&quot;pheno&quot;,&quot;min&quot;,&quot;max&quot;,&quot;median&quot;,&quot;mean&quot;,&quot;sd&quot;)
+
+
+# get all possible combinations of atlas, meas &amp; pheno
+num_ROIs = as.character(c(34, 68, 148, 274, 334, 360, 500))
+meas = c(&quot;SurfArea&quot;,&quot;GrayVol&quot;,&quot;ThickAvg&quot;)
+pheno = c(&quot;age&quot;,&quot;gpheno&quot;,&quot;sex&quot;)
+results[,c(&quot;num_ROIs&quot;,&quot;meas&quot;,&quot;pheno&quot;)] = expand.grid(num_ROIs, meas, pheno)
+
+
+for(i in num_ROIs){
+  #i = 500
+  null = read.table(paste0(&quot;morph_results_&quot;,i,&quot;randomROIs.table&quot;), header=T)
+  
+  # change measurement type names from randomaparc
+  null$meas[which(null$meas == &quot;area&quot;)] = &quot;SurfArea&quot;
+  null$meas[which(null$meas == &quot;volume&quot;)] = &quot;GrayVol&quot;
+  null$meas[which(null$meas == &quot;thickness&quot;)] = &quot;ThickAvg&quot;
+
+  for(j in c(&quot;SurfArea&quot;,&quot;GrayVol&quot;,&quot;ThickAvg&quot;)){
+    
+    for(k in c(&quot;age&quot;,&quot;gpheno&quot;,&quot;sex&quot;)){
+      # subset data.frame
+      subset = null[which(null$meas == j &amp; null$pheno == k),]
+    
+      
+      #### store results
+      # mean morph
+      results$mean[which(results$num_ROIs == i &amp; results$meas == j &amp; results$pheno == k)] = mean(subset$morph, na.rm=T)
+      # sd morph
+      results$sd[which(results$num_ROIs == i &amp; results$meas == j &amp; results$pheno == k)] = sd(subset$morph, na.rm=T)
+      # min morph
+      results$min[which(results$num_ROIs == i &amp; results$meas == j &amp; results$pheno == k)] = min(subset$morph, na.rm=T)
+      # max morph
+      results$max[which(results$num_ROIs == i &amp; results$meas == j &amp; results$pheno == k)] = max(subset$morph, na.rm=T)
+      # median morph
+      results$median[which(results$num_ROIs == i &amp; results$meas == j &amp; results$pheno == k)] = median(subset$morph, na.rm=T)
+      
+    }
+    
+  }
+  
+
+}
+
+# round values
+results[,c(&quot;min&quot;,&quot;max&quot;,&quot;median&quot;,&quot;mean&quot;,&quot;sd&quot;)]=round(results[,c(&quot;min&quot;,&quot;max&quot;,&quot;median&quot;,&quot;mean&quot;,&quot;sd&quot;)], digits=2)
+
+# order frame
+results=results[order(results$num_ROIs),]
+
+library(DT)
+datatable(results, rownames=FALSE, filter=&quot;top&quot;,options= list(pageLength=10,scrollX=T), caption = &quot;Descriptive statistics morphometricity estimates random atlases&quot;)</code></pre>
+<div id="htmlwidget-248d5d0dbbb5a6e2c899" style="width:100%;height:auto;" class="datatables html-widget"></div>
+<script type="application/json" data-for="htmlwidget-248d5d0dbbb5a6e2c899">{"x":{"filter":"top","filterHTML":"<tr>\n  <td data-type=\"factor\" style=\"vertical-align: top;\">\n    <div class=\"form-group has-feedback\" style=\"margin-bottom: auto;\">\n      <input type=\"search\" placeholder=\"All\" class=\"form-control\" style=\"width: 100%;\"/>\n      <span class=\"glyphicon glyphicon-remove-circle form-control-feedback\"><\/span>\n    <\/div>\n    <div style=\"width: 100%; display: none;\">\n      <select multiple=\"multiple\" style=\"width: 100%;\" data-options=\"[&quot;34&quot;,&quot;68&quot;,&quot;148&quot;,&quot;274&quot;,&quot;334&quot;,&quot;360&quot;,&quot;500&quot;]\"><\/select>\n    <\/div>\n  <\/td>\n  <td data-type=\"factor\" style=\"vertical-align: top;\">\n    <div class=\"form-group has-feedback\" style=\"margin-bottom: auto;\">\n      <input type=\"search\" placeholder=\"All\" class=\"form-control\" style=\"width: 100%;\"/>\n      <span class=\"glyphicon glyphicon-remove-circle form-control-feedback\"><\/span>\n    <\/div>\n    <div style=\"width: 100%; display: none;\">\n      <select multiple=\"multiple\" style=\"width: 100%;\" data-options=\"[&quot;SurfArea&quot;,&quot;GrayVol&quot;,&quot;ThickAvg&quot;]\"><\/select>\n    <\/div>\n  <\/td>\n  <td data-type=\"factor\" style=\"vertical-align: top;\">\n    <div class=\"form-group has-feedback\" style=\"margin-bottom: auto;\">\n      <input type=\"search\" placeholder=\"All\" class=\"form-control\" style=\"width: 100%;\"/>\n      <span class=\"glyphicon glyphicon-remove-circle form-control-feedback\"><\/span>\n    <\/div>\n    <div style=\"width: 100%; display: none;\">\n      <select multiple=\"multiple\" style=\"width: 100%;\" data-options=\"[&quot;age&quot;,&quot;gpheno&quot;,&quot;sex&quot;]\"><\/select>\n    <\/div>\n  <\/td>\n  <td data-type=\"number\" style=\"vertical-align: top;\">\n    <div class=\"form-group has-feedback\" style=\"margin-bottom: auto;\">\n      <input type=\"search\" placeholder=\"All\" class=\"form-control\" style=\"width: 100%;\"/>\n      <span class=\"glyphicon glyphicon-remove-circle form-control-feedback\"><\/span>\n    <\/div>\n    <div style=\"display: none; position: absolute; width: 200px;\">\n      <div data-min=\"2.19\" data-max=\"46.05\" data-scale=\"2\"><\/div>\n      <span style=\"float: left;\"><\/span>\n      <span style=\"float: right;\"><\/span>\n    <\/div>\n  <\/td>\n  <td data-type=\"number\" style=\"vertical-align: top;\">\n    <div class=\"form-group has-feedback\" style=\"margin-bottom: auto;\">\n      <input type=\"search\" placeholder=\"All\" class=\"form-control\" style=\"width: 100%;\"/>\n      <span class=\"glyphicon glyphicon-remove-circle form-control-feedback\"><\/span>\n    <\/div>\n    <div style=\"display: none; position: absolute; width: 200px;\">\n      <div data-min=\"6.46\" data-max=\"52.25\" data-scale=\"2\"><\/div>\n      <span style=\"float: left;\"><\/span>\n      <span style=\"float: right;\"><\/span>\n    <\/div>\n  <\/td>\n  <td data-type=\"number\" style=\"vertical-align: top;\">\n    <div class=\"form-group has-feedback\" style=\"margin-bottom: auto;\">\n      <input type=\"search\" placeholder=\"All\" class=\"form-control\" style=\"width: 100%;\"/>\n      <span class=\"glyphicon glyphicon-remove-circle form-control-feedback\"><\/span>\n    <\/div>\n    <div style=\"display: none; position: absolute; width: 200px;\">\n      <div data-min=\"4.53\" data-max=\"49.54\" data-scale=\"2\"><\/div>\n      <span style=\"float: left;\"><\/span>\n      <span style=\"float: right;\"><\/span>\n    <\/div>\n  <\/td>\n  <td data-type=\"number\" style=\"vertical-align: top;\">\n    <div class=\"form-group has-feedback\" style=\"margin-bottom: auto;\">\n      <input type=\"search\" placeholder=\"All\" class=\"form-control\" style=\"width: 100%;\"/>\n      <span class=\"glyphicon glyphicon-remove-circle form-control-feedback\"><\/span>\n    <\/div>\n    <div style=\"display: none; position: absolute; width: 200px;\">\n      <div data-min=\"4.49\" data-max=\"49.55\" data-scale=\"2\"><\/div>\n      <span style=\"float: left;\"><\/span>\n      <span style=\"float: right;\"><\/span>\n    <\/div>\n  <\/td>\n  <td data-type=\"number\" style=\"vertical-align: top;\">\n    <div class=\"form-group has-feedback\" style=\"margin-bottom: auto;\">\n      <input type=\"search\" placeholder=\"All\" class=\"form-control\" style=\"width: 100%;\"/>\n      <span class=\"glyphicon glyphicon-remove-circle form-control-feedback\"><\/span>\n    <\/div>\n    <div style=\"display: none; position: absolute; width: 200px;\">\n      <div data-min=\"0.25\" data-max=\"4.32\" data-scale=\"2\"><\/div>\n      <span style=\"float: left;\"><\/span>\n      <span style=\"float: right;\"><\/span>\n    <\/div>\n  <\/td>\n<\/tr>","caption":"<caption>Descriptive statistics morphometricity estimates random atlases<\/caption>","data":[["34","34","34","34","34","34","34","34","34","68","68","68","68","68","68","68","68","68","148","148","148","148","148","148","148","148","148","274","274","274","274","274","274","274","274","274","334","334","334","334","334","334","334","334","334","360","360","360","360","360","360","360","360","360","500","500","500","500","500","500","500","500","500"],["SurfArea","GrayVol","ThickAvg","SurfArea","GrayVol","ThickAvg","SurfArea","GrayVol","ThickAvg","SurfArea","GrayVol","ThickAvg","SurfArea","GrayVol","ThickAvg","SurfArea","GrayVol","ThickAvg","SurfArea","GrayVol","ThickAvg","SurfArea","GrayVol","ThickAvg","SurfArea","GrayVol","ThickAvg","SurfArea","GrayVol","ThickAvg","SurfArea","GrayVol","ThickAvg","SurfArea","GrayVol","ThickAvg","SurfArea","GrayVol","ThickAvg","SurfArea","GrayVol","ThickAvg","SurfArea","GrayVol","ThickAvg","SurfArea","GrayVol","ThickAvg","SurfArea","GrayVol","ThickAvg","SurfArea","GrayVol","ThickAvg","SurfArea","GrayVol","ThickAvg","SurfArea","GrayVol","ThickAvg","SurfArea","GrayVol","ThickAvg"],["age","age","age","gpheno","gpheno","gpheno","sex","sex","sex","age","age","age","gpheno","gpheno","gpheno","sex","sex","sex","age","age","age","gpheno","gpheno","gpheno","sex","sex","sex","age","age","age","gpheno","gpheno","gpheno","sex","sex","sex","age","age","age","gpheno","gpheno","gpheno","sex","sex","sex","age","age","age","gpheno","gpheno","gpheno","sex","sex","sex","age","age","age","gpheno","gpheno","gpheno","sex","sex","sex"],[13.06,13.75,21.14,3.25,2.19,5.66,17.66,19.32,21.34,18.46,23.49,23.1,4.73,4.36,6.59,24.43,26.58,26.75,30.6,30.33,24.43,8.64,6.55,7.03,35.14,33.11,32.84,39.37,33.66,25.3,12.18,7.68,6.62,40.42,38.04,33.75,42,33.77,25.98,12.76,7.82,6.72,43.46,38.43,33.79,43.41,33.94,25.92,13.14,7.77,6.71,43.4,38.85,34.2,45.08,34.65,26.19,13.71,8.2,6.82,46.05,40.09,35.54],[29.46,35.48,34.69,8.39,6.46,11.2,33.66,35.76,38.12,35.09,38.19,32.73,10.66,9.7,9.99,38.91,38.3,39.88,42.79,45.31,31.61,13.75,10.61,9.24,45.26,42.21,39.1,49.1,43.26,30.42,16.57,10.35,8.4,50,46.17,41.46,50.56,41.6,30.06,16.42,10.26,8.05,51.9,45.06,40.48,51.08,41.84,30.31,16.67,10.76,7.96,51.43,44.03,40.29,51.61,40.79,29.63,16.66,9.85,8.32,52.25,44.56,40.65],[20.35,23.17,27.94,5.34,4.53,8.4,24.22,26.29,31.73,27.27,29.76,27.7,7.74,6.27,8.37,31.87,32.68,33.69,36.45,35.8,28.14,11.53,8.02,7.94,39.83,38.58,35.93,44.62,37.55,27.88,14.19,8.85,7.51,45.76,41.21,37.25,46.23,37.66,27.76,14.69,9.04,7.44,47.3,41.64,37.65,46.86,37.49,27.77,14.8,9.03,7.44,47.79,41.68,37.75,48.4,37.5,27.72,15.18,9,7.35,49.54,42.29,38.02],[20.24,22.96,27.93,5.48,4.49,8.5,24.31,26.18,31.88,27.09,29.83,27.77,7.73,6.37,8.26,31.91,32.46,33.74,36.59,35.64,28.14,11.39,8.14,7.98,40.12,38.31,35.88,44.59,37.4,27.94,14.15,8.88,7.53,45.8,41.3,37.34,46.28,37.56,27.76,14.67,9.07,7.42,47.33,41.73,37.68,46.94,37.53,27.83,14.83,9.07,7.39,47.73,41.77,37.77,48.47,37.5,27.78,15.14,9.03,7.36,49.55,42.2,38.09],[3.32,4.32,2.6,1.15,0.86,1.07,3.26,3.45,3.32,2.98,2.85,1.91,1.16,0.83,0.71,2.89,2.52,2.54,2.4,2.36,1.49,1,0.7,0.44,2.3,1.92,1.49,1.91,1.77,0.94,0.96,0.55,0.33,1.82,1.38,1.18,1.75,1.69,0.89,0.82,0.49,0.29,1.63,1.18,0.98,1.58,1.65,0.86,0.76,0.5,0.27,1.5,1.09,1,1.35,1.28,0.72,0.67,0.37,0.25,1.22,0.97,0.84]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th>num_ROIs<\/th>\n      <th>meas<\/th>\n      <th>pheno<\/th>\n      <th>min<\/th>\n      <th>max<\/th>\n      <th>median<\/th>\n      <th>mean<\/th>\n      <th>sd<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"pageLength":10,"scrollX":true,"columnDefs":[{"className":"dt-right","targets":[3,4,5,6,7]}],"order":[],"autoWidth":false,"orderClasses":false,"orderCellsTop":true}},"evals":[],"jsHooks":[]}</script>
+<p>This table is stored in an excel sheet using the code below</p>
+<pre class="r"><code># store in Excel sheet</code></pre>
+
+&nbsp;
+<hr />
+<a href = "https://www.kcl.ac.uk/">
+<p style="text-align: center"><img src="KCL_logo.jpg" href="https://www.kcl.ac.uk/" style="width:70px;height:50px"> 
+</a>
+</p>
+
+<a href = "https://www.kcl.ac.uk/people/anna-furtjes">
+<p style="text-align: center;">By Anna Elisabeth Fürtjes</a></p>
+<p style="text-align: center;"><span style="color: #808080;"><em>anna.furtjes@kcl.ac.uk</em></span></p>
+
+<!-- Add icon library -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+<!-- Add font awesome icons -->
+<p style="text-align: center;">
+    <a href="https://twitter.com/Anna_Furtjes" class="fa fa-twitter"></a>
+</p>
+
+&nbsp;
+
+
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.odd').parent('tbody').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open');
+  });
+});
+</script>
+
+<!-- code folding -->
+<script>
+$(document).ready(function () {
+  window.initializeCodeFolding("hide" === "show");
+});
+</script>
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

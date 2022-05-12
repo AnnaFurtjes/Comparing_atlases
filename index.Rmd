@@ -41,7 +41,7 @@ knitr::opts_chunk$set(echo = TRUE, warning = F, message = F)
   
   4. [Morphometricity estimates](morph_est.html)
   
-  5. [LASSO]()
+  5. [LASSO](Running_LASSO.html)
   
 
   
@@ -57,7 +57,9 @@ knitr::opts_chunk$set(echo = TRUE, warning = F, message = F)
 
   1. [Morphometricity]()
   
-  2. [Likelihood ratio test]()
+  2. [Added morphometricity (LRT)](Results.html#)
+  
+  3. [Random distributions of morphometricity](Results.html#)
   
   3. [LASSO]()
   

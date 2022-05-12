@@ -1,5 +1,5 @@
 ---
-title: "Random atlases"
+title: "Results: Random atlases"
 author: "Anna Elisabeth Furtjes"
 highlighter: prettify
 output: 
@@ -13,11 +13,11 @@ output:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE, eval = FALSE)
+knitr::opts_knit$set(root.dir = "C:/Users/k1894405/OneDrive - King's College London/PhD/Projects/Comparing labelling protocols/results/nulldistr")
+
 ```
 
-```{r}
-setwd("C:/Users/k1894405/OneDrive - King's College London/PhD/Projects/Comparing labelling protocols/results/nulldistr")
-
+```{r eval=T}
 # create data.frame to store results
 results = data.frame(matrix(nrow = 7*3*3, ncol = 8))
 names(results) = c("num_ROIs", "meas","pheno","min","max","median","mean","sd")
@@ -75,75 +75,10 @@ library(DT)
 datatable(results, rownames=FALSE, filter="top",options= list(pageLength=10,scrollX=T), caption = "Descriptive statistics morphometricity estimates random atlases")
 ```
 
-## LRT analyses results
-This is probably not the right markdown document, but I'm lazy so for now it will be in the results from the random atlases
 
-Notes:
 
-We conduct the LRT analyses to figure out how much value it adds for the morphometricity estimate if we add a more complex atlas to the less complex atlas. atlas1+atlas2 vs.  atlas1 
-
-We calculated the LRT results by testing whether dropping the second atlas from the analysis significantly improves the morphometricity estimate
-
-The heatmap below will indicate the difference in variance explained (%) by the atlas1+atlas2 minus the variance explained by atlas1 only. The models in which we got a significant improvement are marked with a *
-
-We will have heatmaps for each measurement type and for each phenotype.
+This table is stored in an excel sheet using the code below
 ```{r}
-library(ggplot2)
-
-setwd("C:/Users/k1894405/OneDrive - King's College London/PhD/Projects/Comparing labelling protocols/results/LRT")
-
-LRT=read.table("LRT_results.table", header=T)
-
-# work out the difference between sum_G & V_G1
-LRT$diff = round(LRT$sum_G - LRT$V_G1, digits=2)
-LRT$sig = ifelse(LRT$p_val < (0.05/28), "*","")
-LRT$sig = paste(LRT$diff, LRT$sig)
-
-save=list()
-
-# iterate over measurement type & phenotype
-for(i in unique(LRT$meas)){
-
-  for(j in unique(LRT$pheno)){
-      # subset the data frame 
-      subset=LRT[which(LRT$meas == i & LRT$pheno == j),]
-      
-      # plot heatmap
-
-      # order to have smaller atlas first
-      subset$ordered1 = factor(subset$atlas1, levels=c("Yeo","DK","Des","JulichBrain","Gordon","Glasser","Schaefer","vertices"))
-      subset$ordered2 = factor(subset$atlas2, levels=c("Yeo","DK","Des","JulichBrain","Gordon","Glasser","Schaefer","vertices"))
-      
-      # chose colors depending on measurement type
-      if(i == "GrayVol"){color = "#63C5DA"}
-      if(i == "SurfArea"){color = "#0492C2"}
-      if(i == "ThickAvg"){color = "#016064"}
-      
-      #63C5DA GrayVol
-      #0492C2 SurfArea
-      #016064 ThickAvg
-      title = paste0("Phenotype = ",j, ", Measurement type = ",i)
-      
-      map = ggplot(subset, aes(ordered2, ordered1)) +
-        geom_tile(aes(fill = diff), colour = "white") +
-        scale_fill_gradient(low = "white", high = color)+
-        theme_minimal()+ 
-        xlab("More complex atlas")+
-        #ylab("Atlas with fewer ROIs")+
-        ylab("")+
-        ggtitle(title)+
-        theme(legend.position="top",legend.justification="right")+
-        labs(fill = "% added by\nincluding more\ncomplex atlas")+
-        geom_text(aes(ordered2, ordered1,label=sig),color="black",size=3)
-      
-      
-      plot_name=paste0(i,"_",j)
-      
-      save[[plot_name]] <- map
-  }
-}
-
-plot_grid(save[["GrayVol_age"]], save[["SurfArea_age"]], save[["ThickAvg_age"]], ncol=3)
-  
+# store in Excel sheet
 ```
 

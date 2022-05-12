@@ -1,0 +1,1326 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+<meta name="author" content="Anna Elisabeth Furtjes" />
+
+
+<title>Results</title>
+
+<script src="site_libs/header-attrs-2.10/header-attrs.js"></script>
+<script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/spacelab.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<style>h1 {font-size: 34px;}
+       h1.title {font-size: 38px;}
+       h2 {font-size: 30px;}
+       h3 {font-size: 24px;}
+       h4 {font-size: 18px;}
+       h5 {font-size: 16px;}
+       h6 {font-size: 12px;}
+       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
+       pre:not([class]) { background-color: white }</style>
+<script src="site_libs/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<script src="site_libs/navigation-1.1/codefolding.js"></script>
+<link href="site_libs/highlightjs-9.12.0/default.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+<style type="text/css">code{white-space: pre;}</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+
+
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+pre code {
+  padding: 0;
+}
+</style>
+
+
+<style type="text/css">
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #adb5bd;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script type="text/javascript">
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.tab('show');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+
+  // Navbar adjustments
+  var navHeight = $(".navbar").first().height() + 15;
+  var style = document.createElement('style');
+  var pt = "padding-top: " + navHeight + "px; ";
+  var mt = "margin-top: -" + navHeight + "px; ";
+  var css = "";
+  // offset scroll position for anchor links (for fixed navbar)
+  for (var i = 1; i <= 6; i++) {
+    css += ".section h" + i + "{ " + pt + mt + "}\n";
+  }
+  style.innerHTML = "body {" + pt + "padding-bottom: 40px; }\n" + css;
+  document.head.appendChild(style);
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+<style type="text/css">
+.code-folding-btn { margin-bottom: 4px; }
+</style>
+
+
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-inverse  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">Morphometricity</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="Serious_Pipeline.html">Neuroimaging pre-processing</a>
+</li>
+<li>
+  <a href="index.html">Tab 2</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div id="header">
+
+<div class="btn-group pull-right float-right">
+<button type="button" class="btn btn-default btn-xs btn-secondary btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span>Code</span> <span class="caret"></span></button>
+<ul class="dropdown-menu dropdown-menu-right" style="min-width: 50px;">
+<li><a id="rmd-show-all-code" href="#">Show All Code</a></li>
+<li><a id="rmd-hide-all-code" href="#">Hide All Code</a></li>
+</ul>
+</div>
+
+
+
+<h1 class="title toc-ignore">Results</h1>
+<h4 class="author">Anna Elisabeth Furtjes</h4>
+
+</div>
+
+
+<div id="descriptive-statistics" class="section level1">
+<h1>1. Descriptive statistics</h1>
+<pre class="r"><code>### plot descriptive stats for phenotypic variables
+
+library(readr)
+library(tidyr)
+library(ggplot2)
+library(Hmisc)
+library(plyr)
+library(RColorBrewer)
+library(reshape2)
+library(PupillometryR)
+library(cowplot)
+
+
+setwd(&quot;~/phenotypes&quot;)
+
+pheno&lt;-read.table(&quot;age_pheno.txt&quot;,header=F)
+
+names(pheno) &lt;- c(&quot;IID&quot;,&quot;FID&quot;,&quot;age_in_months&quot;)
+
+pheno$name &lt;- rep(&quot;Age in months&quot;,nrow(pheno))
+
+# restrict to overlapping participants with brain data
+ids &lt;- read.table(&quot;indi.list.fid&quot;)
+names(ids)[1]=&quot;IID&quot;
+pheno = merge(pheno, ids, by=&quot;IID&quot;)
+
+age_plot &lt;- ggplot(data=pheno, aes(x=name, y=age_in_months))+
+  geom_flat_violin(position = position_nudge(x = .2, y = 0), alpha = .8, colour=&quot;#1A1A1A&quot;, fill = &quot;#98bdcd&quot;,alpha=0.1, lwd=1) +
+  geom_point(aes(y = age_in_months), position = position_jitter(width = .15), size = .5, alpha = 1,colour=&quot;#98bdcd&quot;)+
+  geom_boxplot(width = .2, guides = FALSE, outlier.shape = NA, alpha = 0.5, colour=&quot;#1A1A1A&quot;, lwd=1.3)+ 
+   expand_limits(x=2)+
+  ylab(&quot;Age in months&quot;)+
+  annotate(geom = &quot;text&quot;, x=1, y=500,label=paste0(&quot;N = &quot;,nrow(pheno)),color=&quot;#696969&quot;)+
+  theme_bw()+
+  theme(text = element_text(size=12),#, colour=&#39;lemonchiffon4&#39;
+        axis.text.x = element_blank(),
+        axis.text.y = element_text(size=13, colour=&#39;#696969&#39;),
+        axis.title.y = element_text(face=&quot;bold&quot;, colour=&#39;#1A1A1A&#39;, size=17),
+        axis.title.x = element_blank(),
+        axis.line.x = element_blank(),
+        axis.line.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.ticks.y = element_blank(),
+        panel.border = element_blank())
+
+age_plot
+
+############################################################
+
+pheno&lt;-read.table(&quot;bmi_pheno.txt&quot;,header=F)
+
+names(pheno) &lt;- c(&quot;IID&quot;,&quot;FID&quot;,&quot;bmi&quot;)
+
+pheno$name &lt;- rep(&quot;BMI&quot;,nrow(pheno))
+# restrict to overlapping participants with brain data
+pheno = merge(pheno, ids, by=&quot;IID&quot;)
+
+bmi_plot &lt;- ggplot(data=pheno, aes(x=name, y=bmi))+
+  geom_flat_violin(position = position_nudge(x = .2, y = 0), alpha = .8, colour=&quot;#1A1A1A&quot;, fill = &quot;#98bdcd&quot;,alpha=0.1, lwd=1) +
+  geom_point(aes(y = bmi), position = position_jitter(width = .15), size = .5, alpha = 1,colour=&quot;#98bdcd&quot;)+
+  geom_boxplot(width = .2, guides = FALSE, outlier.shape = NA, alpha = 0.5, colour=&quot;#1A1A1A&quot;, lwd=1.3)+ 
+  expand_limits(x=2)+
+  ylab(&quot;Body Mass Index&quot;)+
+  annotate(geom = &quot;text&quot;, x=1, y=10,label=paste0(&quot;N = &quot;,nrow(pheno)),color=&quot;#696969&quot;)+
+  theme_bw() +
+  theme(text = element_text(size=12),#, colour=&#39;lemonchiffon4&#39;
+        axis.text.x = element_blank(),
+        axis.text.y = element_text(size=13, colour=&#39;#696969&#39;),
+        axis.title.y = element_text(face=&quot;bold&quot;, colour=&#39;#1A1A1A&#39;, size=17),
+        axis.title.x = element_blank(),
+        axis.line.x = element_blank(),
+        axis.line.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.ticks.y = element_blank(),
+        panel.border = element_blank())
+
+bmi_plot
+
+############################################################
+
+pheno&lt;-read.table(&quot;gpheno.txt&quot;,header=F)
+
+names(pheno) &lt;- c(&quot;IID&quot;,&quot;FID&quot;,&quot;g&quot;)
+
+pheno$name &lt;- rep(&quot;g&quot;,nrow(pheno))
+# restrict to overlapping participants with brain data
+pheno = merge(pheno, ids, by=&quot;IID&quot;)
+
+g_plot &lt;- ggplot(data=pheno, aes(x=name, y=g))+
+  geom_flat_violin(position = position_nudge(x = .2, y = 0), alpha = .8, colour=&quot;#1A1A1A&quot;, fill = &quot;#98bdcd&quot;,alpha=0.1, lwd=1) +
+  geom_point(aes(y = g), position = position_jitter(width = .15), size = .5, alpha = 1,colour=&quot;#98bdcd&quot;)+
+  geom_boxplot(width = .2, guides = FALSE, outlier.shape = NA, alpha = 0.5, colour=&quot;#1A1A1A&quot;, lwd=1.3)+ 
+  expand_limits(x=2)+
+  ylab(&quot;General Cognitive Ability&quot;)+
+  annotate(geom = &quot;text&quot;, x=1, y=-2.5,label=paste0(&quot;N = &quot;,nrow(pheno)),color=&quot;#696969&quot;)+
+  theme_bw() +
+  theme(text = element_text(size=12),#, colour=&#39;lemonchiffon4&#39;
+        axis.text.x = element_blank(),
+        axis.text.y = element_text(size=13, colour=&#39;#696969&#39;),
+        axis.title.y = element_text(face=&quot;bold&quot;, colour=&#39;#1A1A1A&#39;, size=17),
+        axis.title.x = element_blank(),
+        axis.line.x = element_blank(),
+        axis.line.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.ticks.y = element_blank(),
+        panel.border = element_blank())
+
+g_plot
+
+##########################
+
+
+#pheno &lt;- data.frame(matrix(nrow=2000,ncol=3))
+#names(pheno) &lt;- c(&quot;IID&quot;,&quot;FID&quot;,&quot;sex&quot;)
+#pheno$IID &lt;- 1:nrow(pheno)
+#pheno$FID &lt;- 1:nrow(pheno)
+#pheno$sex[1:1300] &lt;- 0
+#pheno$sex[1301:nrow(pheno)] &lt;- 1
+
+pheno&lt;-read.table(&quot;sex_pheno.txt&quot;,header=F)
+
+names(pheno) &lt;- c(&quot;IID&quot;,&quot;FID&quot;,&quot;sex&quot;)
+
+# restrict to overlapping participants with brain data
+pheno = merge(pheno, ids, by=&quot;IID&quot;)
+
+## Female = 0
+
+sex_plot&lt;-
+  ggplot(pheno,aes(x=sex))+
+  geom_histogram(binwidth = 1, fill=&quot;#98bdcd&quot;, color=&quot;#1A1A1A&quot;,lwd=1.3)+
+  annotate(geom = &quot;text&quot;, x=0, y=sum(pheno$sex == 0)-2000,label=paste0(sum(pheno$sex == 0),&quot;\nfemales&quot;),color=&quot;#696969&quot;)+
+  annotate(geom = &quot;text&quot;, x=1, y=sum(pheno$sex == 1)-2000,label=paste0(sum(pheno$sex == 1),&quot;\nmales&quot;),color=&quot;#696969&quot;)+
+  ylab(&quot;Males and females (count)&quot;)+
+  theme_bw() +
+  theme(text = element_text(size=12),#, colour=&#39;lemonchiffon4&#39;
+        axis.text.x = element_blank(),
+        axis.text.y = element_text(size=13, colour=&#39;#696969&#39;),
+        axis.title.y = element_text(face=&quot;bold&quot;, colour=&#39;#1A1A1A&#39;, size=17),
+        axis.title.x = element_blank(),
+        axis.line.x = element_blank(),
+        axis.line.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.ticks.y = element_blank(),
+        panel.border = element_blank())
+
+sex_plot
+
+##########################
+
+pheno&lt;-read.table(&quot;cig_pheno.txt&quot;,header=F)
+
+names(pheno) &lt;- c(&quot;IID&quot;,&quot;FID&quot;,&quot;cig&quot;)
+# restrict to overlapping participants with brain data
+pheno = merge(pheno, ids, by=&quot;IID&quot;)
+
+cig_plot&lt;-
+  ggplot(pheno,aes(x=cig))+
+  geom_histogram(binwidth = 1, fill=&quot;#98bdcd&quot;, color=&quot;#1A1A1A&quot;,lwd=1.3)+
+  ylab(&quot;Cigarette smoking (count)&quot;)+
+  annotate(geom = &quot;text&quot;, x=3.5, y=21000,label=paste0(&quot;N = &quot;, nrow(pheno)),color=&quot;#696969&quot;)+
+  annotate(geom = &quot;text&quot;, x=0, y=sum(pheno$cig == 0)+2500,label=&quot;Never smoked&quot;,color=&quot;#696969&quot;,angle = 90)+
+  annotate(geom = &quot;text&quot;, x=1, y=sum(pheno$cig == 1)+4000,label=&quot;Just tried once or twice&quot;,color=&quot;#696969&quot;,angle = 90)+
+  annotate(geom = &quot;text&quot;, x=2, y=sum(pheno$cig == 2)-2500,label=&quot;Occasionally&quot;,color=&quot;#696969&quot;,angle = 90)+
+  annotate(geom = &quot;text&quot;, x=3, y=sum(pheno$cig == 3)+7000,label=&quot;Regularly - bottom quantile quantity&quot;,color=&quot;#696969&quot;,angle = 90)+
+  annotate(geom = &quot;text&quot;, x=4, y=sum(pheno$cig == 4)+7000,label=&quot;Regularly - second quantile quantity&quot;,color=&quot;#696969&quot;,angle = 90)+
+  annotate(geom = &quot;text&quot;, x=5, y=sum(pheno$cig == 5)+7000,label=&quot;Regularly - third quantile quantity&quot;,color=&quot;#696969&quot;,angle = 90)+
+  annotate(geom = &quot;text&quot;, x=6, y=sum(pheno$cig == 6)+7000,label=&quot;Regularly - top quantile quantity&quot;,color=&quot;#696969&quot;,angle = 90)+
+  theme_bw() +
+  theme(text = element_text(size=12),#, colour=&#39;lemonchiffon4&#39;
+        axis.text.x = element_blank(),
+        axis.text.y = element_text(size=13, colour=&#39;#696969&#39;),
+        axis.title.y = element_text(face=&quot;bold&quot;, colour=&#39;#1A1A1A&#39;, size=17),
+        axis.title.x = element_blank(),
+        axis.line.x = element_blank(),
+        axis.line.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.ticks.y = element_blank(),
+        panel.border = element_blank())
+
+cig_plot
+
+##########################
+
+pheno&lt;-read.table(&quot;edu_pheno.txt&quot;,header=F)
+
+names(pheno) &lt;- c(&quot;IID&quot;,&quot;FID&quot;,&quot;edu&quot;)
+
+# restrict to overlapping participants with brain data
+pheno = merge(pheno, ids, by=&quot;IID&quot;)
+
+edu_plot&lt;-
+  ggplot(pheno,aes(x=edu))+
+  geom_histogram(binwidth = 1, fill=&quot;#98bdcd&quot;, color=&quot;#1A1A1A&quot;,lwd=1.3)+
+  ylab(&quot;Education (count)&quot;)+
+  theme_bw() +
+  annotate(geom = &quot;text&quot;, x=0, y=sum(pheno$edu == 0)+4000,label=&quot;None of the above&quot;,color=&quot;#696969&quot;,angle = 90)+
+  annotate(geom = &quot;text&quot;, x=1, y=sum(pheno$edu == 1)+6000,label=&quot;Other professional qualifications&quot;,color=&quot;#696969&quot;,angle = 90)+
+  annotate(geom = &quot;text&quot;, x=2, y=sum(pheno$edu == 2)+6000,label=&quot;NVQ or HND or HNC or equivalent&quot;,color=&quot;#696969&quot;,angle = 90)+
+  annotate(geom = &quot;text&quot;, x=3, y=sum(pheno$edu == 3)+4000,label=&quot;CSEs or equivalent&quot;,color=&quot;#696969&quot;,angle = 90)+
+  annotate(geom = &quot;text&quot;, x=4, y=sum(pheno$edu == 4)+5500,label=&quot;O levels/GCSEs or equivalent&quot;,color=&quot;#696969&quot;,angle = 90)+
+  annotate(geom = &quot;text&quot;, x=5, y=sum(pheno$edu == 5)+5500,label=&quot;A levels/AS levels or equivalent&quot;,color=&quot;#696969&quot;,angle = 90)+
+  annotate(geom = &quot;text&quot;, x=6, y=sum(pheno$edu == 6)-5000,label=&quot;College or University degree&quot;,color=&quot;#696969&quot;,angle = 90)+
+  annotate(geom = &quot;text&quot;, x=3.5, y=21000,label=paste0(&quot;N = &quot;, nrow(pheno)),color=&quot;#696969&quot;)+
+  theme(text = element_text(size=12),#, colour=&#39;lemonchiffon4&#39;
+        axis.text.x = element_blank(),
+        axis.text.y = element_text(size=13, colour=&#39;#696969&#39;),
+        axis.title.y = element_text(face=&quot;bold&quot;, colour=&#39;#1A1A1A&#39;, size=17),
+        axis.title.x = element_blank(),
+        axis.line.x = element_blank(),
+        axis.line.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.ticks.y = element_blank(),
+        panel.border = element_blank())
+
+edu_plot
+
+
+##########################
+
+pheno&lt;-read.table(&quot;alc_pheno.txt&quot;,header=F)
+
+names(pheno) &lt;- c(&quot;IID&quot;,&quot;FID&quot;,&quot;alc&quot;)
+# restrict to overlapping participants with brain data
+pheno = merge(pheno, ids, by=&quot;IID&quot;)
+
+alc_plot&lt;-
+  ggplot(pheno,aes(x=alc))+
+  geom_histogram(binwidth = 1, fill=&quot;#98bdcd&quot;, color=&quot;#1A1A1A&quot;,lwd=1.3)+
+  ylab(&quot;Alcohol (count)&quot;)+
+  annotate(geom = &quot;text&quot;, x=1.5, y=10000,label=paste0(&quot;N = &quot;, nrow(pheno)),color=&quot;#696969&quot;)+
+  annotate(geom = &quot;text&quot;, x=0, y=sum(pheno$alc == 0)+2000,label=&quot;Never drinking&quot;,color=&quot;#696969&quot;,angle = 90)+
+  annotate(geom = &quot;text&quot;, x=1, y=sum(pheno$alc == 1)+2000,label=&quot;Monthly or less&quot;,color=&quot;#696969&quot;,angle = 90)+
+  annotate(geom = &quot;text&quot;, x=2, y=sum(pheno$alc == 2)+2000,label=&quot;2 to 4 times a month&quot;,color=&quot;#696969&quot;,angle = 90)+
+  annotate(geom = &quot;text&quot;, x=3, y=sum(pheno$alc == 3)-2000,label=&quot;2 to 3 times a week&quot;,color=&quot;#696969&quot;,angle = 90)+
+  annotate(geom = &quot;text&quot;, x=4, y=sum(pheno$alc == 4)-2000,label=&quot;4 or more times a week&quot;,color=&quot;#696969&quot;,angle = 90)+
+  theme_bw() +
+  theme(text = element_text(size=12),#, colour=&#39;lemonchiffon4&#39;
+        axis.text.x = element_blank(),
+        axis.text.y = element_text(size=13, colour=&#39;#696969&#39;),
+        axis.title.y = element_text(face=&quot;bold&quot;, colour=&#39;#1A1A1A&#39;, size=17),
+        axis.title.x = element_blank(),
+        axis.line.x = element_blank(),
+        axis.line.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.ticks.y = element_blank(),
+        panel.border = element_blank())
+
+alc_plot
+
+##########################
+library(cowplot)
+library(gridExtra)
+
+tiff(&quot;~/Comparing labelling protocols/results/pheno/cont_plots.tiff&quot;, width = 15, height = 5, units = &#39;in&#39;, res=1000)
+
+plot_grid(age_plot, bmi_plot, g_plot, nrow = 1, ncol = 3, labels=c(&quot;A&quot;,&quot;B&quot;,&quot;C&quot;), label_colour = &quot;#696969&quot;)
+
+dev.off()
+
+tiff(&quot;~/Comparing labelling protocols/results/pheno/cat_plots.tiff&quot;, width = 15, height = 5, units = &#39;in&#39;, res=1000)
+
+plot_grid(sex_plot, cig_plot, edu_plot, alc_plot, nrow = 1, ncol = 4, labels=c(&quot;D&quot;,&quot;E&quot;,&quot;F&quot;,&quot;G&quot;), label_colour = &quot;#696969&quot;)
+
+dev.off()</code></pre>
+<p><br> <br></p>
+<div id="continuous-phenotypes" class="section level2">
+<h2>Continuous phenotypes</h2>
+<p><img src="other_images/cont_plots.PNG" /></p>
+</div>
+<div id="categorical-phenotypes" class="section level2">
+<h2>Categorical phenotypes</h2>
+<p><img src="other_images/cat_plots.PNG" /></p>
+<p><br> <br></p>
+</div>
+</div>
+<div id="morphometricity-estimates" class="section level1">
+<h1>2. Morphometricity estimates</h1>
+<pre class="r"><code>#### plot morph results for empirical atlases 
+## using geom_point &amp; geom_errorbar
+## 
+setwd(&quot;~/Comparing labelling protocols/results/empirical&quot;)
+
+library(ggplot2)
+
+
+#est = read.table(&quot;morph_results_QCed.table&quot;, header=T)
+est = read.table(&quot;morph_results_QCed_vertices.table&quot;, header=T)
+randomest = read.table(&quot;morph_results_randomaparc.table&quot;, header=T)
+est = rbind(est, randomest)
+
+# change measurement type names from randomaparc
+est$meas[which(est$meas == &quot;area&quot;)] = &quot;SurfArea&quot;
+est$meas[which(est$meas == &quot;volume&quot;)] = &quot;GrayVol&quot;
+est$meas[which(est$meas == &quot;thickness&quot;)] = &quot;ThickAvg&quot;
+
+names(est)[which(names(est) == &quot;meas&quot;)] = &quot;Measurement type&quot;
+
+# add to data.frame how any areas each atlas has
+est$num_roi = 0
+est$num_roi[which(est$atlas == &quot;DK&quot;)] = 68
+est$num_roi[which(est$atlas == &quot;Des&quot;)] = 148
+est$num_roi[which(est$atlas == &quot;Glasser&quot;)] = 360
+est$num_roi[which(est$atlas == &quot;Gordon&quot;)] = 333
+est$num_roi[which(est$atlas == &quot;Schaefer&quot;)] = 500
+est$num_roi[which(est$atlas == &quot;Yeo&quot;)] = 34
+est$num_roi[which(est$atlas == &quot;JulichBrain&quot;)] = 273
+est$num_roi[which(est$atlas == &quot;10000randomROIs&quot;)] = 10000
+est$num_roi[which(est$atlas == &quot;1000randomROIs&quot;)] = 1000
+est$num_roi[which(est$atlas == &quot;50000randomROIs&quot;)] = 50000
+est$num_roi[which(est$atlas == &quot;5000randomROIs&quot;)] = 5000
+est$num_roi[which(est$atlas == &quot;vertices&quot;)] = 300000
+
+# get numeric array to idnicate where to plot x axis
+est$num_plot = 0
+est$num_plot[which(est$atlas == &quot;DK&quot;)] = 2
+est$num_plot[which(est$atlas == &quot;Des&quot;)] = 3
+est$num_plot[which(est$atlas == &quot;Glasser&quot;)] = 6
+est$num_plot[which(est$atlas == &quot;Gordon&quot;)] = 5
+est$num_plot[which(est$atlas == &quot;Schaefer&quot;)] = 7
+est$num_plot[which(est$atlas == &quot;Yeo&quot;)] = 1
+est$num_plot[which(est$atlas == &quot;JulichBrain&quot;)] = 4
+est$num_plot[which(est$atlas == &quot;1000randomROIs&quot;)] = 8
+est$num_plot[which(est$atlas == &quot;5000randomROIs&quot;)] = 9
+est$num_plot[which(est$atlas == &quot;10000randomROIs&quot;)] = 10
+est$num_plot[which(est$atlas == &quot;50000randomROIs&quot;)] = 11
+est$num_plot[which(est$atlas == &quot;vertices&quot;)] = 12
+
+pheno_loop = c(&quot;age&quot;, &quot;sex&quot;, &quot;gpheno&quot;, &quot;bmi&quot;, &quot;alc&quot;, &quot;edu&quot;, &quot;cig&quot;)
+
+save=list()
+
+counter=0
+
+for(i in pheno_loop){
+  # define input pheno &amp; Measurement type
+  pheno = i
+  
+  counter = counter+1
+  
+  if(pheno == &quot;sex&quot; | pheno == &quot;age&quot;){
+    title=paste0(toupper(substr(pheno, 1,1)),substr(pheno, 2,nchar(pheno)))
+  }else if(pheno == &quot;bmi&quot;){
+    title=paste0(&quot;Body Mass Index&quot;)
+  }else if(pheno == &quot;alc&quot;){
+    title=paste0(&quot;Alcohol consumption&quot;)
+  }else if(pheno == &quot;cig&quot;){
+    title=paste0(&quot;Cigarette consumption&quot;)
+  }else if(pheno == &quot;edu&quot;){
+    title=paste0(&quot;Education&quot;)
+  }else if(pheno == &quot;gpheno&quot;){
+    title=paste0(&quot;General cognitive ability&quot;)
+  }
+  
+  title_size=22
+  other_size=20
+  axis_text=16
+  
+  datasubset = est[which(est$pheno == i) ,]
+  
+  morphplot &lt;- ggplot(data=datasubset, mapping= aes(y = morph, x = num_plot, group = `Measurement type`, colour = `Measurement type`))+
+    geom_point(mapping = aes(y = morph, x = num_plot), size=2.5, alpha = 1, position=position_dodge(width=0.3))+
+    geom_errorbar(aes(ymin = ci_l,
+                      ymax = ci_u, x = num_plot), size=.6, alpha = 1, position=position_dodge(width=0.3))+
+    scale_color_manual(values = c(&quot;#0492C2&quot;, &quot;#63C5DA&quot;,&quot;#016064&quot;))+
+    #xlab(&quot;Number of ROIs&quot;)+
+    ylab(&quot;Morphometricity (%)&quot;)+
+    ggtitle(title)+
+    scale_x_discrete(limits=c(&quot;34&quot;,&quot;68&quot;,&quot;148&quot;,&quot;273&quot;,&quot;333&quot;,&quot;360&quot;,&quot;500&quot;,&quot;1k&quot;,&quot;5k&quot;,&quot;10k&quot;,&quot;50k&quot;,&quot;300k&quot;))+ ##unique(est$num_roi)
+    scale_y_discrete(limits = c(0,10,20,30,40,50,60,70))+
+    ylim(0,max(datasubset$ci_u))+
+    theme_bw()+
+    #scale_x_discrete(labels= c(&quot;34&quot;,&quot;68&quot;,&quot;148&quot;,&quot;273&quot;,&quot;333&quot;,&quot;360&quot;,&quot;500&quot;,&quot;1000&quot;,&quot;5000&quot;,&quot;10.000&quot;,&quot;50.000&quot;))+
+    theme(text = element_text(size=other_size),
+          axis.text.x = element_text(size=axis_text, colour=&#39;#696969&#39;),
+          axis.text.y = element_text(size=axis_text, colour=&#39;#696969&#39;),
+          plot.title = element_text(face=&quot;bold&quot;, colour=&#39;#1A1A1A&#39;, size=title_size, hjust = 0.5),
+          axis.title.y = element_text(face=&quot;bold&quot;, colour=&#39;#1A1A1A&#39;, size=20, angle=90),
+          axis.title.x = element_blank(),
+          axis.line.x = element_blank(),
+          axis.line.y = element_blank(),
+          axis.ticks.x = element_blank(),
+          axis.ticks.y = element_blank(),
+          panel.border = element_blank())
+  #scale_color_manual(name=&#39;Parcellations&#39;,
+  #                   breaks=c(&#39;Functional&#39;, &#39;Structural&#39;, &#39;Multi-modal&#39;),
+  #                   values=c(&#39;Functional&#39;=&#39;#E69F00&#39;, &#39;Structural&#39;=&#39;#56B4E9&#39;, &#39;Multi-modal&#39;=&#39;#009E73&#39;))
+  
+  #if(counter == 1 | counter == 4){
+  #  morphplot+ylab(&quot;Morphometricity (%)&quot;)+ theme(axis.title.y = element_text(face=&quot;bold&quot;, colour=&#39;#1A1A1A&#39;, size=20, angle=90))
+  # }
+  
+  if(counter &lt; length(pheno_loop)){
+    morphplot = morphplot + theme(legend.position = &quot;none&quot;)+xlab(&quot;Number of ROIs&quot;)+ theme(axis.title.x = element_text(face=&quot;bold&quot;, colour=&#39;#1A1A1A&#39;, size=20)) 
+  }
+  
+  save[[i]] &lt;- morphplot
+}
+
+# formatting
+#save[[&quot;age&quot;]] &lt;- save[[&quot;age&quot;]]+ylab(&quot;Morphometricity (%)&quot;)+ theme(axis.title.y = element_text(face=&quot;bold&quot;, colour=&#39;#1A1A1A&#39;, size=20, angle=90))
+
+#save[[&quot;cig&quot;]] &lt;- save[[&quot;cig&quot;]]+xlab(&quot;Number of ROIs&quot;)+theme(axis.title.x = element_text(face=&quot;bold&quot;, colour=&#39;#1A1A1A&#39;, size=20)) 
+
+for(i in pheno_loop){
+  tiff(paste0(&quot;~/Comparing labelling protocols/results/plots/morph_&quot;, i, &quot;.tiff&quot;), width = 8, height = 4, units = &quot;in&quot;, pointsize = 2, bg=&quot;white&quot;, res=800)
+  save[[i]]
+  dev.off()
+}
+
+
+### cig/ last pheno has to have more width
+tiff(paste0(&quot;~/Comparing labelling protocols/results/plots/morph_&quot;, &quot;cig&quot;, &quot;.tiff&quot;), width = 10.5, height = 4, units = &quot;in&quot;, pointsize = 2, bg=&quot;white&quot;, res=800)
+save[[&quot;cig&quot;]]
+dev.off()
+
+#save(save, &quot;~/Comparing labelling protocols/results/morph.RData&quot;)</code></pre>
+<p><br> <br></p>
+<p><img src="other_images/morph.PNG" /></p>
+<p><br> <br></p>
+<div id="bic" class="section level2">
+<h2>BIC</h2>
+<p>Is there a relationship between model fit and number of ROIs?</p>
+<p>We calculated BIC as BIC = log(n)*p – 2log(L) where the first part of the equation denotes the model complexity, and the second part denotes model performance. The smaller the BIC, the better the model does, and the more it is considered to approximate the truth. The BIC can only be used for model comparison if the same N was used, which is the case in this data.</p>
+<pre class="r"><code>setwd(&quot;C:/Users/k1894405/OneDrive - King&#39;s College London/PhD/Projects/Comparing labelling protocols/results/empirical&quot;)
+
+est = read.table(&quot;morph_results_QCed_vertices.table&quot;, header=T)
+randomest = read.table(&quot;morph_results_randomaparc.table&quot;, header=T)
+est = rbind(est, randomest)
+
+# rank atlases based on number of ROIs
+est$num_plot = 0
+est$num_plot[which(est$atlas == &quot;DK&quot;)] = 2
+est$num_plot[which(est$atlas == &quot;Des&quot;)] = 3
+est$num_plot[which(est$atlas == &quot;Glasser&quot;)] = 6
+est$num_plot[which(est$atlas == &quot;Gordon&quot;)] = 5
+est$num_plot[which(est$atlas == &quot;Schaefer&quot;)] = 7
+est$num_plot[which(est$atlas == &quot;Yeo&quot;)] = 1
+est$num_plot[which(est$atlas == &quot;JulichBrain&quot;)] = 4
+est$num_plot[which(est$atlas == &quot;1000randomROIs&quot;)] = 8
+est$num_plot[which(est$atlas == &quot;5000randomROIs&quot;)] = 9
+est$num_plot[which(est$atlas == &quot;10000randomROIs&quot;)] = 10
+est$num_plot[which(est$atlas == &quot;50000randomROIs&quot;)] = 11
+est$num_plot[which(est$atlas == &quot;vertices&quot;)] = 12
+
+
+# change measurement type names from randomaparc
+est$meas[which(est$meas == &quot;area&quot;)] = &quot;SurfArea&quot;
+est$meas[which(est$meas == &quot;volume&quot;)] = &quot;GrayVol&quot;
+est$meas[which(est$meas == &quot;thickness&quot;)] = &quot;ThickAvg&quot;
+
+names(est)[which(names(est) == &quot;meas&quot;)] = &quot;Measurement type&quot;
+
+save=list()
+
+for(i in unique(est$pheno)){
+    # get subset of pheno
+    subset=est[which(est$pheno == i),]
+    
+    if(i == &quot;sex&quot; | i == &quot;age&quot;){
+    title=paste0(toupper(substr(i, 1,1)),substr(i, 2,nchar(i)))
+  }else if(i == &quot;bmi&quot;){
+    title=paste0(&quot;Body Mass Index&quot;)
+  }else if(i == &quot;alc&quot;){
+    title=paste0(&quot;Alcohol consumption&quot;)
+  }else if(i == &quot;cig&quot;){
+    title=paste0(&quot;Cigarette consumption&quot;)
+  }else if(i == &quot;edu&quot;){
+    title=paste0(&quot;Education&quot;)
+  }else if(i == &quot;gi&quot;){
+    title=paste0(&quot;General cognitive ability&quot;)
+  }
+      
+    BIC_plot=ggplot(data = subset, mapping= aes(y = BIC, x = num_plot, group = `Measurement type`, colour = `Measurement type`))+
+      geom_point(shape=18, size=3)+
+      scale_color_manual(values = c(&quot;#0492C2&quot;, &quot;#63C5DA&quot;,&quot;#016064&quot;))+
+      ggtitle(title)+
+      ylab(&quot;BIC&quot;)+
+      xlab(&quot;Atlases&quot;)+
+      scale_x_discrete(limits=c(&quot;Yeo&quot;,&quot;DK&quot;,&quot;Des&quot;,&quot;JulichBrain&quot;,&quot;Gordon&quot;,&quot;Glasser&quot;,&quot;Schaefer&quot;,&quot;random 1k&quot;,&quot;random 5k&quot;,&quot;random 10k&quot;,&quot;random 50k&quot;,&quot;Vertices&quot;))+
+      theme_bw()+
+      theme(text = element_text(size=20),
+          axis.text.x = element_text(size=16, colour=&#39;#696969&#39;, angle = 90, vjust=0.2, hjust = 0.1),
+          axis.text.y = element_text(size=16, colour=&#39;#696969&#39;),
+          plot.title = element_text(face=&quot;bold&quot;, colour=&#39;#1A1A1A&#39;, size=22, hjust = 0.5),
+          axis.title.y = element_text(face=&quot;bold&quot;, colour=&#39;#1A1A1A&#39;, size=20, angle=90),
+          axis.title.x = element_text(face=&quot;bold&quot;, colour=&#39;#1A1A1A&#39;, size=20),
+          axis.line.x = element_blank(),
+          axis.line.y = element_blank(),
+          axis.ticks.x = element_blank(),
+          axis.ticks.y = element_blank(),
+          panel.border = element_blank())
+    
+    save[[i]] &lt;- BIC_plot
+}
+
+i = &quot;age&quot;
+tiff(paste0(&quot;C:/Users/k1894405/OneDrive - King&#39;s College London/PhD/Projects/Comparing labelling protocols/results/plots/BIC_&quot;, i, &quot;.tiff&quot;), width = 10, height = 5, units = &quot;in&quot;, pointsize = 2, bg=&quot;white&quot;, res=800)
+save[[i]]
+dev.off()
+
+i = &quot;alc&quot;
+tiff(paste0(&quot;C:/Users/k1894405/OneDrive - King&#39;s College London/PhD/Projects/Comparing labelling protocols/results/plots/BIC_&quot;, i, &quot;.tiff&quot;), width = 10, height = 5, units = &quot;in&quot;, pointsize = 2, bg=&quot;white&quot;, res=800)
+save[[i]]
+dev.off()
+
+i = &quot;bmi&quot;
+tiff(paste0(&quot;C:/Users/k1894405/OneDrive - King&#39;s College London/PhD/Projects/Comparing labelling protocols/results/plots/BIC_&quot;, i, &quot;.tiff&quot;), width = 10, height = 5, units = &quot;in&quot;, pointsize = 2, bg=&quot;white&quot;, res=800)
+save[[i]]
+dev.off()
+
+i = &quot;cig&quot;
+tiff(paste0(&quot;C:/Users/k1894405/OneDrive - King&#39;s College London/PhD/Projects/Comparing labelling protocols/results/plots/BIC_&quot;, i, &quot;.tiff&quot;), width = 10, height = 5, units = &quot;in&quot;, pointsize = 2, bg=&quot;white&quot;, res=800)
+save[[i]]
+dev.off()
+
+i = &quot;edu&quot;
+tiff(paste0(&quot;C:/Users/k1894405/OneDrive - King&#39;s College London/PhD/Projects/Comparing labelling protocols/results/plots/BIC_&quot;, i, &quot;.tiff&quot;), width = 10, height = 5, units = &quot;in&quot;, pointsize = 2, bg=&quot;white&quot;, res=800)
+save[[i]]
+dev.off()
+
+i = &quot;gpheno&quot;
+tiff(paste0(&quot;C:/Users/k1894405/OneDrive - King&#39;s College London/PhD/Projects/Comparing labelling protocols/results/plots/BIC_&quot;, i, &quot;.tiff&quot;), width = 10, height = 5, units = &quot;in&quot;, pointsize = 2, bg=&quot;white&quot;, res=800)
+save[[i]]
+dev.off()
+
+i = &quot;sex&quot;
+tiff(paste0(&quot;C:/Users/k1894405/OneDrive - King&#39;s College London/PhD/Projects/Comparing labelling protocols/results/plots/BIC_&quot;, i, &quot;.tiff&quot;), width = 10, height = 5, units = &quot;in&quot;, pointsize = 2, bg=&quot;white&quot;, res=800)
+save[[i]]
+dev.off()</code></pre>
+</div>
+</div>
+<div id="added-morphometricity-likelihood-ratio-tests" class="section level1">
+<h1>3. Added morphometricity (Likelihood ratio tests)</h1>
+<p>This is probably not the right markdown document, but I’m lazy so for now it will be in the results from the random atlases</p>
+<p>Notes:</p>
+<p>We conduct the LRT analyses to figure out how much value it adds for the morphometricity estimate if we add a more complex atlas to the less complex atlas. atlas1+atlas2 vs. atlas1</p>
+<p>We calculated the LRT results by testing whether dropping the second atlas from the analysis significantly improves the morphometricity estimate</p>
+<p>The heatmap below will indicate the difference in variance explained (%) by the atlas1+atlas2 minus the variance explained by atlas1 only. The models in which we got a significant improvement are marked with a *</p>
+<p>We will have heatmaps for each measurement type and for each phenotype.</p>
+<p>Link to the code used to produce this table!</p>
+<pre class="r"><code>library(ggplot2)
+library(cowplot)
+
+# read in LRT results
+LRT=read.table(paste0(getwd(),&quot;/LRT/LRT_results.table&quot;), header=T)
+
+# read in morph results
+morph=read.table(paste0(getwd(),&quot;/empirical/morph_results_QCed_vertices.table&quot;), header=T)
+names(morph)[which(names(morph) == &quot;atlas&quot;)] &lt;- &quot;atlas1&quot;
+# change measurement type names from randomaparc
+morph$meas[which(morph$meas == &quot;area&quot;)] = &quot;SurfArea&quot;
+morph$meas[which(morph$meas == &quot;volume&quot;)] = &quot;GrayVol&quot;
+morph$meas[which(morph$meas == &quot;thickness&quot;)] = &quot;ThickAvg&quot;
+
+# work out the difference between sum_G &amp; V_G1
+LRT$sum_G = round(LRT$sum_G, digits=2)*100
+
+save=list()
+
+# iterate over measurement type &amp; phenotype
+for(i in unique(LRT$meas)){
+
+  for(j in unique(LRT$pheno)){
+      # subset the LRT data frame 
+      subset=LRT[which(LRT$meas == i &amp; LRT$pheno == j),c(&quot;atlas1&quot;,&quot;atlas2&quot;,&quot;sum_G&quot;)]
+      subset$morph = NA
+      
+      # subset morph data frame
+      subset_morph = morph[which(morph$meas == i &amp; morph$pheno == j),c(&quot;atlas1&quot;,&quot;morph&quot;)]
+      subset_morph$atlas2 &lt;- subset_morph$atlas1
+      subset_morph$sum_G = NA
+      subset_morph = subset_morph[,c(&quot;atlas1&quot;,&quot;atlas2&quot;,&quot;sum_G&quot;,&quot;morph&quot;)]
+      subset_morph$morph = round(subset_morph$morph, digits = 0)
+      
+      # combine data sets
+      subset = rbind(subset, subset_morph)
+      
+      for(x in unique(subset$atlas1)){
+        subset$morph = ifelse(subset$atlas1 == x &amp; subset$atlas2 != x, subset_morph$morph[which(subset_morph$atlas1 == x)], subset$morph)
+      }
+
+      subset$diff = round(subset$sum_G - subset$morph, digits=2)
+      
+      subset$sig = ifelse(!is.na(subset$sum_G),paste0(subset$diff, &quot;%\n(&quot;,subset$sum_G,&quot;%)&quot;), paste0(subset$morph,&quot;%&quot;))
+
+      
+      # plot heatmap
+      
+
+      # order to have smaller atlas first
+      subset$ordered1 = factor(subset$atlas1, levels=c(&quot;Yeo&quot;,&quot;DK&quot;,&quot;Des&quot;,&quot;JulichBrain&quot;,&quot;Gordon&quot;,&quot;Glasser&quot;,&quot;Schaefer&quot;,&quot;vertices&quot;))
+      subset$ordered2 = factor(subset$atlas2, levels=c(&quot;Yeo&quot;,&quot;DK&quot;,&quot;Des&quot;,&quot;JulichBrain&quot;,&quot;Gordon&quot;,&quot;Glasser&quot;,&quot;Schaefer&quot;,&quot;vertices&quot;))
+      
+      # chose colors depending on measurement type
+      if(i == &quot;GrayVol&quot;){color = &quot;#63C5DA&quot;}
+      if(i == &quot;SurfArea&quot;){color = &quot;#0492C2&quot;}
+      if(i == &quot;ThickAvg&quot;){color = &quot;#016064&quot;}
+      
+      #63C5DA GrayVol
+      #0492C2 SurfArea
+      #016064 ThickAvg
+      if(i == &quot;SurfArea&quot;){
+          title = paste0(&quot;Non-brain trait = &quot;,j)
+        }else{
+          title = &quot;&quot;
+      }
+        
+      
+      subtitle = paste0(&quot;Measurement type = &quot;,i)
+      
+      map = ggplot(subset, aes(ordered2, ordered1)) +
+        geom_tile(aes(fill = diff), colour = &quot;white&quot;) +
+        scale_fill_gradient(low = &quot;white&quot;, high = color,breaks=c(0,10,20,30,40,50,60,70))+
+        theme_minimal()+ 
+        xlab(&quot;Higher dimensional atlas&quot;)+
+        #ylab(&quot;Atlas with fewer ROIs&quot;)+
+        ylab(&quot;&quot;)+
+        ggtitle(title, subtitle = subtitle)+
+        theme(legend.position=&quot;top&quot;,legend.justification=&quot;right&quot;,
+        plot.title = element_text(face=&quot;bold&quot;, colour=&#39;#1A1A1A&#39;, size=18),
+        axis.text.x = element_text(angle = 45, vjust=0.6))+
+        labs(fill = &quot;Total added\nmorpho-\nmetricity&quot;)+
+        geom_text(aes(ordered2, ordered1,label=sig),color=&quot;black&quot;,size=3)
+      
+      
+      plot_name=paste0(i,&quot;_&quot;,j)
+      
+      save[[plot_name]] &lt;- map
+  }
+}
+
+i=&quot;age&quot;
+tiff(paste0(&quot;C:/Users/k1894405/OneDrive - King&#39;s College London/PhD/Projects/Comparing labelling protocols/results/plots/added_morph_&quot;, i, &quot;.tiff&quot;), width = 12, height = 5, units = &quot;in&quot;, pointsize = 2, bg=&quot;white&quot;, res=800)
+
+plot_grid(save[[paste0(&quot;GrayVol_&quot;,i)]], save[[paste0(&quot;SurfArea_&quot;,i)]], save[[paste0(&quot;ThickAvg_&quot;,i)]], ncol=3)
+
+dev.off()
+
+i=&quot;sex&quot;
+tiff(paste0(&quot;C:/Users/k1894405/OneDrive - King&#39;s College London/PhD/Projects/Comparing labelling protocols/results/plots/added_morph_&quot;, i, &quot;.tiff&quot;), width = 12, height = 5, units = &quot;in&quot;, pointsize = 2, bg=&quot;white&quot;, res=800)
+
+plot_grid(save[[paste0(&quot;GrayVol_&quot;,i)]], save[[paste0(&quot;SurfArea_&quot;,i)]], save[[paste0(&quot;ThickAvg_&quot;,i)]], ncol=3)
+
+dev.off()
+
+
+i=&quot;gpheno&quot;
+tiff(paste0(&quot;C:/Users/k1894405/OneDrive - King&#39;s College London/PhD/Projects/Comparing labelling protocols/results/plots/added_morph_&quot;, i, &quot;.tiff&quot;), width = 12, height = 5, units = &quot;in&quot;, pointsize = 2, bg=&quot;white&quot;, res=800)
+
+plot_grid(save[[paste0(&quot;GrayVol_&quot;,i)]], save[[paste0(&quot;SurfArea_&quot;,i)]], save[[paste0(&quot;ThickAvg_&quot;,i)]], ncol=3)
+
+dev.off()
+
+
+i=&quot;bmi&quot;
+tiff(paste0(&quot;C:/Users/k1894405/OneDrive - King&#39;s College London/PhD/Projects/Comparing labelling protocols/results/plots/added_morph_&quot;, i, &quot;.tiff&quot;), width = 12, height = 5, units = &quot;in&quot;, pointsize = 2, bg=&quot;white&quot;, res=800)
+
+plot_grid(save[[paste0(&quot;GrayVol_&quot;,i)]], save[[paste0(&quot;SurfArea_&quot;,i)]], save[[paste0(&quot;ThickAvg_&quot;,i)]], ncol=3)
+
+dev.off()
+
+i=&quot;edu&quot;
+tiff(paste0(&quot;C:/Users/k1894405/OneDrive - King&#39;s College London/PhD/Projects/Comparing labelling protocols/results/plots/added_morph_&quot;, i, &quot;.tiff&quot;), width = 12, height = 5, units = &quot;in&quot;, pointsize = 2, bg=&quot;white&quot;, res=800)
+
+plot_grid(save[[paste0(&quot;GrayVol_&quot;,i)]], save[[paste0(&quot;SurfArea_&quot;,i)]], save[[paste0(&quot;ThickAvg_&quot;,i)]], ncol=3)
+
+dev.off()
+
+
+i=&quot;alc&quot;
+tiff(paste0(&quot;C:/Users/k1894405/OneDrive - King&#39;s College London/PhD/Projects/Comparing labelling protocols/results/plots/added_morph_&quot;, i, &quot;.tiff&quot;), width = 12, height = 5, units = &quot;in&quot;, pointsize = 2, bg=&quot;white&quot;, res=800)
+
+plot_grid(save[[paste0(&quot;GrayVol_&quot;,i)]], save[[paste0(&quot;SurfArea_&quot;,i)]], save[[paste0(&quot;ThickAvg_&quot;,i)]], ncol=3)
+
+dev.off()
+
+
+i=&quot;cig&quot;
+tiff(paste0(&quot;C:/Users/k1894405/OneDrive - King&#39;s College London/PhD/Projects/Comparing labelling protocols/results/plots/added_morph_&quot;, i, &quot;.tiff&quot;), width = 12, height = 5, units = &quot;in&quot;, pointsize = 2, bg=&quot;white&quot;, res=800)
+
+plot_grid(save[[paste0(&quot;GrayVol_&quot;,i)]], save[[paste0(&quot;SurfArea_&quot;,i)]], save[[paste0(&quot;ThickAvg_&quot;,i)]], ncol=3)
+
+dev.off()</code></pre>
+<p><br> <br></p>
+<div id="descriptives-of-added-morphometricity" class="section level2">
+<h2>Descriptives of added morphometricity</h2>
+<pre class="r"><code># create data.frame to store results
+results = data.frame(matrix(nrow = 3*7, ncol = 8))
+names(results) = c(&quot;meas&quot;,&quot;pheno&quot;,&quot;min&quot;,&quot;max&quot;,&quot;median&quot;,&quot;mean&quot;,&quot;sd&quot;,&quot;non_missing_est&quot;)
+
+
+# get all possible combinations of atlas, meas &amp; pheno
+meas = c(&quot;SurfArea&quot;,&quot;GrayVol&quot;,&quot;ThickAvg&quot;)
+pheno = unique(LRT$pheno)
+results[,c(&quot;meas&quot;,&quot;pheno&quot;)] = expand.grid(meas, pheno)
+
+
+
+  for(j in c(&quot;SurfArea&quot;,&quot;GrayVol&quot;,&quot;ThickAvg&quot;)){
+    
+    for(k in unique(LRT$pheno)){
+      # subset data.frame
+      subset = LRT[which(LRT$meas == j &amp; LRT$pheno == k),]
+      
+       #### store results
+      # mean morph
+      results$mean[which(results$meas == j &amp; results$pheno == k)] = mean(subset$diff, na.rm=T)
+      # sd morph
+      results$sd[which(results$meas == j &amp; results$pheno == k)] = sd(subset$diff, na.rm=T)
+      # min morph
+      results$min[which(results$meas == j &amp; results$pheno == k)] = min(subset$diff, na.rm=T)
+      # max morph
+      results$max[which(results$meas == j &amp; results$pheno == k)] = max(subset$diff, na.rm=T)
+      # median morph
+      results$median[which(results$meas == j &amp; results$pheno == k)] = median(subset$diff, na.rm=T)
+      # store non-missing values
+      results$non_missing_est[which(results$meas == j &amp; results$pheno == k)] = nrow(subset)
+    }
+  }
+
+library(DT)
+datatable(results, rownames=FALSE, filter=&quot;top&quot;,options= list(pageLength=10,scrollX=T), caption = &quot;Descriptive statistics of added morphometricity&quot;)</code></pre>
+<p>This table is stored in an excel sheet using the code below</p>
+<pre class="r"><code># store in Excel sheet</code></pre>
+<p><br> <br></p>
+</div>
+</div>
+<div id="random-distributions-of-morphometricity" class="section level1">
+<h1>4. Random distributions of morphometricity</h1>
+<pre class="r"><code>library(ggplot2)
+library(cowplot)
+library(dplyr)
+library(PupillometryR)
+
+setwd(&quot;~/Comparing labelling protocols/results/nulldistr&quot;)
+
+save=list()
+
+for(i in c(34, 68, 148, 274, 334, 360, 500)){
+
+null = read.table(paste0(&quot;morph_results_&quot;,i,&quot;randomROIs.table&quot;), header=T)
+
+# change measurement type names from randomaparc
+null$meas[which(null$meas == &quot;area&quot;)] = &quot;SurfArea&quot;
+null$meas[which(null$meas == &quot;volume&quot;)] = &quot;GrayVol&quot;
+null$meas[which(null$meas == &quot;thickness&quot;)] = &quot;ThickAvg&quot;
+
+names(null)[which(names(null) == &quot;meas&quot;)] = &quot;Measurement type&quot;
+
+# filter for atlas
+#null = null[which(null$atlas == paste0(i,&quot;randomROIs&quot;)),]
+
+# filter for pheno
+null = null[which(null$pheno ==&quot;age&quot; | null$pheno ==&quot;gpheno&quot; | null$pheno ==&quot;sex&quot;),]
+
+null$pheno[which(null$pheno ==&quot;age&quot;)] = &quot;Age&quot;
+null$pheno[which(null$pheno ==&quot;gpheno&quot;)] = &quot;General\ncognitive\nability&quot;
+null$pheno[which(null$pheno ==&quot;sex&quot;)] = &quot;Sex&quot;
+
+
+title_size=22
+other_size=20
+axis_text=16
+
+
+# get estimates from empitical atlases
+est = read.table(&quot;~/Comparing labelling protocols/results/empirical/morph_results_QCed.table&quot;, header=T)
+# pheno &amp; morph for DK
+if(i == 68){atlas = &quot;DK&quot;}
+if(i == 148){atlas = &quot;Des&quot;}
+if(i == 34){atlas = &quot;Yeo&quot;}
+if(i == 274){atlas = &quot;JulichBrain&quot;}
+if(i == 500){atlas = &quot;Schaefer&quot;}
+if(i == 334){atlas = &quot;Gordon&quot;}
+if(i == 360){atlas = &quot;Glasser&quot;}
+
+
+mu=est[which(est$atlas == atlas),c(&quot;meas&quot;, &quot;morph&quot;, &quot;pheno&quot;)]
+
+GrayVolnum_age = mu$morph[which(mu$meas==&quot;GrayVol&quot; &amp; mu$pheno==&quot;age&quot;)]
+SurfAreanum_age = mu$morph[which(mu$meas==&quot;SurfArea&quot; &amp; mu$pheno==&quot;age&quot;)]
+ThickAvgnum_age = mu$morph[which(mu$meas==&quot;ThickAvg&quot; &amp; mu$pheno==&quot;age&quot;)]
+
+GrayVolnum_sex = mu$morph[which(mu$meas==&quot;GrayVol&quot; &amp; mu$pheno==&quot;sex&quot;)]
+SurfAreanum_sex = mu$morph[which(mu$meas==&quot;SurfArea&quot; &amp; mu$pheno==&quot;sex&quot;)]
+ThickAvgnum_sex = mu$morph[which(mu$meas==&quot;ThickAvg&quot; &amp; mu$pheno==&quot;sex&quot;)]
+
+GrayVolnum_g = mu$morph[which(mu$meas==&quot;GrayVol&quot; &amp; mu$pheno==&quot;gpheno&quot;)]
+SurfAreanum_g = mu$morph[which(mu$meas==&quot;SurfArea&quot; &amp; mu$pheno==&quot;gpheno&quot;)]
+ThickAvgnum_g = mu$morph[which(mu$meas==&quot;ThickAvg&quot; &amp; mu$pheno==&quot;gpheno&quot;)]
+
+title = paste0(i,&quot; random ROIs&quot;)
+  
+random_plot &lt;- ggplot(null, aes(y = morph, x = pheno, color = `Measurement type`, group = interaction(pheno, `Measurement type`))) +
+    ggtitle(title)+
+    geom_boxplot(alpha = 0.1, width=0.75) +
+    geom_point(position = position_dodge(width=0.75),alpha = 0.2, size=2)+
+    scale_color_manual(values=c(&quot;#0492C2&quot;,&quot;#63C5DA&quot;,&quot;#016064&quot;))+
+    theme_bw()+
+    ylab(&quot;Morphometricity estimate (%)&quot;)+
+    theme(text = element_text(size=other_size),
+          axis.text.x = element_text(size=axis_text, colour=&#39;#696969&#39;),
+          axis.text.y = element_text(size=axis_text, colour=&#39;#696969&#39;),
+          plot.title = element_text(face=&quot;bold&quot;, colour=&#39;#1A1A1A&#39;, size=18, hjust = 0.5),
+          axis.title.y = element_text(face=&quot;bold&quot;, colour=&#39;#1A1A1A&#39;, size=18),
+          axis.title.x = element_blank(),
+          axis.line.x = element_blank(),
+          axis.line.y = element_blank(),
+          axis.ticks.x = element_blank(),
+          axis.ticks.y = element_blank(),
+          panel.border = element_blank())+
+    annotate(geom=&quot;point&quot;, y=SurfAreanum_age, x=&quot;Age&quot;, shape=4, color=&quot;red&quot;, size=5, stroke=1.5)+
+    annotate(geom=&quot;point&quot;, y=GrayVolnum_age, x=1-0.25, shape=4, color=&quot;red&quot;, size=5, stroke=1.5)+
+    annotate(geom=&quot;point&quot;, y=ThickAvgnum_age, x=1+0.25, shape=4, color=&quot;red&quot;, size=5, stroke=1.5)+
+    annotate(geom=&quot;point&quot;, y=SurfAreanum_g, x=&quot;General\ncognitive\nability&quot;, shape=4, color=&quot;red&quot;, size=5, stroke=1.5)+
+    annotate(geom=&quot;point&quot;, y=GrayVolnum_g, x=2-0.25, shape=4, color=&quot;red&quot;, size=5, stroke=1.5)+
+    annotate(geom=&quot;point&quot;, y=ThickAvgnum_g, x=2+0.25, shape=4, color=&quot;red&quot;, size=5, stroke=1.5)+
+    annotate(geom=&quot;point&quot;, y=SurfAreanum_sex, x=&quot;Sex&quot;, shape=4, color=&quot;red&quot;, size=5, stroke=1.5)+
+    annotate(geom=&quot;point&quot;, y=GrayVolnum_sex, x=3-0.25, shape=4, color=&quot;red&quot;, size=5, stroke=1.5)+
+    annotate(geom=&quot;point&quot;, y=ThickAvgnum_sex, x=3+0.25, shape=4, color=&quot;red&quot;, size=5, stroke=1.5)
+    
+save[[atlas]] &lt;- random_plot
+}
+
+i = &quot;DK&quot;
+    
+tiff(paste0(&quot;~/Comparing labelling protocols/results/plots/nulldistr_&quot;, i, &quot;.tiff&quot;), width = 8, height = 5, units = &quot;in&quot;, pointsize = 2, bg=&quot;white&quot;, res=800)
+save[[i]]
+dev.off()
+
+i = &quot;Des&quot;
+tiff(paste0(&quot;~/Comparing labelling protocols/results/plots/nulldistr_&quot;, i, &quot;.tiff&quot;), width = 8, height = 5, units = &quot;in&quot;, pointsize = 2, bg=&quot;white&quot;, res=800)
+save[[i]]
+dev.off()
+
+i = &quot;JulichBrain&quot;
+tiff(paste0(&quot;~/Comparing labelling protocols/results/plots/nulldistr_&quot;, i, &quot;.tiff&quot;), width = 8, height = 5, units = &quot;in&quot;, pointsize = 2, bg=&quot;white&quot;, res=800)
+save[[i]]
+dev.off()
+
+i=&quot;Yeo&quot;
+tiff(paste0(&quot;~/Comparing labelling protocols/results/plots/nulldistr_&quot;, i, &quot;.tiff&quot;), width = 8, height = 5, units = &quot;in&quot;, pointsize = 2, bg=&quot;white&quot;, res=800)
+save[[i]]
+dev.off()
+
+i = &quot;Schaefer&quot;
+tiff(paste0(&quot;~/Comparing labelling protocols/results/plots/nulldistr_&quot;, i, &quot;.tiff&quot;), width = 8, height = 5, units = &quot;in&quot;, pointsize = 2, bg=&quot;white&quot;, res=800)
+save[[i]]
+dev.off()
+
+i = &quot;Glasser&quot;
+tiff(paste0(&quot;~/Comparing labelling protocols/results/plots/nulldistr_&quot;, i, &quot;.tiff&quot;), width = 8, height = 5, units = &quot;in&quot;, pointsize = 2, bg=&quot;white&quot;, res=800)
+save[[i]]
+dev.off()
+
+i = &quot;Gordon&quot;
+tiff(paste0(&quot;~/Comparing labelling protocols/results/plots/nulldistr_&quot;, i, &quot;.tiff&quot;), width = 8, height = 5, units = &quot;in&quot;, pointsize = 2, bg=&quot;white&quot;, res=800)
+save[[i]]
+dev.off()</code></pre>
+</div>
+<div id="lasso-regressions" class="section level1">
+<h1>5. LASSO regressions</h1>
+</div>
+
+&nbsp;
+<hr />
+<a href = "https://www.kcl.ac.uk/">
+<p style="text-align: center"><img src="KCL_logo.jpg" href="https://www.kcl.ac.uk/" style="width:70px;height:50px"> 
+</a>
+</p>
+
+<a href = "https://www.kcl.ac.uk/people/anna-furtjes">
+<p style="text-align: center;">By Anna Elisabeth Fürtjes</a></p>
+<p style="text-align: center;"><span style="color: #808080;"><em>anna.furtjes@kcl.ac.uk</em></span></p>
+
+<!-- Add icon library -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+<!-- Add font awesome icons -->
+<p style="text-align: center;">
+    <a href="https://twitter.com/Anna_Furtjes" class="fa fa-twitter"></a>
+</p>
+
+&nbsp;
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.odd').parent('tbody').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open');
+  });
+});
+</script>
+
+<!-- code folding -->
+<script>
+$(document).ready(function () {
+  window.initializeCodeFolding("hide" === "show");
+});
+</script>
+
+<script>
+$(document).ready(function ()  {
+
+    // temporarily add toc-ignore selector to headers for the consistency with Pandoc
+    $('.unlisted.unnumbered').addClass('toc-ignore')
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_');
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

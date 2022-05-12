@@ -1,0 +1,19 @@
+---
+title: "Results: Added morphometricity (LRT)"
+author: "Anna Elisabeth Furtjes"
+highlighter: prettify
+output: 
+  html_document:
+    code_folding: hide
+    theme: spacelab
+    includes:
+      after_body: footer.html
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE, eval = FALSE)
+knitr::opts_knit$set(root.dir = "C:/Users/k1894405/OneDrive - King's College London/PhD/Projects/Comparing labelling protocols/results/LRT")
+```
+
+

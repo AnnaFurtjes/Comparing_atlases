@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+<meta name="author" content="Anna Elisabeth Furtjes" />
+
+
+<title>Results: Added morphometricity (LRT)</title>
+
+<script src="site_libs/header-attrs-2.10/header-attrs.js"></script>
+<script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/spacelab.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<style>h1 {font-size: 34px;}
+       h1.title {font-size: 38px;}
+       h2 {font-size: 30px;}
+       h3 {font-size: 24px;}
+       h4 {font-size: 18px;}
+       h5 {font-size: 16px;}
+       h6 {font-size: 12px;}
+       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
+       pre:not([class]) { background-color: white }</style>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<script src="site_libs/navigation-1.1/codefolding.js"></script>
+<link href="site_libs/highlightjs-9.12.0/default.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+<style type="text/css">code{white-space: pre;}</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+
+
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+pre code {
+  padding: 0;
+}
+</style>
+
+
+<style type="text/css">
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #adb5bd;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script type="text/javascript">
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.tab('show');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+
+  // Navbar adjustments
+  var navHeight = $(".navbar").first().height() + 15;
+  var style = document.createElement('style');
+  var pt = "padding-top: " + navHeight + "px; ";
+  var mt = "margin-top: -" + navHeight + "px; ";
+  var css = "";
+  // offset scroll position for anchor links (for fixed navbar)
+  for (var i = 1; i <= 6; i++) {
+    css += ".section h" + i + "{ " + pt + mt + "}\n";
+  }
+  style.innerHTML = "body {" + pt + "padding-bottom: 40px; }\n" + css;
+  document.head.appendChild(style);
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+<style type="text/css">
+.code-folding-btn { margin-bottom: 4px; }
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+
+
+<div class="navbar navbar-inverse  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">Morphometricity</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="Serious_Pipeline.html">Neuroimaging pre-processing</a>
+</li>
+<li>
+  <a href="index.html">Tab 2</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div id="header">
+
+<div class="btn-group pull-right float-right">
+<button type="button" class="btn btn-default btn-xs btn-secondary btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span>Code</span> <span class="caret"></span></button>
+<ul class="dropdown-menu dropdown-menu-right" style="min-width: 50px;">
+<li><a id="rmd-show-all-code" href="#">Show All Code</a></li>
+<li><a id="rmd-hide-all-code" href="#">Hide All Code</a></li>
+</ul>
+</div>
+
+
+
+<h1 class="title toc-ignore">Results: Added morphometricity (LRT)</h1>
+<h4 class="author">Anna Elisabeth Furtjes</h4>
+
+</div>
+
+
+<div id="lrt-analyses-results" class="section level2">
+<h2>LRT analyses results</h2>
+<p>This is probably not the right markdown document, but I’m lazy so for now it will be in the results from the random atlases</p>
+<p>Notes:</p>
+<p>We conduct the LRT analyses to figure out how much value it adds for the morphometricity estimate if we add a more complex atlas to the less complex atlas. atlas1+atlas2 vs. atlas1</p>
+<p>We calculated the LRT results by testing whether dropping the second atlas from the analysis significantly improves the morphometricity estimate</p>
+<p>The heatmap below will indicate the difference in variance explained (%) by the atlas1+atlas2 minus the variance explained by atlas1 only. The models in which we got a significant improvement are marked with a *</p>
+<p>We will have heatmaps for each measurement type and for each phenotype.</p>
+<pre class="r"><code>library(ggplot2)
+library(cowplot)
+
+#setwd(&quot;C:/Users/k1894405/OneDrive - King&#39;s College London/PhD/Projects/Comparing labelling protocols/results/LRT&quot;)
+
+LRT=read.table(&quot;LRT_results.table&quot;, header=T)
+
+# work out the difference between sum_G &amp; V_G1
+LRT$diff = round(LRT$sum_G - LRT$V_G1, digits=2)
+LRT$sig = ifelse(LRT$p_val &lt; (0.05/28), &quot;*&quot;,&quot;&quot;)
+LRT$sig = paste(LRT$diff, LRT$sig)
+
+save=list()
+
+# iterate over measurement type &amp; phenotype
+for(i in unique(LRT$meas)){
+
+  for(j in unique(LRT$pheno)){
+      # subset the data frame 
+      subset=LRT[which(LRT$meas == i &amp; LRT$pheno == j),]
+      
+      # plot heatmap
+
+      # order to have smaller atlas first
+      subset$ordered1 = factor(subset$atlas1, levels=c(&quot;Yeo&quot;,&quot;DK&quot;,&quot;Des&quot;,&quot;JulichBrain&quot;,&quot;Gordon&quot;,&quot;Glasser&quot;,&quot;Schaefer&quot;,&quot;vertices&quot;))
+      subset$ordered2 = factor(subset$atlas2, levels=c(&quot;Yeo&quot;,&quot;DK&quot;,&quot;Des&quot;,&quot;JulichBrain&quot;,&quot;Gordon&quot;,&quot;Glasser&quot;,&quot;Schaefer&quot;,&quot;vertices&quot;))
+      
+      # chose colors depending on measurement type
+      if(i == &quot;GrayVol&quot;){color = &quot;#63C5DA&quot;}
+      if(i == &quot;SurfArea&quot;){color = &quot;#0492C2&quot;}
+      if(i == &quot;ThickAvg&quot;){color = &quot;#016064&quot;}
+      
+      #63C5DA GrayVol
+      #0492C2 SurfArea
+      #016064 ThickAvg
+      title = paste0(&quot;Phenotype = &quot;,j, &quot;, Measurement type = &quot;,i)
+      
+      map = ggplot(subset, aes(ordered2, ordered1)) +
+        geom_tile(aes(fill = diff), colour = &quot;white&quot;) +
+        scale_fill_gradient(low = &quot;white&quot;, high = color)+
+        theme_minimal()+ 
+        xlab(&quot;Higher dimensional atlas&quot;)+
+        #ylab(&quot;Atlas with fewer ROIs&quot;)+
+        ylab(&quot;&quot;)+
+        ggtitle(title)+
+        theme(legend.position=&quot;top&quot;,legend.justification=&quot;right&quot;)+
+        labs(fill = &quot;% added by\nincluding higher\ndimensional atlas&quot;)+
+        geom_text(aes(ordered2, ordered1,label=sig),color=&quot;black&quot;,size=3)
+      
+      
+      plot_name=paste0(i,&quot;_&quot;,j)
+      
+      save[[plot_name]] &lt;- map
+  }
+}
+
+plot_grid(save[[&quot;GrayVol_age&quot;]], save[[&quot;SurfArea_age&quot;]], save[[&quot;ThickAvg_age&quot;]], ncol=3)</code></pre>
+</div>
+<div id="descriptives-of-added-morphometricity" class="section level2">
+<h2>Descriptives of added morphometricity</h2>
+<pre class="r"><code># create data.frame to store results
+results = data.frame(matrix(nrow = 3*7, ncol = 8))
+names(results) = c(&quot;meas&quot;,&quot;pheno&quot;,&quot;min&quot;,&quot;max&quot;,&quot;median&quot;,&quot;mean&quot;,&quot;sd&quot;,&quot;non_missing_est&quot;)
+
+
+# get all possible combinations of atlas, meas &amp; pheno
+meas = c(&quot;SurfArea&quot;,&quot;GrayVol&quot;,&quot;ThickAvg&quot;)
+pheno = unique(LRT$pheno)
+results[,c(&quot;meas&quot;,&quot;pheno&quot;)] = expand.grid(meas, pheno)
+
+
+
+  for(j in c(&quot;SurfArea&quot;,&quot;GrayVol&quot;,&quot;ThickAvg&quot;)){
+    
+    for(k in unique(LRT$pheno)){
+      # subset data.frame
+      subset = LRT[which(LRT$meas == j &amp; LRT$pheno == k),]
+      
+       #### store results
+      # mean morph
+      results$mean[which(results$meas == j &amp; results$pheno == k)] = mean(subset$diff, na.rm=T)
+      # sd morph
+      results$sd[which(results$meas == j &amp; results$pheno == k)] = sd(subset$diff, na.rm=T)
+      # min morph
+      results$min[which(results$meas == j &amp; results$pheno == k)] = min(subset$diff, na.rm=T)
+      # max morph
+      results$max[which(results$meas == j &amp; results$pheno == k)] = max(subset$diff, na.rm=T)
+      # median morph
+      results$median[which(results$meas == j &amp; results$pheno == k)] = median(subset$diff, na.rm=T)
+      # store non-missing values
+      results$non_missing_est[which(results$meas == j &amp; results$pheno == k)] = nrow(subset)
+    }
+  }
+
+library(DT)
+datatable(results, rownames=FALSE, filter=&quot;top&quot;,options= list(pageLength=10,scrollX=T), caption = &quot;Descriptive statistics of added morphometricity&quot;)</code></pre>
+</div>
+
+&nbsp;
+<hr />
+<a href = "https://www.kcl.ac.uk/">
+<p style="text-align: center"><img src="KCL_logo.jpg" href="https://www.kcl.ac.uk/" style="width:70px;height:50px"> 
+</a>
+</p>
+
+<a href = "https://www.kcl.ac.uk/people/anna-furtjes">
+<p style="text-align: center;">By Anna Elisabeth Fürtjes</a></p>
+<p style="text-align: center;"><span style="color: #808080;"><em>anna.furtjes@kcl.ac.uk</em></span></p>
+
+<!-- Add icon library -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+<!-- Add font awesome icons -->
+<p style="text-align: center;">
+    <a href="https://twitter.com/Anna_Furtjes" class="fa fa-twitter"></a>
+</p>
+
+&nbsp;
+
+
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.odd').parent('tbody').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open');
+  });
+});
+</script>
+
+<!-- code folding -->
+<script>
+$(document).ready(function () {
+  window.initializeCodeFolding("hide" === "show");
+});
+</script>
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

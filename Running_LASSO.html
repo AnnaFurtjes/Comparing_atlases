@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+<meta name="author" content="Anna Elisabeth Furtjes" />
+
+
+<title>Running LASSO regressions</title>
+
+<script src="site_libs/header-attrs-2.10/header-attrs.js"></script>
+<script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/spacelab.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<style>h1 {font-size: 34px;}
+       h1.title {font-size: 38px;}
+       h2 {font-size: 30px;}
+       h3 {font-size: 24px;}
+       h4 {font-size: 18px;}
+       h5 {font-size: 16px;}
+       h6 {font-size: 12px;}
+       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
+       pre:not([class]) { background-color: white }</style>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<script src="site_libs/navigation-1.1/codefolding.js"></script>
+<link href="site_libs/highlightjs-9.12.0/default.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+<style type="text/css">code{white-space: pre;}</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+
+
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+pre code {
+  padding: 0;
+}
+</style>
+
+
+<style type="text/css">
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #adb5bd;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script type="text/javascript">
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.tab('show');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+
+  // Navbar adjustments
+  var navHeight = $(".navbar").first().height() + 15;
+  var style = document.createElement('style');
+  var pt = "padding-top: " + navHeight + "px; ";
+  var mt = "margin-top: -" + navHeight + "px; ";
+  var css = "";
+  // offset scroll position for anchor links (for fixed navbar)
+  for (var i = 1; i <= 6; i++) {
+    css += ".section h" + i + "{ " + pt + mt + "}\n";
+  }
+  style.innerHTML = "body {" + pt + "padding-bottom: 40px; }\n" + css;
+  document.head.appendChild(style);
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+<style type="text/css">
+.code-folding-btn { margin-bottom: 4px; }
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+
+
+<div class="navbar navbar-inverse  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">Morphometricity</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="Serious_Pipeline.html">Neuroimaging pre-processing</a>
+</li>
+<li>
+  <a href="index.html">Tab 2</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div id="header">
+
+<div class="btn-group pull-right float-right">
+<button type="button" class="btn btn-default btn-xs btn-secondary btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span>Code</span> <span class="caret"></span></button>
+<ul class="dropdown-menu dropdown-menu-right" style="min-width: 50px;">
+<li><a id="rmd-show-all-code" href="#">Show All Code</a></li>
+<li><a id="rmd-hide-all-code" href="#">Hide All Code</a></li>
+</ul>
+</div>
+
+
+
+<h1 class="title toc-ignore">Running LASSO regressions</h1>
+<h4 class="author">Anna Elisabeth Furtjes</h4>
+
+</div>
+
+
+<p><br> <br></p>
+<hr />
+<p>Here, we perform LASSO models to obtain ROI-specific effect sizes that can be used to predict individual-level non-brain traits in an independent prediction dataset. We obtain absolute errors as the difference between observed and predicted values for a non-brain trait. To test whether one atlas yielded better prediction accuracy than another, we tested whether there was a statistical difference in absolute errors between two atlases using the Wilcoxon Sign Rank test.</p>
+<p><br> <br></p>
+<div id="lasso-regression" class="section level1">
+<h1>LASSO regression</h1>
+<p>The code below is an R script (<code>LASSO_bigstatsr.R</code>) we use to calculate LASSO models and from which we get individual-level prediction into the phenotype. This script outputs text files with participant IIDs (validation only) and predicted phenotypic values.</p>
+<pre class="r"><code>### Calculate LASSO models
+### Script adapted from 
+### https://github.com/baptisteCD/Brain-LMM/blob/master/RR_9.0_PenalisedRegressionFunction_bigstatsr.R
+### 250GB RAM
+# Load environment
+library(readr)
+library(bigmemory)
+library(doMC)
+library(bigstatsr)
+library(stringr)
+
+
+# Load arguments
+arg = commandArgs(trailingOnly=TRUE)
+
+# Arguments are
+# 1) working directory - where files are located
+# 2) file of vertex wise values/ or atlas file name
+# 3) output folder (in working directory)
+# 4) variable (to predict) name
+#### calling it in shell with eg: Rscript LASSO_bigstatsr.R /working/directory /atlases/JulichBrain_ThickAvg $pheno
+
+
+wd = arg[1]
+
+vertexFile = arg[2] ## bod file processed through OSCA
+
+
+pheno = arg[3]
+
+outFolder = arg[4]
+
+
+# Working directory
+setwd(wd)
+
+print(&quot;Finished set-up.&quot;)
+
+# Big statsr approach - attache previously created FBM
+st=Sys.time()
+
+
+dat=read.big.matrix(paste0(wd,&quot;/&quot;, vertexFile), sep = &quot; &quot;, header = T, type=&quot;double&quot;) 
+
+et=Sys.time()
+openingTime=et-st
+
+# Write time
+print(paste(&quot;Finished reading in brain data.&quot;))
+openingTime
+
+# Check dimensions
+print(dim(dat))
+nfeatures = ncol(dat)
+
+# Open phenotype and order according to the ids list
+phenoVar = read.table(paste0(&quot;~/phenotypes/&quot;, pheno, &quot;.txt&quot;), sep = &quot;\t&quot;, header = F)
+names(phenoVar) = c(&quot;IID&quot;,&quot;FID&quot;,&quot;pheno&quot;)
+
+print(paste(&quot;Finished reading in pheno data.&quot;))
+
+
+# create table that holds info on this analysis 
+log = data.frame(matrix(ncol=2,nrow=11))
+names(log) = c(&quot;measure&quot;, &quot;info&quot;)
+
+####################################################################
+#### Define discovery and replication data set
+####################################################################
+
+## implement random sampling in script
+all_brain_subj = as.data.frame(dat[,1])
+names(all_brain_subj)=c(&quot;IID&quot;)
+
+all_subj = merge(phenoVar, all_brain_subj, by=&quot;IID&quot;)
+
+## restrict to participants who were included in the previous morph estimates 
+print(&quot;Reading in restrict table&quot;)
+restrict = read.table(&quot;~/morphometricity/data/indi.list.fid&quot;)
+names(restrict)=c(&quot;IID&quot;,&quot;FID&quot;)
+all_subj = merge(all_subj, restrict, by=&quot;IID&quot;)
+
+# only keep unique participants (no duplicates)
+all_subj = unique(all_subj$IID)
+
+
+# randomly sample
+set.seed(12345)
+disco = sample(all_subj, size = 0.8*length(all_subj), replace=FALSE)
+# none of these participants have missing phenotypes as there are no missing values in my phenos
+repli = setdiff(all_subj, disco)
+
+print(paste0(&quot;This analysis is for atlas &quot;, vertexFile, &quot; and phenotype: &quot;,pheno,&quot;, including &quot;, length(disco),&quot; participants in the discovery data set, and &quot;, length(repli), &quot; in the replication data set (Ntotal = &quot;,length(all_subj),&quot;).&quot;))
+
+# save this info in log object
+log[1,] =c(&quot;atlas: &quot;,vertexFile)
+log[2,] =c(&quot;pheno: &quot;,pheno)
+log[3,] =c(&quot;Ndisco: &quot;,length(disco))
+log[4,] =c(&quot;Nrepli: &quot;,length(repli))
+log[5,] =c(&quot;Ntotal: &quot;,length(all_subj))
+
+
+print(paste(&quot;Finished splitting sample into discovery and replication.&quot;))
+
+
+
+####################################################################
+#### LASSO 
+####################################################################
+
+print(&quot;Starting to apply split to big matrix&quot;)
+# split brain data set
+datD = dat[which(dat[,1] %in% disco),]
+datR = dat[which(dat[,1] %in% repli),]
+print(&quot;Finished applying split to big matrix&quot;)
+
+# Check dimensions of subsets
+print(dim(datD))
+print(str(datD))
+
+print(dim(datR))
+
+print(&quot;Transforming as_FBM&quot;)
+# Format for bigstatsr
+datD_FBM = as_FBM(datD) 
+datR_FBM = as_FBM(datR) 
+print(&quot;Finished transforming as_FBM&quot;)
+
+
+print(pheno)
+print(&quot;Opening phenotype file&quot;)
+
+# Re order and match IDs with phenotypes
+phenoM=phenoVar[match(datD[,1], phenoVar[,1], nomatch = NULL),c(&quot;IID&quot;,&quot;pheno&quot;)]
+
+# check that IDs from brain &amp; pheno file match
+cor(datD[,1], phenoM[,1])
+cbind(datD[1:10,1], phenoM[1:10,1])
+
+print(&quot;Cross validation using bigstatsr (NB not real CV)&quot;)
+st1=Sys.time()
+
+# Specifications:
+# X = An object of class FBM. (brain pheno)
+# y.train = Vector of responses (behavioral pheno)
+# ind.col = Vector of the column indices that are used (all but IID column, brain and pheno frames should have same order)
+# alphas = lasso penalty is 1 
+# nlambda = The number of lambda values. Default is 200
+# K = Number of sets used in the Cross-Model Selection and Averaging (CMSA) procedure. (ten-fold cross-valid)
+
+print(paste(&quot;Now starting ten-fold cross-validation.&quot;))
+
+
+cv.bstatsr &lt;- big_spLinReg(X = datD_FBM, y.train = phenoM[,2], ind.col = 2:nfeatures, alphas = 1, nlambda = 100, K = 10)
+et1=Sys.time()
+cvRunTime=et1-st1
+# Write time
+print(paste(&quot;Finished running cross-validation using bigstatsr&quot;))
+cvRunTime
+
+# Print lasso details
+summary(cv.bstatsr)
+
+# save this info in log object
+log[6,] =c(&quot;nfeatures: &quot;,summary(cv.bstatsr)$nb_var)
+log[7,] =c(&quot;alpha: &quot;,summary(cv.bstatsr)$alpha)
+log[8,] =c(&quot;power_adaptive: &quot;,summary(cv.bstatsr)$power_adaptive)
+log[9,] =c(&quot;power_scale: &quot;,summary(cv.bstatsr)$power_scale)
+log[10,] =c(&quot;validation_loss: &quot;,summary(cv.bstatsr)$validation_loss)
+log[11,] =c(&quot;intercept: &quot;,summary(cv.bstatsr)$intercept)
+
+#log[12:(11+summary(cv.bstatsr)$nb_var),&quot;measure&quot;]=paste0(&quot;beta&quot;,1:summary(cv.bstatsr)$nb_var)
+#log[12:(11+summary(cv.bstatsr)$nb_var),&quot;info&quot;]=unlist(summary(cv.bstatsr)$beta)
+
+print(paste(&quot;Stored results in log.&quot;))
+
+
+# Store predictor
+# this should have nrow = repli
+res=cbind(datR[,1], as.vector(predict(cv.bstatsr, datR_FBM )) )
+
+# get atlas name to print
+atlas=strsplit(vertexFile, &quot;_&quot;)[[1]][1]
+meas=strsplit(vertexFile, &quot;_&quot;)[[1]][3]
+
+write.table(res, paste0(outFolder, &quot;/&quot;, &quot;lasso&quot;, &quot;_pred_&quot;, atlas,&quot;_&quot;,meas, &quot;_&quot;, pheno,&quot;.txt&quot;), col.names = F, row.names = F, quote=F)
+write.table(log, paste0(outFolder, &quot;/&quot;, &quot;lasso&quot;, &quot;_pred_&quot;, atlas,&quot;_&quot;,meas, &quot;_&quot;, pheno,&quot;.log&quot;), col.names = F, row.names = F, quote=F)
+
+print(paste(&quot;Saved output in &quot;,outFolder))</code></pre>
+<p><br></p>
+<p>The code below is used to initiate the Rscript above.</p>
+<pre class="bash"><code>#!/bin/bash -l
+#SBATCH --job-name=LASSO_atlases
+#SBATCH --output=~/morphometricity/output/LASSO_atlases_%A_%a.out
+#SBATCH -D ~/imaging/output
+#SBATCH --mem=100G 
+#SBATCH --cpus-per-task=10
+#SBATCH --time=2-00:00
+#SBATCH --array=1-7 ## one per meas
+
+wd=&quot;~/morphometricity/data/atlases&quot;
+bod_dir=&quot;~/morphometricity/data/bod_files&quot;
+out_dir=&quot;~/morphometricity/results/LASSO&quot;
+scripts_dir=&quot;~/morphometricity/scripts&quot;
+
+
+refList=${scripts_dir}/ref_atlases.txt
+atlas=$(awk &quot;FNR==$SLURM_ARRAY_TASK_ID&quot; $refList)
+
+
+module load apps/R/3.6.0
+
+for meas in ThickAvg SurfArea GrayVol
+do
+
+for pheno in sex_pheno bmi_pheno edu_pheno alc_pheno cig_pheno gpheno age_pheno
+do
+
+    if [ ! -f ${out_dir}/lasso_pred_${atlas}_${meas}_${pheno}.txt ]
+    then
+    
+        
+        atlasFile=${wd}/${atlas}_${meas}_*
+        
+        echo &quot;Now starting LASSO model for ${atlasFile} and $pheno&quot;
+        
+        Rscript ${scripts_dir}/LASSO_bigstatsr.R ${atlasFile} $pheno $out_dir
+    fi
+    
+done
+
+done
+
+#### sbatch -p brc,shared ~/morphometricity/scripts/Run_LASSO_atlases.sh</code></pre>
+<p><br> <br></p>
+<hr />
+</div>
+<div id="wilcoxon-sign-ranked-tests" class="section level1">
+<h1>Wilcoxon Sign Ranked tests</h1>
+<p>The Rscript below (<code>Wilcoxon_sign_rank.R</code>) reads in the output obtained from the LASSO models above, calculates absolute errors as the difference between observed and predicted values, and calculates a Wilcoxon sigh rank test to compare prediction accuracies of one atlas versus another atlas.</p>
+<ul>
+<li><p><em>H0</em> = there is no median difference in absolute error between atlas1 and atlas2 (i.e., <code>atlas1$abs_err - atlas2$abs_err = 0</code>)</p></li>
+<li><p><em>H1</em> = there is a difference in absolute error and it’s either positive or negative (two.sided test)</p></li>
+</ul>
+<p>A non-significant result with a small effect size tells us that we have no evidence to conclude that atlas 1 performed any better than atlas 2.</p>
+<pre class="r"><code>## Wilcoxon Signed Rank test to compare prediction accuracies obtained from different atlases 
+
+# Analysis steps
+# 1. Read in output created by LASSO predictions, eg., &quot;lasso_pred_Yeo_GrayVol_sex.txt&quot;
+# 2. Merge predictions with actual measured phenotypes. Resulting table will have columns: eid, pheno, LASSOpredictions. End up with subset of replication sample
+# 3. Calculate absolute errors: observed - averaged predictions
+# 4. Perform wilcoxon test to contrast absolute errors by two atlases = absolute error atlas 1 vs. absolute error atlas2
+
+# Load arguments
+arg = commandArgs(trailingOnly=TRUE)
+
+lasso_dir = arg[1]
+# eg lasso_dir = &quot;~/morphometricity/results/LASSO&quot;
+
+atlas1_name = arg[2]
+# eg. atlas1_name = &quot;Yeo&quot;
+
+atlas2_name = arg[3]
+#eg. atlas2_name = &quot;DK&quot;
+
+meas = arg[4]
+# eg. meas = &quot;ThickAvg&quot;
+
+pheno_name = arg[5]
+# eg. pheno_name = &quot;bmi_pheno&quot;
+
+
+# load dependencies
+library(data.table)
+library(stringr)
+library(rstatix)
+library(reshape2)
+
+
+########################################################################
+## read in LASSO predictions
+########################################################################
+
+# read in prediction atlas 1
+atlas1_file = list.files(path = lasso_dir, pattern = paste0(&quot;lasso_pred_&quot;, atlas1_name, &quot;_&quot;, meas, &quot;_&quot;, pheno_name, &quot;.txt&quot;))
+atlas1_pred = fread(paste0(lasso_dir, &quot;/&quot;, atlas1_file), header=F)
+
+names(atlas1_pred) = c(&quot;IID&quot;, &quot;pred&quot;)
+
+# read in prediction atlas 2
+# if vertices, change the way atlas is referenced
+
+if(atlas2_name == &quot;vertices&quot;){
+
+    # change meas naming
+    if(meas == &quot;GrayVol&quot;){meas_vertex = &quot;volume&quot;}
+    if(meas == &quot;ThickAvg&quot;){meas_vertex = &quot;thickness&quot;}
+    if(meas == &quot;SurfArea&quot;){meas_vertex = &quot;area&quot;}
+    
+    atlas2_file = list.files(path = lasso_dir, pattern=paste0(&quot;lasso_pred_vertices_&quot;, meas_vertex,&quot;.txt_&quot;,pheno_name,&quot;.txt&quot;))
+    atlas2_pred = fread(paste0(lasso_dir, &quot;/&quot;, atlas2_file), header=F)
+    
+}else{
+    atlas2_file = list.files(path = lasso_dir, pattern = paste0(&quot;lasso_pred_&quot;, atlas2_name, &quot;_&quot;, meas, &quot;_&quot;, pheno_name, &quot;.txt&quot;))
+    atlas2_pred = fread(paste0(lasso_dir, &quot;/&quot;, atlas2_file), header=F)
+}
+names(atlas2_pred) = c(&quot;IID&quot;, &quot;pred&quot;)
+
+########################################################################
+## read in actual observed phenotype
+########################################################################
+
+pheno_dir = &quot;/mnt/lustre/datasets/ukbiobank/ukb40933/phenotypes&quot;
+
+# read in atlas 1
+pheno_name.txt = list.files(path = pheno_dir, pattern=paste0(pheno_name, &quot;.txt&quot;))
+pheno = fread(paste0(pheno_dir, &quot;/&quot;, pheno_name.txt))
+
+# keep only one IID column
+pheno = pheno[,2:3]
+
+# name columns
+names(pheno) = c(&quot;IID&quot;, &quot;obs&quot;)
+
+
+########################################################################
+## merge observed and predicted
+########################################################################
+
+# merge predicted and observed values, this function will only retain overlap (i.e., replication dataset)
+atlas1 = merge(atlas1_pred, pheno, by = &quot;IID&quot;)
+atlas2 = merge(atlas2_pred, pheno, by = &quot;IID&quot;)
+
+########################################################################
+## calculate absolute errors
+## difference between predicted and observed measures 
+########################################################################
+
+atlas1$abs_err1 = atlas1$pred - atlas1$obs
+atlas2$abs_err2 = atlas2$pred - atlas2$obs
+
+
+########################################################################
+## reshape data 
+########################################################################
+
+both = merge(atlas1, atlas2, by = &quot;IID&quot;)
+
+both = melt(both[,c(&quot;IID&quot;, &quot;abs_err1&quot;, &quot;abs_err2&quot;)], id.vars = c(&quot;IID&quot;))
+names(both)=c(&quot;IID&quot;, &quot;atlas&quot;, &quot;abs_err&quot;)
+both$atlas = ifelse(both$atlas == &quot;abs_err1&quot;, &quot;atlas1&quot;, &quot;atlas2&quot;)
+
+########################################################################
+## calculate Wilcoxon Sign rank test: observed and predicted
+########################################################################
+## H0 = there is no difference in absolute error in the difference between observed &amp; predicted values (i.e., atlas1$abs_err - atlas2$abs_err = 0)
+## H1 = There is a difference, the median difference is positive or negative (two.sided test)
+## The test statistic for the Wilcoxon Signed Rank Test is W, defined as the smaller of W+ (sum of the positive ranks) and W- (sum of the negative ranks). If the null hypothesis is true, we expect to see similar numbers of lower and higher ranks that are both positive and negative (i.e., W+ and W- would be similar). If the research hypothesis is true we expect to see more higher and positive ranks (in this example, more children with substantial improvement in repetitive behavior after treatment as compared to before, i.e., W+ much larger than W-). https://sphweb.bumc.bu.edu/otlt/MPH-Modules/BS/BS704_Nonparametric/BS704_Nonparametric6.html?msclkid=62a38d40c49b11ecb22117b019c6db2b
+
+test = wilcox_test(data = both, abs_err ~ atlas, paired = TRUE, p.adjust.method = &quot;bonferroni&quot;, alternative = &quot;two.sided&quot;, detailed=TRUE)
+eff_size = wilcox_effsize(data = both, abs_err ~ atlas, paired = TRUE, p.adjust.method = &quot;bonferroni&quot;, alternative = &quot;two.sided&quot;, detailed=TRUE)
+ 
+# create frame to store data
+results = data.frame(matrix(ncol = 8, nrow = 1))
+names(results) = c(&quot;atlas1&quot;, &quot;atlas2&quot;,&quot;meas&quot;,&quot;pheno&quot;, &quot;N&quot;, &quot;statistic&quot;, &quot;p&quot;, &quot;effsize&quot;)
+
+# store data 
+results[1,] = as.vector(c(atlas1_name, atlas2_name, meas, str_remove(pheno_name, pattern=&quot;.txt&quot;), nrow(atlas1), test$statistic, test$p, eff_size$effsize))
+
+
+## a non-significant results with a small effect size tells us that we don;t have evidence to conclude that atlas 1 performed any better than atlas 2
+
+
+
+write.table(results, paste0(&quot;~/morphometricity/results/Wilcoxon/&quot;, atlas1_name, &quot;_&quot;, atlas2_name, &quot;_&quot;, meas, &quot;_&quot;, str_remove(pheno_name, pattern=&quot;.txt&quot;), &quot;_wilcoxon_results.txt&quot;), quote=F, col.names=T, row.names=F, sep=&quot;\t&quot;)</code></pre>
+<p>The Rscript above (<code>Wilcoxon_sign_rank.R</code>) can be initiated by the following shell script.</p>
+<pre class="bash"><code>#!/bin/bash -l
+#SBATCH --job-name=Wilcoxon
+#SBATCH --output=~/morphometricity/output/Wilcoxon_atlases_%A_%a.out
+#SBATCH -D ~/imaging/output
+#SBATCH --mem=10G 
+#SBATCH --time=2-00:00
+#SBATCH --array=1-7 ## one per meas
+
+lasso_dir=&quot;~/morphometricity/results/LASSO&quot;
+scripts_dir=&quot;~/morphometricity/scripts&quot;
+results_dir=&quot;~/morphometricity/results/Wilcoxon&quot;
+
+refList=${scripts_dir}/ref_atlases.txt
+atlas1=$(awk &quot;FNR==$SLURM_ARRAY_TASK_ID&quot; $refList)
+
+atlas2_num=$(($SLURM_ARRAY_TASK_ID+1))
+
+module load apps/R/3.6.0
+
+for atlas2_find in $(seq $atlas2_num 8)
+do
+refList2=${scripts_dir}/ref_brain_rep.txt
+atlas2=$(awk &quot;FNR==$atlas2_find&quot; $refList2)
+
+    for meas in ThickAvg SurfArea GrayVol
+    do
+
+    for pheno in sex_pheno bmi_pheno edu_pheno alc_pheno cig_pheno gpheno age_pheno
+    do
+
+        if [ ! -f ${results_dir}/${atlas1}_${atlas2}_${pheno}_wilcoxon_results.txt ]
+        then
+        
+                        
+            echo &quot;Now starting Wilcoxon test for ${atlas1}_${atlas2}_${pheno}&quot;
+            
+            Rscript ${scripts_dir}/Wilcoxon_sign_rank.R ${lasso_dir} ${atlas1} ${atlas2} ${meas} ${pheno}
+        fi
+        
+    done
+
+    done
+
+done
+
+#### sbatch -p brc,shared ~/morphometricity/scripts/Wilcoxon.sh</code></pre>
+<p><br></p>
+<p>Format output by these scripts using the following Rscript.</p>
+<pre class="r"><code>##### format Wilcoxon results 
+
+setwd(&quot;~/morphometricity/results/Wilcoxon&quot;)
+
+# create object to hold results
+results = data.frame(matrix(ncol = 8, nrow = 0))
+names(results) = c(&quot;atlas1&quot;, &quot;atlas2&quot;,&quot;meas&quot;,&quot;pheno&quot;, &quot;N&quot;, &quot;statistic&quot;, &quot;p&quot;, &quot;effsize&quot;)
+
+
+output = list.files(pattern=&quot;wilcoxon_results.txt&quot;)
+### expecting (28*3*7) results
+for(i in 1:length(output)){
+    line = read.table(output[i], header=T)
+    
+    results = rbind(results, line)
+
+}
+
+print(paste(&quot;Obtained results for&quot;, nrow(results), &quot;Wilcoxon models.&quot;))
+
+write.table(results, &quot;~/morphometricity/results/Wilcoxon/Wilcoxon_results.table&quot;, col.names=T, row.names=T, quote=F, sep=&quot;\t&quot;)</code></pre>
+<p><br></p>
+<hr />
+<p>This table is included in the supplementary materials of the manuscript. It is displayed in an Excel document that was formatted using the code below.</p>
+<pre class="r"><code>library()</code></pre>
+</div>
+
+&nbsp;
+<hr />
+<a href = "https://www.kcl.ac.uk/">
+<p style="text-align: center"><img src="KCL_logo.jpg" href="https://www.kcl.ac.uk/" style="width:70px;height:50px"> 
+</a>
+</p>
+
+<a href = "https://www.kcl.ac.uk/people/anna-furtjes">
+<p style="text-align: center;">By Anna Elisabeth Fürtjes</a></p>
+<p style="text-align: center;"><span style="color: #808080;"><em>anna.furtjes@kcl.ac.uk</em></span></p>
+
+<!-- Add icon library -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+<!-- Add font awesome icons -->
+<p style="text-align: center;">
+    <a href="https://twitter.com/Anna_Furtjes" class="fa fa-twitter"></a>
+</p>
+
+&nbsp;
+
+
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.odd').parent('tbody').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open');
+  });
+});
+</script>
+
+<!-- code folding -->
+<script>
+$(document).ready(function () {
+  window.initializeCodeFolding("hide" === "show");
+});
+</script>
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
