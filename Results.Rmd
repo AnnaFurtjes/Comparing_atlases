@@ -596,14 +596,18 @@ library(ggplot2)
 library(gridExtra)
 setwd("C:/Users/k1894405/OneDrive - King's College London/temp")
 
+names = read.table("Schaefer_GrayVol_mostpred_LASSO.txt")
+
+
 GrayVol = fread("Schaefer_GrayVol_all_43035", data.table = F)
+GrayVol = GrayVol[which(names(GrayVol) %in% names$V1),]
 
 make_pretty = function(){
     theme_bw()+
-    theme(text = element_text(size=3),
+    theme(text = element_text(size=5),
             axis.text.x = element_blank(),
             axis.text.y = element_blank(),
-            plot.title = element_text(face="bold", colour='#1A1A1A', size=3, hjust = 0.5),
+            plot.title = element_text(face="bold", colour='#1A1A1A', size=5, hjust = 0.5),
               axis.title.y = element_blank(),
               axis.title.x = element_blank(),
               axis.line.x = element_blank(),
@@ -614,22 +618,48 @@ make_pretty = function(){
 
 
 save = lapply(
-  names(GrayVol)[2:65], 
+  names(GrayVol)[2:50], 
   function(n) 
     ggplot(data = GrayVol, aes_string(x=paste0(n))) + 
-    geom_histogram(aes(y = ..density..), fill = "#1b98e0")+
+    geom_histogram(aes(y = ..density..), fill = "#1b98e0", bins= 20)+
     stat_function(fun = dnorm,
                         args = list(mean = mean(GrayVol[,paste0(n)], na.rm=T),
                                     sd = sd(GrayVol[,paste0(n)], na.rm=T)),
                         col = "black",
                         size = 0.1)+
           ylab("")+xlab("")+
-          ggtitle(i)+
+          ggtitle(n)+
           make_pretty()
 )
 
 ## put all plots together
-tiff(paste0("C:/Users/k1894405/OneDrive - King's College London/PhD/Projects/Comparing labelling protocols/results/plots/Schaefer_GrayVol.tiff"), width = 10, height = 5, units = "in", pointsize = 2, bg="white", res=800)
+tiff(paste0("C:/Users/k1894405/OneDrive - King's College London/PhD/Projects/Comparing labelling protocols/results/plots/Schaefer_GrayVol_mostpred.tiff"), width = 10, height = 5, units = "in", pointsize = 2, bg="white", res=800)
+do.call(grid.arrange,save)
+dev.off()
+
+#### least predictive areas
+names = read.table("Schaefer_GrayVol_leastpred_LASSO.txt")
+
+GrayVol = fread("Schaefer_GrayVol_all_43035", data.table = F)
+GrayVol = GrayVol[which(names(GrayVol) %in% names$V1),]
+
+save = lapply(
+  names(GrayVol)[2:50], 
+  function(n) 
+    ggplot(data = GrayVol, aes_string(x=paste0(n))) + 
+    geom_histogram(aes(y = ..density..), fill = "#1b98e0", bins= 20)+
+    stat_function(fun = dnorm,
+                        args = list(mean = mean(GrayVol[,paste0(n)], na.rm=T),
+                                    sd = sd(GrayVol[,paste0(n)], na.rm=T)),
+                        col = "black",
+                        size = 0.1)+
+          ylab("")+xlab("")+
+          ggtitle(n)+
+          make_pretty()
+)
+
+## put all plots together
+tiff(paste0("C:/Users/k1894405/OneDrive - King's College London/PhD/Projects/Comparing labelling protocols/results/plots/Schaefer_GrayVol_leastpred.tiff"), width = 10, height = 5, units = "in", pointsize = 2, bg="white", res=800)
 do.call(grid.arrange,save)
 dev.off()
 
@@ -797,6 +827,158 @@ tiff(paste0("C:/Users/k1894405/OneDrive - King's College London/PhD/Projects/Com
 plot_grid(save[[paste0("GrayVol_",i)]], save[[paste0("SurfArea_",i)]], save[[paste0("ThickAvg_",i)]], ncol=3)
 
 dev.off()
+```
+
+
+Alternative visualisation is to display the relative increase in morphometricity that we get by adding the more complex atlas to the equation. 
+
+We obtain this relative increase as the total variance explained by both atlases divided by the morph estimate of the lower dimensional atlas. 
+For example, DK explains 25% SurfArea morphometricity in age by itself. DK and Des together explain 52% in age. 52%/25% = 2.08 suggesting that adding the higher dimensional atlas increased the estimate by about double.
+
+V_G/ morph = 1 suggests that there was no added morphometricity by adding the more complex atlas.
+V_G/ morph < 1 suggests there was an increase in morphomtricity by adding the more complex atlas.
+
+```{r}
+library(ggplot2)
+library(cowplot)
+
+# read in LRT results
+LRT=read.table(paste0(getwd(),"/LRT/LRT_results.table"), header=T)
+
+# read in morph results
+morph=read.table(paste0(getwd(),"/empirical/morph_results_QCed_vertices.table"), header=T)
+names(morph)[which(names(morph) == "atlas")] <- "atlas1"
+# change measurement type names from randomaparc
+morph$meas[which(morph$meas == "area")] = "SurfArea"
+morph$meas[which(morph$meas == "volume")] = "GrayVol"
+morph$meas[which(morph$meas == "thickness")] = "ThickAvg"
+
+# work out the difference between sum_G & V_G1
+LRT$sum_G = round(LRT$sum_G, digits=2)*100
+
+save=list()
+
+# iterate over measurement type & phenotype
+for(i in unique(LRT$meas)){
+
+  for(j in unique(LRT$pheno)){
+      # subset the LRT data frame 
+      subset=LRT[which(LRT$meas == i & LRT$pheno == j),c("atlas1","atlas2","sum_G")]
+      subset$morph = NA
+      
+      # subset morph data frame
+      subset_morph = morph[which(morph$meas == i & morph$pheno == j),c("atlas1","morph")]
+      subset_morph$atlas2 <- subset_morph$atlas1
+      subset_morph$sum_G = NA
+      subset_morph = subset_morph[,c("atlas1","atlas2","sum_G","morph")]
+      subset_morph$morph = round(subset_morph$morph, digits = 0)
+      
+      # combine data sets
+      subset = rbind(subset, subset_morph)
+      
+      for(x in unique(subset$atlas1)){
+        subset$morph = ifelse(subset$atlas1 == x & subset$atlas2 != x, subset_morph$morph[which(subset_morph$atlas1 == x)], subset$morph)
+      }
+
+      subset$ratio = round(subset$sum_G / subset$morph, digits=2)
+      
+      subset$sig = ifelse(!is.na(subset$sum_G),paste0(subset$ratio, "\n(",subset$sum_G,"%)"), paste0(subset$morph,"%"))
+
+      
+      # plot heatmap
+      
+
+      # order to have smaller atlas first
+      subset$ordered1 = factor(subset$atlas1, levels=c("Yeo","DK","Des","JulichBrain","Gordon","Glasser","Schaefer","vertices"))
+      subset$ordered2 = factor(subset$atlas2, levels=c("Yeo","DK","Des","JulichBrain","Gordon","Glasser","Schaefer","vertices"))
+      
+      # chose colors depending on measurement type
+      if(i == "GrayVol"){color = "#63C5DA"}
+      if(i == "SurfArea"){color = "#0492C2"}
+      if(i == "ThickAvg"){color = "#016064"}
+      
+      #63C5DA GrayVol
+      #0492C2 SurfArea
+      #016064 ThickAvg
+      if(i == "SurfArea"){
+          title = paste0("Non-brain trait = ",j)
+        }else{
+          title = ""
+      }
+        
+      
+      subtitle = paste0("Measurement type = ",i)
+      
+      map = ggplot(subset, aes(ordered2, ordered1)) +
+        geom_tile(aes(fill = ratio), colour = "white") +
+        scale_fill_gradient(low = "white", high = color,breaks=c(0,10,20,30,40,50,60,70))+
+        theme_minimal()+ 
+        xlab("Higher dimensional atlas")+
+        #ylab("Atlas with fewer ROIs")+
+        ylab("")+
+        ggtitle(title, subtitle = subtitle)+
+        theme(legend.position="top",legend.justification="right",
+        plot.title = element_text(face="bold", colour='#1A1A1A', size=18),
+        axis.text.x = element_text(angle = 45, vjust=0.6))+
+        labs(fill = "Total added\nmorpho-\nmetricity")+
+        geom_text(aes(ordered2, ordered1,label=sig),color="black",size=3)
+      
+      
+      plot_name=paste0(i,"_",j)
+      
+      save[[plot_name]] <- map
+  }
+}
+
+i="age"
+tiff(paste0("C:/Users/k1894405/OneDrive - King's College London/PhD/Projects/Comparing labelling protocols/results/plots/ratio_morph_", i, ".tiff"), width = 12, height = 5, units = "in", pointsize = 2, bg="white", res=800)
+
+plot_grid(save[[paste0("GrayVol_",i)]], save[[paste0("SurfArea_",i)]], save[[paste0("ThickAvg_",i)]], ncol=3)
+
+dev.off()
+
+i="sex"
+tiff(paste0("C:/Users/k1894405/OneDrive - King's College London/PhD/Projects/Comparing labelling protocols/results/plots/ratio_morph_", i, ".tiff"), width = 12, height = 5, units = "in", pointsize = 2, bg="white", res=800)
+
+plot_grid(save[[paste0("GrayVol_",i)]], save[[paste0("SurfArea_",i)]], save[[paste0("ThickAvg_",i)]], ncol=3)
+
+dev.off()
+
+i="bmi"
+tiff(paste0("C:/Users/k1894405/OneDrive - King's College London/PhD/Projects/Comparing labelling protocols/results/plots/ratio_morph_", i, ".tiff"), width = 12, height = 5, units = "in", pointsize = 2, bg="white", res=800)
+
+plot_grid(save[[paste0("GrayVol_",i)]], save[[paste0("SurfArea_",i)]], save[[paste0("ThickAvg_",i)]], ncol=3)
+
+dev.off()
+
+i="edu"
+tiff(paste0("C:/Users/k1894405/OneDrive - King's College London/PhD/Projects/Comparing labelling protocols/results/plots/ratio_morph_", i, ".tiff"), width = 12, height = 5, units = "in", pointsize = 2, bg="white", res=800)
+
+plot_grid(save[[paste0("GrayVol_",i)]], save[[paste0("SurfArea_",i)]], save[[paste0("ThickAvg_",i)]], ncol=3)
+
+dev.off()
+
+i="gpheno"
+tiff(paste0("C:/Users/k1894405/OneDrive - King's College London/PhD/Projects/Comparing labelling protocols/results/plots/ratio_morph_", i, ".tiff"), width = 12, height = 5, units = "in", pointsize = 2, bg="white", res=800)
+
+plot_grid(save[[paste0("GrayVol_",i)]], save[[paste0("SurfArea_",i)]], save[[paste0("ThickAvg_",i)]], ncol=3)
+
+dev.off()
+
+i="cig"
+tiff(paste0("C:/Users/k1894405/OneDrive - King's College London/PhD/Projects/Comparing labelling protocols/results/plots/ratio_morph_", i, ".tiff"), width = 12, height = 5, units = "in", pointsize = 2, bg="white", res=800)
+
+plot_grid(save[[paste0("GrayVol_",i)]], save[[paste0("SurfArea_",i)]], save[[paste0("ThickAvg_",i)]], ncol=3)
+
+dev.off()
+
+i="alc"
+tiff(paste0("C:/Users/k1894405/OneDrive - King's College London/PhD/Projects/Comparing labelling protocols/results/plots/ratio_morph_", i, ".tiff"), width = 12, height = 5, units = "in", pointsize = 2, bg="white", res=800)
+
+plot_grid(save[[paste0("GrayVol_",i)]], save[[paste0("SurfArea_",i)]], save[[paste0("ThickAvg_",i)]], ncol=3)
+
+dev.off()
+
 ```
 
 
@@ -991,6 +1173,9 @@ tiff(paste0("~/Comparing labelling protocols/results/plots/nulldistr_", i, ".tif
 save[[i]]
 dev.off()
 ```
+
+
+
 
 
 # 5. LASSO regressions
