@@ -15,7 +15,7 @@
 <title>Results</title>
 
 <script src="site_libs/header-attrs-2.10/header-attrs.js"></script>
-<script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
+<script src="site_libs/jquery-3.5.1/jquery.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link href="site_libs/bootstrap-3.3.5/css/spacelab.min.css" rel="stylesheet" />
 <script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
@@ -37,6 +37,18 @@
 <script src="site_libs/navigation-1.1/codefolding.js"></script>
 <link href="site_libs/highlightjs-9.12.0/default.css" rel="stylesheet" />
 <script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+<script src="site_libs/htmlwidgets-1.5.3/htmlwidgets.js"></script>
+<link href="site_libs/datatables-css-0.0.0/datatables-crosstalk.css" rel="stylesheet" />
+<script src="site_libs/datatables-binding-0.15/datatables.js"></script>
+<link href="site_libs/dt-core-1.10.20/css/jquery.dataTables.min.css" rel="stylesheet" />
+<link href="site_libs/dt-core-1.10.20/css/jquery.dataTables.extra.css" rel="stylesheet" />
+<script src="site_libs/dt-core-1.10.20/js/jquery.dataTables.min.js"></script>
+<link href="site_libs/nouislider-7.0.10/jquery.nouislider.min.css" rel="stylesheet" />
+<script src="site_libs/nouislider-7.0.10/jquery.nouislider.min.js"></script>
+<link href="site_libs/selectize-0.12.0/selectize.bootstrap3.css" rel="stylesheet" />
+<script src="site_libs/selectize-0.12.0/selectize.min.js"></script>
+<link href="site_libs/crosstalk-1.1.1/css/crosstalk.css" rel="stylesheet" />
+<script src="site_libs/crosstalk-1.1.1/js/crosstalk.min.js"></script>
 
 <style type="text/css">
   code{white-space: pre-wrap;}
@@ -780,7 +792,8 @@ dev.off()
 <h2>BIC</h2>
 <p>Is there a relationship between model fit and number of ROIs?</p>
 <p>We calculated BIC as BIC = log(n)*p – 2log(L) where the first part of the equation denotes the model complexity, and the second part denotes model performance. The smaller the BIC, the better the model does, and the more it is considered to approximate the truth. The BIC can only be used for model comparison if the same N was used, which is the case in this data.</p>
-<pre class="r"><code>setwd(&quot;C:/Users/k1894405/OneDrive - King&#39;s College London/PhD/Projects/Comparing labelling protocols/results/empirical&quot;)
+<pre class="r"><code>library(ggplot2)
+setwd(&quot;C:/Users/k1894405/OneDrive - King&#39;s College London/PhD/Projects/Comparing labelling protocols/results/empirical&quot;)
 
 est = read.table(&quot;morph_results_QCed_vertices.table&quot;, header=T)
 randomest = read.table(&quot;morph_results_randomaparc.table&quot;, header=T)
@@ -825,7 +838,7 @@ for(i in unique(est$pheno)){
     title=paste0(&quot;Cigarette consumption&quot;)
   }else if(i == &quot;edu&quot;){
     title=paste0(&quot;Education&quot;)
-  }else if(i == &quot;gi&quot;){
+  }else if(i == &quot;gpheno&quot;){
     title=paste0(&quot;General cognitive ability&quot;)
   }
       
@@ -885,6 +898,81 @@ dev.off()
 i = &quot;sex&quot;
 tiff(paste0(&quot;C:/Users/k1894405/OneDrive - King&#39;s College London/PhD/Projects/Comparing labelling protocols/results/plots/BIC_&quot;, i, &quot;.tiff&quot;), width = 10, height = 5, units = &quot;in&quot;, pointsize = 2, bg=&quot;white&quot;, res=800)
 save[[i]]
+dev.off()</code></pre>
+<p><img src="other_images/BIC.PNG" /></p>
+<hr />
+<p>We found that the Schaefer atlas often does better than other atlases in predicting age &amp; sex, but the BIC displayed a worse fit. It is hard to judge this because we have no confidence intervals for the BIC but we thought we should double check whether some areas have extreme outliers. Ideally, we would check the distributions of all 500 regions, but that is not practical. Instead, we take the regions with the largest effects in the LASSO analyses and plot their distributions.</p>
+<pre class="r"><code>library(data.table)
+library(cowplot)
+library(ggplot2)
+library(gridExtra)
+setwd(&quot;C:/Users/k1894405/OneDrive - King&#39;s College London/temp&quot;)
+
+names = read.table(&quot;Schaefer_GrayVol_mostpred_LASSO.txt&quot;)
+
+
+GrayVol = fread(&quot;Schaefer_GrayVol_all_43035&quot;, data.table = F)
+GrayVol = GrayVol[which(names(GrayVol) %in% names$V1),]
+
+make_pretty = function(){
+    theme_bw()+
+    theme(text = element_text(size=5),
+            axis.text.x = element_blank(),
+            axis.text.y = element_blank(),
+            plot.title = element_text(face=&quot;bold&quot;, colour=&#39;#1A1A1A&#39;, size=5, hjust = 0.5),
+              axis.title.y = element_blank(),
+              axis.title.x = element_blank(),
+              axis.line.x = element_blank(),
+              axis.line.y = element_blank(),
+              axis.ticks.x = element_blank(),
+              axis.ticks.y = element_blank(),
+              panel.border = element_blank())}
+
+
+save = lapply(
+  names(GrayVol)[2:50], 
+  function(n) 
+    ggplot(data = GrayVol, aes_string(x=paste0(n))) + 
+    geom_histogram(aes(y = ..density..), fill = &quot;#1b98e0&quot;, bins= 20)+
+    stat_function(fun = dnorm,
+                        args = list(mean = mean(GrayVol[,paste0(n)], na.rm=T),
+                                    sd = sd(GrayVol[,paste0(n)], na.rm=T)),
+                        col = &quot;black&quot;,
+                        size = 0.1)+
+          ylab(&quot;&quot;)+xlab(&quot;&quot;)+
+          ggtitle(n)+
+          make_pretty()
+)
+
+## put all plots together
+tiff(paste0(&quot;C:/Users/k1894405/OneDrive - King&#39;s College London/PhD/Projects/Comparing labelling protocols/results/plots/Schaefer_GrayVol_mostpred.tiff&quot;), width = 10, height = 5, units = &quot;in&quot;, pointsize = 2, bg=&quot;white&quot;, res=800)
+do.call(grid.arrange,save)
+dev.off()
+
+#### least predictive areas
+names = read.table(&quot;Schaefer_GrayVol_leastpred_LASSO.txt&quot;)
+
+GrayVol = fread(&quot;Schaefer_GrayVol_all_43035&quot;, data.table = F)
+GrayVol = GrayVol[which(names(GrayVol) %in% names$V1),]
+
+save = lapply(
+  names(GrayVol)[2:50], 
+  function(n) 
+    ggplot(data = GrayVol, aes_string(x=paste0(n))) + 
+    geom_histogram(aes(y = ..density..), fill = &quot;#1b98e0&quot;, bins= 20)+
+    stat_function(fun = dnorm,
+                        args = list(mean = mean(GrayVol[,paste0(n)], na.rm=T),
+                                    sd = sd(GrayVol[,paste0(n)], na.rm=T)),
+                        col = &quot;black&quot;,
+                        size = 0.1)+
+          ylab(&quot;&quot;)+xlab(&quot;&quot;)+
+          ggtitle(n)+
+          make_pretty()
+)
+
+## put all plots together
+tiff(paste0(&quot;C:/Users/k1894405/OneDrive - King&#39;s College London/PhD/Projects/Comparing labelling protocols/results/plots/Schaefer_GrayVol_leastpred.tiff&quot;), width = 10, height = 5, units = &quot;in&quot;, pointsize = 2, bg=&quot;white&quot;, res=800)
+do.call(grid.arrange,save)
 dev.off()</code></pre>
 </div>
 </div>
@@ -1040,12 +1128,176 @@ tiff(paste0(&quot;C:/Users/k1894405/OneDrive - King&#39;s College London/PhD/Pro
 plot_grid(save[[paste0(&quot;GrayVol_&quot;,i)]], save[[paste0(&quot;SurfArea_&quot;,i)]], save[[paste0(&quot;ThickAvg_&quot;,i)]], ncol=3)
 
 dev.off()</code></pre>
+<p>Alternative visualisation is to display the relative increase in morphometricity that we get by adding the more complex atlas to the equation.</p>
+<p>We obtain this relative increase as the total variance explained by both atlases divided by the morph estimate of the lower dimensional atlas. For example, DK explains 25% SurfArea morphometricity in age by itself. DK and Des together explain 52% in age. 52%/25% = 2.08 suggesting that adding the higher dimensional atlas increased the estimate by about double.</p>
+<p>V_G/ morph = 1 suggests that there was no added morphometricity by adding the more complex atlas. V_G/ morph &lt; 1 suggests there was an increase in morphomtricity by adding the more complex atlas.</p>
+<pre class="r"><code>library(ggplot2)
+library(cowplot)
+
+# read in LRT results
+LRT=read.table(paste0(getwd(),&quot;/LRT/LRT_results.table&quot;), header=T)
+LRT$ci_l &lt;- (LRT$sum_G - 1.96*LRT$sum_SE)*100 
+LRT$ci_u &lt;- (LRT$sum_G + 1.96*LRT$sum_SE)*100 
+
+
+# read in morph results
+morph=read.table(paste0(getwd(),&quot;/empirical/morph_results_QCed_vertices.table&quot;), header=T)
+names(morph)[which(names(morph) == &quot;atlas&quot;)] &lt;- &quot;atlas1&quot;
+# change measurement type names from randomaparc
+morph$meas[which(morph$meas == &quot;area&quot;)] = &quot;SurfArea&quot;
+morph$meas[which(morph$meas == &quot;volume&quot;)] = &quot;GrayVol&quot;
+morph$meas[which(morph$meas == &quot;thickness&quot;)] = &quot;ThickAvg&quot;
+
+# work out the difference between sum_G &amp; V_G1
+LRT$sum_G = round(LRT$sum_G, digits=2)*100
+
+save=list()
+
+# iterate over measurement type &amp; phenotype
+for(i in unique(LRT$meas)){
+
+  for(j in unique(LRT$pheno)){
+      # subset the LRT data frame 
+      subset=LRT[which(LRT$meas == i &amp; LRT$pheno == j),c(&quot;atlas1&quot;,&quot;atlas2&quot;,&quot;sum_G&quot;)]
+      subset$morph = NA
+      
+      # subset morph data frame
+      subset_morph = morph[which(morph$meas == i &amp; morph$pheno == j),c(&quot;atlas1&quot;,&quot;morph&quot;)]
+      subset_morph$atlas2 &lt;- subset_morph$atlas1
+      subset_morph$sum_G = NA
+      subset_morph = subset_morph[,c(&quot;atlas1&quot;,&quot;atlas2&quot;,&quot;sum_G&quot;,&quot;morph&quot;)]
+      subset_morph$morph = round(subset_morph$morph, digits = 0)
+      
+      # combine data sets
+      subset = rbind(subset, subset_morph)
+      
+      for(x in unique(subset$atlas1)){
+        subset$morph = ifelse(subset$atlas1 == x &amp; subset$atlas2 != x, subset_morph$morph[which(subset_morph$atlas1 == x)], subset$morph)
+      }
+
+      subset$ratio = round(subset$sum_G / subset$morph, digits=2)
+      
+      subset$sig = ifelse(!is.na(subset$sum_G),paste0(subset$ratio, &quot;\n(&quot;,subset$sum_G,&quot;%)&quot;), paste0(subset$morph,&quot;%&quot;))
+
+      
+      # plot heatmap
+      
+
+      # order to have smaller atlas first
+      subset$ordered1 = factor(subset$atlas1, levels=c(&quot;Yeo&quot;,&quot;DK&quot;,&quot;Des&quot;,&quot;JulichBrain&quot;,&quot;Gordon&quot;,&quot;Glasser&quot;,&quot;Schaefer&quot;,&quot;vertices&quot;))
+      subset$ordered2 = factor(subset$atlas2, levels=c(&quot;Yeo&quot;,&quot;DK&quot;,&quot;Des&quot;,&quot;JulichBrain&quot;,&quot;Gordon&quot;,&quot;Glasser&quot;,&quot;Schaefer&quot;,&quot;vertices&quot;))
+      
+      # chose colors depending on measurement type
+      if(i == &quot;GrayVol&quot;){color = &quot;#63C5DA&quot;}
+      if(i == &quot;SurfArea&quot;){color = &quot;#0492C2&quot;}
+      if(i == &quot;ThickAvg&quot;){color = &quot;#016064&quot;}
+      
+      #63C5DA GrayVol
+      #0492C2 SurfArea
+      #016064 ThickAvg
+      if(i == &quot;SurfArea&quot;){
+          title = paste0(&quot;Non-brain trait = &quot;,j)
+        }else{
+          title = &quot;&quot;
+      }
+        
+      
+      subtitle = paste0(&quot;Measurement type = &quot;,i)
+      
+      map = ggplot(subset, aes(ordered2, ordered1)) +
+        geom_tile(aes(fill = ratio), colour = &quot;white&quot;) +
+        scale_fill_gradient(low = &quot;white&quot;, high = color,breaks=c(0,10,20,30,40,50,60,70))+
+        theme_minimal()+ 
+        xlab(&quot;Higher dimensional atlas&quot;)+
+        #ylab(&quot;Atlas with fewer ROIs&quot;)+
+        ylab(&quot;&quot;)+
+        ggtitle(title, subtitle = subtitle)+
+        theme(legend.position=&quot;top&quot;,legend.justification=&quot;right&quot;,
+        plot.title = element_text(face=&quot;bold&quot;, colour=&#39;#1A1A1A&#39;, size=18),
+        axis.text.x = element_text(angle = 45, vjust=0.6))+
+        labs(fill = &quot;Total added\nmorpho-\nmetricity&quot;)+
+        geom_text(aes(ordered2, ordered1,label=sig),color=&quot;black&quot;,size=3)
+      
+      
+      plot_name=paste0(i,&quot;_&quot;,j)
+      
+      save[[plot_name]] &lt;- map
+  }
+}
+
+i=&quot;age&quot;
+tiff(paste0(&quot;C:/Users/k1894405/OneDrive - King&#39;s College London/PhD/Projects/Comparing labelling protocols/results/plots/ratio_morph_&quot;, i, &quot;.tiff&quot;), width = 12, height = 5, units = &quot;in&quot;, pointsize = 2, bg=&quot;white&quot;, res=800)
+
+plot_grid(save[[paste0(&quot;GrayVol_&quot;,i)]], save[[paste0(&quot;SurfArea_&quot;,i)]], save[[paste0(&quot;ThickAvg_&quot;,i)]], ncol=3)
+
+dev.off()
+
+i=&quot;sex&quot;
+tiff(paste0(&quot;C:/Users/k1894405/OneDrive - King&#39;s College London/PhD/Projects/Comparing labelling protocols/results/plots/ratio_morph_&quot;, i, &quot;.tiff&quot;), width = 12, height = 5, units = &quot;in&quot;, pointsize = 2, bg=&quot;white&quot;, res=800)
+
+plot_grid(save[[paste0(&quot;GrayVol_&quot;,i)]], save[[paste0(&quot;SurfArea_&quot;,i)]], save[[paste0(&quot;ThickAvg_&quot;,i)]], ncol=3)
+
+dev.off()
+
+i=&quot;bmi&quot;
+tiff(paste0(&quot;C:/Users/k1894405/OneDrive - King&#39;s College London/PhD/Projects/Comparing labelling protocols/results/plots/ratio_morph_&quot;, i, &quot;.tiff&quot;), width = 12, height = 5, units = &quot;in&quot;, pointsize = 2, bg=&quot;white&quot;, res=800)
+
+plot_grid(save[[paste0(&quot;GrayVol_&quot;,i)]], save[[paste0(&quot;SurfArea_&quot;,i)]], save[[paste0(&quot;ThickAvg_&quot;,i)]], ncol=3)
+
+dev.off()
+
+i=&quot;edu&quot;
+tiff(paste0(&quot;C:/Users/k1894405/OneDrive - King&#39;s College London/PhD/Projects/Comparing labelling protocols/results/plots/ratio_morph_&quot;, i, &quot;.tiff&quot;), width = 12, height = 5, units = &quot;in&quot;, pointsize = 2, bg=&quot;white&quot;, res=800)
+
+plot_grid(save[[paste0(&quot;GrayVol_&quot;,i)]], save[[paste0(&quot;SurfArea_&quot;,i)]], save[[paste0(&quot;ThickAvg_&quot;,i)]], ncol=3)
+
+dev.off()
+
+i=&quot;gpheno&quot;
+tiff(paste0(&quot;C:/Users/k1894405/OneDrive - King&#39;s College London/PhD/Projects/Comparing labelling protocols/results/plots/ratio_morph_&quot;, i, &quot;.tiff&quot;), width = 12, height = 5, units = &quot;in&quot;, pointsize = 2, bg=&quot;white&quot;, res=800)
+
+plot_grid(save[[paste0(&quot;GrayVol_&quot;,i)]], save[[paste0(&quot;SurfArea_&quot;,i)]], save[[paste0(&quot;ThickAvg_&quot;,i)]], ncol=3)
+
+dev.off()
+
+i=&quot;cig&quot;
+tiff(paste0(&quot;C:/Users/k1894405/OneDrive - King&#39;s College London/PhD/Projects/Comparing labelling protocols/results/plots/ratio_morph_&quot;, i, &quot;.tiff&quot;), width = 12, height = 5, units = &quot;in&quot;, pointsize = 2, bg=&quot;white&quot;, res=800)
+
+plot_grid(save[[paste0(&quot;GrayVol_&quot;,i)]], save[[paste0(&quot;SurfArea_&quot;,i)]], save[[paste0(&quot;ThickAvg_&quot;,i)]], ncol=3)
+
+dev.off()
+
+i=&quot;alc&quot;
+tiff(paste0(&quot;C:/Users/k1894405/OneDrive - King&#39;s College London/PhD/Projects/Comparing labelling protocols/results/plots/ratio_morph_&quot;, i, &quot;.tiff&quot;), width = 12, height = 5, units = &quot;in&quot;, pointsize = 2, bg=&quot;white&quot;, res=800)
+
+plot_grid(save[[paste0(&quot;GrayVol_&quot;,i)]], save[[paste0(&quot;SurfArea_&quot;,i)]], save[[paste0(&quot;ThickAvg_&quot;,i)]], ncol=3)
+
+dev.off()</code></pre>
 <p><br> <br></p>
 <div id="descriptives-of-added-morphometricity" class="section level2">
 <h2>Descriptives of added morphometricity</h2>
 <pre class="r"><code># create data.frame to store results
-results = data.frame(matrix(nrow = 3*7, ncol = 8))
-names(results) = c(&quot;meas&quot;,&quot;pheno&quot;,&quot;min&quot;,&quot;max&quot;,&quot;median&quot;,&quot;mean&quot;,&quot;sd&quot;,&quot;non_missing_est&quot;)
+results = data.frame(matrix(nrow = 3*7, ncol = 12))
+names(results) = c(&quot;meas&quot;,&quot;pheno&quot;,&quot;ratio_min&quot;,&quot;ratio_max&quot;,&quot;ratio_median&quot;,&quot;ratio_mean&quot;,&quot;ratio_sd&quot;,
+                                  &quot;diff_min&quot;,&quot;diff_max&quot;,&quot;diff_median&quot;,&quot;diff_mean&quot;,&quot;diff_sd&quot;)
+
+# read in LRT results
+LRT=read.table(paste0(getwd(),&quot;/LRT/LRT_results.table&quot;), header=T)
+# read in morph results
+morph=read.table(paste0(getwd(),&quot;/empirical/morph_results_QCed_vertices.table&quot;), header=T)
+names(morph)[which(names(morph) == &quot;atlas&quot;)] &lt;- &quot;atlas1&quot;
+# change measurement type names from randomaparc
+morph$meas[which(morph$meas == &quot;area&quot;)] = &quot;SurfArea&quot;
+morph$meas[which(morph$meas == &quot;volume&quot;)] = &quot;GrayVol&quot;
+morph$meas[which(morph$meas == &quot;thickness&quot;)] = &quot;ThickAvg&quot;
+
+# merge morph with LRT
+morph = morph[,c(&quot;atlas1&quot;,&quot;meas&quot;,&quot;pheno&quot;,&quot;morph&quot;)]
+LRT=merge(LRT, morph, by=c(&quot;atlas1&quot;,&quot;meas&quot;,&quot;pheno&quot;))
+
+# get difference in morph estimate and V_G/morph ratio
+LRT$diff = round(LRT$sum_G*100 - LRT$morph, digits=2)
+LRT$ratio = round(LRT$sum_G*100 / LRT$morph, digits=2)
 
 
 # get all possible combinations of atlas, meas &amp; pheno
@@ -1062,23 +1314,38 @@ results[,c(&quot;meas&quot;,&quot;pheno&quot;)] = expand.grid(meas, pheno)
       subset = LRT[which(LRT$meas == j &amp; LRT$pheno == k),]
       
        #### store results
-      # mean morph
-      results$mean[which(results$meas == j &amp; results$pheno == k)] = mean(subset$diff, na.rm=T)
-      # sd morph
-      results$sd[which(results$meas == j &amp; results$pheno == k)] = sd(subset$diff, na.rm=T)
-      # min morph
-      results$min[which(results$meas == j &amp; results$pheno == k)] = min(subset$diff, na.rm=T)
-      # max morph
-      results$max[which(results$meas == j &amp; results$pheno == k)] = max(subset$diff, na.rm=T)
-      # median morph
-      results$median[which(results$meas == j &amp; results$pheno == k)] = median(subset$diff, na.rm=T)
-      # store non-missing values
-      results$non_missing_est[which(results$meas == j &amp; results$pheno == k)] = nrow(subset)
+      # mean morph diff &amp; ratio
+      results$diff_mean[which(results$meas == j &amp; results$pheno == k)] = round(mean(subset$diff, na.rm=T), digits = 2)
+      results$ratio_mean[which(results$meas == j &amp; results$pheno == k)] = round(mean(subset$ratio, na.rm=T), digits = 2)
+      # sd morph diff &amp; ratio
+      results$diff_sd[which(results$meas == j &amp; results$pheno == k)] = round(sd(subset$diff, na.rm=T), digits = 2)
+      results$ratio_sd[which(results$meas == j &amp; results$pheno == k)] = round(sd(subset$ratio, na.rm=T), digits = 2)
+      # min morph diff &amp; ratio
+      results$diff_min[which(results$meas == j &amp; results$pheno == k)] = min(subset$diff, na.rm=T)
+      results$ratio_min[which(results$meas == j &amp; results$pheno == k)] = round(min(subset$ratio, na.rm=T), digits = 2)
+      # max morph diff &amp; ratio
+      results$diff_max[which(results$meas == j &amp; results$pheno == k)] = max(subset$diff, na.rm=T)
+      results$ratio_max[which(results$meas == j &amp; results$pheno == k)] = round(max(subset$ratio, na.rm=T), digits = 2)
+      # median morph diff &amp; ratio
+      results$diff_median[which(results$meas == j &amp; results$pheno == k)] = median(subset$diff, na.rm=T)
+      results$ratio_median[which(results$meas == j &amp; results$pheno == k)] = round(median(subset$ratio, na.rm=T), digits = 2)
+      
     }
   }
 
 library(DT)
 datatable(results, rownames=FALSE, filter=&quot;top&quot;,options= list(pageLength=10,scrollX=T), caption = &quot;Descriptive statistics of added morphometricity&quot;)</code></pre>
+<div id="htmlwidget-58723f19ddd16ee284e6" style="width:100%;height:auto;" class="datatables html-widget"></div>
+<script type="application/json" data-for="htmlwidget-58723f19ddd16ee284e6">{"x":{"filter":"top","filterHTML":"<tr>\n  <td data-type=\"factor\" style=\"vertical-align: top;\">\n    <div class=\"form-group has-feedback\" style=\"margin-bottom: auto;\">\n      <input type=\"search\" placeholder=\"All\" class=\"form-control\" style=\"width: 100%;\"/>\n      <span class=\"glyphicon glyphicon-remove-circle form-control-feedback\"><\/span>\n    <\/div>\n    <div style=\"width: 100%; display: none;\">\n      <select multiple=\"multiple\" style=\"width: 100%;\" data-options=\"[&quot;SurfArea&quot;,&quot;GrayVol&quot;,&quot;ThickAvg&quot;]\"><\/select>\n    <\/div>\n  <\/td>\n  <td data-type=\"factor\" style=\"vertical-align: top;\">\n    <div class=\"form-group has-feedback\" style=\"margin-bottom: auto;\">\n      <input type=\"search\" placeholder=\"All\" class=\"form-control\" style=\"width: 100%;\"/>\n      <span class=\"glyphicon glyphicon-remove-circle form-control-feedback\"><\/span>\n    <\/div>\n    <div style=\"width: 100%; display: none;\">\n      <select multiple=\"multiple\" style=\"width: 100%;\" data-options=\"[&quot;age&quot;,&quot;alc&quot;,&quot;bmi&quot;,&quot;cig&quot;,&quot;edu&quot;,&quot;gpheno&quot;,&quot;sex&quot;]\"><\/select>\n    <\/div>\n  <\/td>\n  <td data-type=\"number\" style=\"vertical-align: top;\">\n    <div class=\"form-group has-feedback\" style=\"margin-bottom: auto;\">\n      <input type=\"search\" placeholder=\"All\" class=\"form-control\" style=\"width: 100%;\"/>\n      <span class=\"glyphicon glyphicon-remove-circle form-control-feedback\"><\/span>\n    <\/div>\n    <div style=\"display: none; position: absolute; width: 200px;\">\n      <div data-min=\"0.93\" data-max=\"1.37\" data-scale=\"2\"><\/div>\n      <span style=\"float: left;\"><\/span>\n      <span style=\"float: right;\"><\/span>\n    <\/div>\n  <\/td>\n  <td data-type=\"number\" style=\"vertical-align: top;\">\n    <div class=\"form-group has-feedback\" style=\"margin-bottom: auto;\">\n      <input type=\"search\" placeholder=\"All\" class=\"form-control\" style=\"width: 100%;\"/>\n      <span class=\"glyphicon glyphicon-remove-circle form-control-feedback\"><\/span>\n    <\/div>\n    <div style=\"display: none; position: absolute; width: 200px;\">\n      <div data-min=\"2.02\" data-max=\"15.63\" data-scale=\"2\"><\/div>\n      <span style=\"float: left;\"><\/span>\n      <span style=\"float: right;\"><\/span>\n    <\/div>\n  <\/td>\n  <td data-type=\"number\" style=\"vertical-align: top;\">\n    <div class=\"form-group has-feedback\" style=\"margin-bottom: auto;\">\n      <input type=\"search\" placeholder=\"All\" class=\"form-control\" style=\"width: 100%;\"/>\n      <span class=\"glyphicon glyphicon-remove-circle form-control-feedback\"><\/span>\n    <\/div>\n    <div style=\"display: none; position: absolute; width: 200px;\">\n      <div data-min=\"1.37\" data-max=\"3.42\" data-scale=\"2\"><\/div>\n      <span style=\"float: left;\"><\/span>\n      <span style=\"float: right;\"><\/span>\n    <\/div>\n  <\/td>\n  <td data-type=\"number\" style=\"vertical-align: top;\">\n    <div class=\"form-group has-feedback\" style=\"margin-bottom: auto;\">\n      <input type=\"search\" placeholder=\"All\" class=\"form-control\" style=\"width: 100%;\"/>\n      <span class=\"glyphicon glyphicon-remove-circle form-control-feedback\"><\/span>\n    <\/div>\n    <div style=\"display: none; position: absolute; width: 200px;\">\n      <div data-min=\"1.54\" data-max=\"4.14\" data-scale=\"2\"><\/div>\n      <span style=\"float: left;\"><\/span>\n      <span style=\"float: right;\"><\/span>\n    <\/div>\n  <\/td>\n  <td data-type=\"number\" style=\"vertical-align: top;\">\n    <div class=\"form-group has-feedback\" style=\"margin-bottom: auto;\">\n      <input type=\"search\" placeholder=\"All\" class=\"form-control\" style=\"width: 100%;\"/>\n      <span class=\"glyphicon glyphicon-remove-circle form-control-feedback\"><\/span>\n    <\/div>\n    <div style=\"display: none; position: absolute; width: 200px;\">\n      <div data-min=\"0.19\" data-max=\"3.51\" data-scale=\"2\"><\/div>\n      <span style=\"float: left;\"><\/span>\n      <span style=\"float: right;\"><\/span>\n    <\/div>\n  <\/td>\n  <td data-type=\"number\" style=\"vertical-align: top;\">\n    <div class=\"form-group has-feedback\" style=\"margin-bottom: auto;\">\n      <input type=\"search\" placeholder=\"All\" class=\"form-control\" style=\"width: 100%;\"/>\n      <span class=\"glyphicon glyphicon-remove-circle form-control-feedback\"><\/span>\n    <\/div>\n    <div style=\"display: none; position: absolute; width: 200px;\">\n      <div data-min=\"-0.16\" data-max=\"15.64\" data-scale=\"2\"><\/div>\n      <span style=\"float: left;\"><\/span>\n      <span style=\"float: right;\"><\/span>\n    <\/div>\n  <\/td>\n  <td data-type=\"number\" style=\"vertical-align: top;\">\n    <div class=\"form-group has-feedback\" style=\"margin-bottom: auto;\">\n      <input type=\"search\" placeholder=\"All\" class=\"form-control\" style=\"width: 100%;\"/>\n      <span class=\"glyphicon glyphicon-remove-circle form-control-feedback\"><\/span>\n    <\/div>\n    <div style=\"display: none; position: absolute; width: 200px;\">\n      <div data-min=\"3.42\" data-max=\"64.08\" data-scale=\"2\"><\/div>\n      <span style=\"float: left;\"><\/span>\n      <span style=\"float: right;\"><\/span>\n    <\/div>\n  <\/td>\n  <td data-type=\"number\" style=\"vertical-align: top;\">\n    <div class=\"form-group has-feedback\" style=\"margin-bottom: auto;\">\n      <input type=\"search\" placeholder=\"All\" class=\"form-control\" style=\"width: 100%;\"/>\n      <span class=\"glyphicon glyphicon-remove-circle form-control-feedback\"><\/span>\n    <\/div>\n    <div style=\"display: none; position: absolute; width: 200px;\">\n      <div data-min=\"0.764999999999999\" data-max=\"37.485\" data-scale=\"15\"><\/div>\n      <span style=\"float: left;\"><\/span>\n      <span style=\"float: right;\"><\/span>\n    <\/div>\n  <\/td>\n  <td data-type=\"number\" style=\"vertical-align: top;\">\n    <div class=\"form-group has-feedback\" style=\"margin-bottom: auto;\">\n      <input type=\"search\" placeholder=\"All\" class=\"form-control\" style=\"width: 100%;\"/>\n      <span class=\"glyphicon glyphicon-remove-circle form-control-feedback\"><\/span>\n    <\/div>\n    <div style=\"display: none; position: absolute; width: 200px;\">\n      <div data-min=\"1.2\" data-max=\"35.62\" data-scale=\"2\"><\/div>\n      <span style=\"float: left;\"><\/span>\n      <span style=\"float: right;\"><\/span>\n    <\/div>\n  <\/td>\n  <td data-type=\"number\" style=\"vertical-align: top;\">\n    <div class=\"form-group has-feedback\" style=\"margin-bottom: auto;\">\n      <input type=\"search\" placeholder=\"All\" class=\"form-control\" style=\"width: 100%;\"/>\n      <span class=\"glyphicon glyphicon-remove-circle form-control-feedback\"><\/span>\n    <\/div>\n    <div style=\"display: none; position: absolute; width: 200px;\">\n      <div data-min=\"0.98\" data-max=\"14.4\" data-scale=\"2\"><\/div>\n      <span style=\"float: left;\"><\/span>\n      <span style=\"float: right;\"><\/span>\n    <\/div>\n  <\/td>\n<\/tr>","caption":"<caption>Descriptive statistics of added morphometricity<\/caption>","data":[["SurfArea","GrayVol","ThickAvg","SurfArea","GrayVol","ThickAvg","SurfArea","GrayVol","ThickAvg","SurfArea","GrayVol","ThickAvg","SurfArea","GrayVol","ThickAvg","SurfArea","GrayVol","ThickAvg","SurfArea","GrayVol","ThickAvg"],["age","age","age","alc","alc","alc","bmi","bmi","bmi","cig","cig","cig","edu","edu","edu","gpheno","gpheno","gpheno","sex","sex","sex"],[1.27,1.21,1.31,0.93,1.19,1.22,1.34,1.34,1.3,1.15,1.11,1.15,1.21,1.22,1.18,1.25,1.21,1.25,1.22,1.37,1.3],[3.36,3.18,2.2,11.73,7.29,3,8.14,15.63,2.52,14.56,13.6,3.24,10.24,10.05,3.04,6.03,4.99,2.03,3.49,2.8,2.28],[1.94,1.94,1.58,2.02,2.11,1.46,2.61,3.42,1.54,1.87,2.87,1.45,2.72,2.6,1.37,2.02,2.35,1.46,2.02,1.79,1.79],[2.04,1.95,1.62,2.75,2.54,1.7,2.96,4.14,1.7,3.57,3.34,1.66,3.22,2.83,1.7,2.38,2.29,1.54,2.18,1.82,1.78],[0.57,0.55,0.19,2.3,1.68,0.5,1.56,3.07,0.35,3.51,2.85,0.55,2.33,1.82,0.54,1.17,0.98,0.23,0.62,0.36,0.28],[11.41,7.5,9.14,-0.16,0.5,0.6,3.85,4.27,3.39,0.48,0.33,0.34,0.96,0.78,0.62,3.01,1.87,1.99,15.64,14.64,11.06],[57.8,48.86,34.49,9.75,8.48,4.77,36.57,36.37,14.08,19.18,11.34,3.42,17.4,11.17,5.85,31.92,19.19,8.06,64.08,52.09,40.2],[31.425,27.4,16.205,1.45,1.5,1.215,10.025,11.22,6.05,1.655,1.8,0.765,3.345,2.32,1.28,7.79,6.87,3.575,37.485,24.65,26.05],[30.01,25.33,16.92,2.55,2.67,1.99,13.93,14.57,7.46,5.46,3.53,1.2,5.65,3.76,2.25,11.63,7.71,4.15,35.62,27.28,25.65],[12.35,10.7,4.91,2.93,2.76,1.42,10.48,9.05,3.44,7.22,3.66,0.98,5.28,2.97,1.71,9.05,5.11,1.78,14.4,10.55,8.29]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th>meas<\/th>\n      <th>pheno<\/th>\n      <th>ratio_min<\/th>\n      <th>ratio_max<\/th>\n      <th>ratio_median<\/th>\n      <th>ratio_mean<\/th>\n      <th>ratio_sd<\/th>\n      <th>diff_min<\/th>\n      <th>diff_max<\/th>\n      <th>diff_median<\/th>\n      <th>diff_mean<\/th>\n      <th>diff_sd<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"pageLength":10,"scrollX":true,"columnDefs":[{"className":"dt-right","targets":[2,3,4,5,6,7,8,9,10,11]}],"order":[],"autoWidth":false,"orderClasses":false,"orderCellsTop":true}},"evals":[],"jsHooks":[]}</script>
+<p>On average, adding the more complex atlas improved the morphometricity estimate by double (average sum_G/morph ratio = 2.37).</p>
+<p>If we look at this split by measurement type:</p>
+<ul>
+<li>average ratio GrayVol = 2.7</li>
+<li>average ratio SurfArea = 2.73</li>
+<li>average ratio ThickAvg = 1.67</li>
+</ul>
+<p>Out of the 588, 12 models were not significant suggesting that most models had an increase in morphometricity when adding the more complex/ high dimensional atlas.</p>
+<p>These non-significant models were all for brain measures of SurfArea and for alcohol and cigarette consumption. These models operated very close to the boundaries of the feature space and had very small estimates for individual atlases as well as combined models. The average morphometricity estimates for atlases alone was 2.46 and the combined estimate (sum_G) was 4.</p>
 <p>This table is stored in an excel sheet using the code below</p>
 <pre class="r"><code># store in Excel sheet</code></pre>
 <p><br> <br></p>

@@ -841,9 +841,13 @@ V_G/ morph < 1 suggests there was an increase in morphomtricity by adding the mo
 ```{r}
 library(ggplot2)
 library(cowplot)
+library(stringr)
 
 # read in LRT results
 LRT=read.table(paste0(getwd(),"/LRT/LRT_results.table"), header=T)
+LRT$ci_l <- (LRT$sum_G - 1.96*LRT$sum_SE)*100 
+LRT$ci_u <- (LRT$sum_G + 1.96*LRT$sum_SE)*100 
+
 
 # read in morph results
 morph=read.table(paste0(getwd(),"/empirical/morph_results_QCed_vertices.table"), header=T)
@@ -900,8 +904,19 @@ for(i in unique(LRT$meas)){
       #63C5DA GrayVol
       #0492C2 SurfArea
       #016064 ThickAvg
-      if(i == "SurfArea"){
-          title = paste0("Non-brain trait = ",j)
+      if(i == "GrayVol"){
+        # change naming
+          mod_name=j
+          mod_name = str_replace(mod_name, pattern="gpheno", replacement = "General cognitive ability")
+          mod_name = str_replace(mod_name, pattern="age", replacement = "Age")
+          mod_name = str_replace(mod_name, pattern="sex", replacement = "Sex")
+          mod_name = str_replace(mod_name, pattern="alc", replacement = "Alcohol consumption")
+          mod_name = str_replace(mod_name, pattern="cig", replacement = "Cigarette consumption")
+          mod_name = str_replace(mod_name, pattern="bmi", replacement = "Body Mass Index")
+          mod_name = str_replace(mod_name, pattern="edu", replacement = "Education")
+          
+          # save title
+          title = paste0("Non-brain trait = ",mod_name)
         }else{
           title = ""
       }
@@ -921,7 +936,8 @@ for(i in unique(LRT$meas)){
         plot.title = element_text(face="bold", colour='#1A1A1A', size=18),
         axis.text.x = element_text(angle = 45, vjust=0.6))+
         labs(fill = "Total added\nmorpho-\nmetricity")+
-        geom_text(aes(ordered2, ordered1,label=sig),color="black",size=3)
+        geom_text(aes(ordered2, ordered1,label=sig),color="black",size=3)+
+        theme(legend.position = "none") # decided to remove legend
       
       
       plot_name=paste0(i,"_",j)
@@ -987,10 +1003,29 @@ dev.off()
 <br>
 
 ## Descriptives of added morphometricity
-```{r}
+```{r, eval =T}
 # create data.frame to store results
-results = data.frame(matrix(nrow = 3*7, ncol = 8))
-names(results) = c("meas","pheno","min","max","median","mean","sd","non_missing_est")
+results = data.frame(matrix(nrow = 3*7, ncol = 12))
+names(results) = c("meas","pheno","ratio_min","ratio_max","ratio_median","ratio_mean","ratio_sd",
+                                  "diff_min","diff_max","diff_median","diff_mean","diff_sd")
+
+# read in LRT results
+LRT=read.table(paste0(getwd(),"/LRT/LRT_results.table"), header=T)
+# read in morph results
+morph=read.table(paste0(getwd(),"/empirical/morph_results_QCed_vertices.table"), header=T)
+names(morph)[which(names(morph) == "atlas")] <- "atlas1"
+# change measurement type names from randomaparc
+morph$meas[which(morph$meas == "area")] = "SurfArea"
+morph$meas[which(morph$meas == "volume")] = "GrayVol"
+morph$meas[which(morph$meas == "thickness")] = "ThickAvg"
+
+# merge morph with LRT
+morph = morph[,c("atlas1","meas","pheno","morph")]
+LRT=merge(LRT, morph, by=c("atlas1","meas","pheno"))
+
+# get difference in morph estimate and V_G/morph ratio
+LRT$diff = round(LRT$sum_G*100 - LRT$morph, digits=2)
+LRT$ratio = round(LRT$sum_G*100 / LRT$morph, digits=2)
 
 
 # get all possible combinations of atlas, meas & pheno
@@ -1007,25 +1042,45 @@ results[,c("meas","pheno")] = expand.grid(meas, pheno)
       subset = LRT[which(LRT$meas == j & LRT$pheno == k),]
       
        #### store results
-      # mean morph
-      results$mean[which(results$meas == j & results$pheno == k)] = mean(subset$diff, na.rm=T)
-      # sd morph
-      results$sd[which(results$meas == j & results$pheno == k)] = sd(subset$diff, na.rm=T)
-      # min morph
-      results$min[which(results$meas == j & results$pheno == k)] = min(subset$diff, na.rm=T)
-      # max morph
-      results$max[which(results$meas == j & results$pheno == k)] = max(subset$diff, na.rm=T)
-      # median morph
-      results$median[which(results$meas == j & results$pheno == k)] = median(subset$diff, na.rm=T)
-      # store non-missing values
-      results$non_missing_est[which(results$meas == j & results$pheno == k)] = nrow(subset)
+      # mean morph diff & ratio
+      results$diff_mean[which(results$meas == j & results$pheno == k)] = round(mean(subset$diff, na.rm=T), digits = 2)
+      results$ratio_mean[which(results$meas == j & results$pheno == k)] = round(mean(subset$ratio, na.rm=T), digits = 2)
+      # sd morph diff & ratio
+      results$diff_sd[which(results$meas == j & results$pheno == k)] = round(sd(subset$diff, na.rm=T), digits = 2)
+      results$ratio_sd[which(results$meas == j & results$pheno == k)] = round(sd(subset$ratio, na.rm=T), digits = 2)
+      # min morph diff & ratio
+      results$diff_min[which(results$meas == j & results$pheno == k)] = min(subset$diff, na.rm=T)
+      results$ratio_min[which(results$meas == j & results$pheno == k)] = round(min(subset$ratio, na.rm=T), digits = 2)
+      # max morph diff & ratio
+      results$diff_max[which(results$meas == j & results$pheno == k)] = max(subset$diff, na.rm=T)
+      results$ratio_max[which(results$meas == j & results$pheno == k)] = round(max(subset$ratio, na.rm=T), digits = 2)
+      # median morph diff & ratio
+      results$diff_median[which(results$meas == j & results$pheno == k)] = median(subset$diff, na.rm=T)
+      results$ratio_median[which(results$meas == j & results$pheno == k)] = round(median(subset$ratio, na.rm=T), digits = 2)
+      
     }
   }
 
 library(DT)
 datatable(results, rownames=FALSE, filter="top",options= list(pageLength=10,scrollX=T), caption = "Descriptive statistics of added morphometricity")
 
+
 ```
+
+On average, adding the more complex atlas improved the morphometricity estimate by double (average sum_G/morph ratio = `r round(mean(results$ratio_mean), digits=2)`).
+
+If we look at this split by measurement type: 
+
+  - average ratio GrayVol = `r round(mean(results[which(results$meas == "GrayVol"),"ratio_mean"]),digits=2)` 
+  - average ratio SurfArea = `r round(mean(results[which(results$meas == "SurfArea"),"ratio_mean"]),digits=2)`
+  - average ratio ThickAvg = `r round(mean(results[which(results$meas == "ThickAvg"),"ratio_mean"]),digits=2)`
+
+
+Out of the 588, `r nrow(LRT[which(LRT$p_val > 0.05/588),])` models were not significant suggesting that most models had an increase in morphometricity when adding the more complex/ high dimensional atlas. 
+
+These non-significant models were all for brain measures of SurfArea and for alcohol and cigarette consumption. These models operated very close to the boundaries of the feature space and had very small estimates for individual atlases as well as combined models. The average morphometricity estimates for atlases alone was `r round(mean(LRT[which(LRT$p_val > 0.05/588),"morph"]), digits=2)` and the combined estimate (sum_G) was `r round(mean(LRT[which(LRT$p_val > 0.05/588),"sum_G"]), digits=2)*100`.
+
+
 
 This table is stored in an excel sheet using the code below
 ```{r}
