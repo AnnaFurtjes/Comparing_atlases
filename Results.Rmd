@@ -461,6 +461,84 @@ dev.off()
 <br>
 <br>
 
+### Create Excel worksheet
+```{r eval=T}
+library(xlsx)
+# create a new workbook for outputs
+#++++++++++++++++++++++++++++++++++++
+# possible values for type are : "xls" and "xlsx"
+wb<-createWorkbook(type="xlsx")
+# Define some cell styles
+#++++++++++++++++++++++++++++++++++++
+# Title and sub title styles
+TITLE_STYLE <- CellStyle(wb)+ Font(wb,  heightInPoints=16, 
+                                   isBold=TRUE, underline=1)
+SUB_TITLE_STYLE <- CellStyle(wb) + 
+  Font(wb,  heightInPoints=14,
+       isItalic=TRUE, isBold=FALSE)
+# Styles for the data table row/column names
+TABLE_ROWNAMES_STYLE <- CellStyle(wb) + Font(wb, isBold=TRUE)
+TABLE_COLNAMES_STYLE <- CellStyle(wb) + Font(wb, isBold=TRUE) +
+  Alignment(wrapText=TRUE, horizontal="ALIGN_CENTER") +
+  Border(color="black", position=c("TOP", "BOTTOM"), 
+         pen=c("BORDER_THIN", "BORDER_THICK")) 
+# Create a new sheet in the workbook
+#++++++++++++++++++++++++++++++++++++
+sheet <- createSheet(wb, sheetName = "ST1 Morphometricity")
+#++++++++++++++++++++++++
+# Helper function to add titles
+#++++++++++++++++++++++++
+# - sheet : sheet object to contain the title
+# - rowIndex : numeric value indicating the row to 
+#contain the title
+# - title : the text to use as title
+# - titleStyle : style object to use for title
+xlsx.addTitle<-function(sheet, rowIndex, title, titleStyle){
+  rows <-createRow(sheet,rowIndex=rowIndex)
+  sheetTitle <-createCell(rows, colIndex=1)
+  setCellValue(sheetTitle[[1,1]], title)
+  setCellStyle(sheetTitle[[1,1]], titleStyle)
+}
+# Add title and sub title into a worksheet
+#++++++++++++++++++++++++++++++++++++
+# Add title
+xlsx.addTitle(sheet, rowIndex=1, title="Morphometricity estimates",
+              titleStyle = TITLE_STYLE)
+# Add sub title
+xlsx.addTitle(sheet, rowIndex=2, 
+              title="Estimates from empirical atlases, large random atlases and vertices (as displayed in Figure 4)",
+              titleStyle = SUB_TITLE_STYLE)
+
+####################
+## get results data
+####################
+setwd("C:/Users/k1894405/OneDrive - King's College London/PhD/Projects/Comparing labelling protocols/results/empirical")
+
+est = read.table("morph_results_QCed_vertices.table", header=T)
+randomest = read.table("morph_results_randomaparc.table", header=T)
+est = rbind(est, randomest)
+
+# change measurement type names from randomaparc
+est$meas[which(est$meas == "area")] = "SurfArea"
+est$meas[which(est$meas == "volume")] = "GrayVol"
+est$meas[which(est$meas == "thickness")] = "ThickAvg"
+
+names(est)[which(names(est) == "meas")] = "Measurement type"
+
+
+
+# Add a table into a worksheet
+#++++++++++++++++++++++++++++++++++++
+addDataFrame(est, sheet, startRow=3, startColumn=1, 
+             colnamesStyle = TABLE_COLNAMES_STYLE,
+             rownamesStyle = TABLE_ROWNAMES_STYLE,row.names = F)
+# Change column width
+setColumnWidth(sheet, colIndex=c(1:ncol(est)), colWidth=17)
+
+
+```
+
+
 ## BIC 
 
 Is there a relationship between model fit and number of ROIs?
@@ -581,7 +659,6 @@ dev.off()
 
 ![](C:/Users/k1894405/Documents/GitHub/Comparing_atlases/other_images/BIC.PNG)
 
-
 ***
 
 
@@ -698,6 +775,34 @@ both= merge(orig, rint, by = c("atlas", "meas", "pheno"))
 
 DT::datatable(both, rownames=FALSE, filter="top",options= list(pageLength=10,scrollX=T), caption = "Comparison original and normalised Schaefer estimates")
 
+```
+
+
+
+### Add data to excel sheet
+```{r eval=T}
+### change sheet name
+sheet <-createSheet(wb, sheetName = "Schaefer morphometricity")
+
+##' change title
+xlsx.addTitle(sheet, rowIndex=1, title="Schaefer atlas normalised vs. original estimates",
+              titleStyle = TITLE_STYLE)
+## Add sub title
+xlsx.addTitle(sheet, rowIndex=2, 
+              title="Morphometricity based on Schaefer atlas raw data as processed by FreeSurfer (orig) and normalised with rank-based inverse normal transformation (rint)",
+              titleStyle = SUB_TITLE_STYLE)
+
+# indicate table to be sabed
+addDataFrame(both, sheet, startRow=3, startColumn=1, 
+             colnamesStyle = TABLE_COLNAMES_STYLE,
+             rownamesStyle = TABLE_ROWNAMES_STYLE,row.names = F)
+
+# Change column width
+setColumnWidth(sheet, colIndex=c(2:ncol(both)), colWidth=14)
+setColumnWidth(sheet, colIndex = 1, colWidth=18)
+
+#setwd("C:/Users/k1894405/OneDrive - King's College London/PhD/Projects/Comparing labelling protocols/writing/Results write-up")
+#saveWorkbook(wb, "Supplementary_Tables.xlsx")
 ```
 
 
@@ -1128,11 +1233,31 @@ These non-significant models were all for brain measures of SurfArea and for alc
 
 
 
-This table is stored in an excel sheet using the code below
-```{r}
-# store in Excel sheet
-```
+### Add data to excel sheet
+```{r eval=T}
+### change sheet name
+sheet <-createSheet(wb, sheetName = "LRTs")
 
+##' change title
+xlsx.addTitle(sheet, rowIndex=1, title="Likelihood ratio tests comparing atlas performance",
+              titleStyle = TITLE_STYLE)
+## Add sub title
+xlsx.addTitle(sheet, rowIndex=2, 
+              title="Summary statistics of LRTs",
+              titleStyle = SUB_TITLE_STYLE)
+
+# indicate table to be sabed
+addDataFrame(results, sheet, startRow=3, startColumn=1, 
+             colnamesStyle = TABLE_COLNAMES_STYLE,
+             rownamesStyle = TABLE_ROWNAMES_STYLE,row.names = F)
+
+# Change column width
+setColumnWidth(sheet, colIndex=c(2:ncol(results)), colWidth=14)
+setColumnWidth(sheet, colIndex = 1, colWidth=18)
+
+#setwd("C:/Users/k1894405/OneDrive - King's College London/PhD/Projects/Comparing labelling protocols/writing/Results write-up")
+#saveWorkbook(wb, "Supplementary_Tables.xlsx")
+```
 
 
 <br>
@@ -1299,7 +1424,73 @@ dev.off()
 ```
 
 
+### Add data to excel sheet
+```{r eval=T}
+###
+setwd(paste0(wd,"/nulldistr"))
 
+# store results
+results = as.data.frame(matrix(nrow = 0, ncol=8))
+names(results)=c("num_ROIs","meas","pheno","mean","sd","min","max","median")
+
+
+for(i in c(34, 68, 148, 274, 334, 360, 500)){
+
+null = read.table(paste0(wd,"/nulldistr/morph_results_",i,"randomROIs.table"), header=T)
+
+# change measurement type names from randomaparc
+null$meas[which(null$meas == "area")] = "SurfArea"
+null$meas[which(null$meas == "volume")] = "GrayVol"
+null$meas[which(null$meas == "thickness")] = "ThickAvg"
+
+
+
+  for(j in c("SurfArea","GrayVol","ThickAvg")){
+    
+    for(k in unique(null$pheno)){
+      # subset data.frame
+      subset = null[which(null$meas == j & null$pheno == k),]
+      
+       #### store results
+      # mean morph 
+      results[nrow(results)+1,c("num_ROIs","meas","pheno","mean")] = c(i,j,k,round(mean(subset$morph, na.rm=T), digits = 2))
+      # sd morph
+      results$sd[which(results$meas == j & results$pheno == k)] = round(sd(subset$morph, na.rm=T), digits = 2)
+      # min morph
+      results$min[which(results$meas == j & results$pheno == k)] = min(subset$morph, na.rm=T)
+      # max morph 
+      results$max[which(results$meas == j & results$pheno == k)] = max(subset$morph, na.rm=T)
+      # median morph 
+      results$median[which(results$meas == j & results$pheno == k)] = median(subset$morph, na.rm=T)
+
+    }
+  }
+
+}
+
+### change sheet name
+sheet <-createSheet(wb, sheetName = "Null distributions")
+
+##' change title
+xlsx.addTitle(sheet, rowIndex=1, title="Summary statistics morphometricity null distributions",
+              titleStyle = TITLE_STYLE)
+## Add sub title
+xlsx.addTitle(sheet, rowIndex=2, 
+              title="Morphometricity estimates from atlases with random boundaries",
+              titleStyle = SUB_TITLE_STYLE)
+
+# indicate table to be sabed
+addDataFrame(results, sheet, startRow=3, startColumn=1, 
+             colnamesStyle = TABLE_COLNAMES_STYLE,
+             rownamesStyle = TABLE_ROWNAMES_STYLE,row.names = F)
+
+# Change column width
+setColumnWidth(sheet, colIndex=c(2:ncol(results)), colWidth=14)
+setColumnWidth(sheet, colIndex = 1, colWidth=18)
+
+#setwd("C:/Users/k1894405/OneDrive - King's College London/PhD/Projects/Comparing labelling protocols/writing/Results write-up")
+#saveWorkbook(wb, "Supplementary_Tables.xlsx")
+```
 
 
 # 5. LASSO regressions
@@ -1391,3 +1582,29 @@ datatable(wil, rownames=FALSE, filter="top",options= list(pageLength=10,scrollX=
 
 ```
 
+### Add data to excel sheet
+```{r eval=T}
+
+### change sheet name
+sheet <-createSheet(wb, sheetName = "Wilcoxon sign rank tests")
+
+##' change title
+xlsx.addTitle(sheet, rowIndex=1, title="Wilcoxon sign rank tests",
+              titleStyle = TITLE_STYLE)
+## Add sub title
+xlsx.addTitle(sheet, rowIndex=2, 
+              title="Wilcoxon tests based on LASSO prediction errors",
+              titleStyle = SUB_TITLE_STYLE)
+
+# indicate table to be sabed
+addDataFrame(wil, sheet, startRow=3, startColumn=1, 
+             colnamesStyle = TABLE_COLNAMES_STYLE,
+             rownamesStyle = TABLE_ROWNAMES_STYLE,row.names = F)
+
+# Change column width
+setColumnWidth(sheet, colIndex=c(2:ncol(wil)), colWidth=14)
+setColumnWidth(sheet, colIndex = 1, colWidth=18)
+
+#setwd("C:/Users/k1894405/OneDrive - King's College London/PhD/Projects/Comparing labelling protocols/writing/Results write-up")
+#saveWorkbook(wb, "Supplementary_Tables.xlsx")
+```
