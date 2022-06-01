@@ -596,6 +596,7 @@ library(ggplot2)
 library(gridExtra)
 setwd("C:/Users/k1894405/OneDrive - King's College London/temp")
 
+# the most predictive regions were determined based on LASSO beta values and the region names were saved in this document
 names = read.table("Schaefer_GrayVol_mostpred_LASSO.txt")
 
 
@@ -665,23 +666,55 @@ dev.off()
 
 ```
 
+![](C:/Users/k1894405/Documents/GitHub/Comparing_atlases/other_images/Schaefer_distr.PNG)
+
+
+***
+
+The plots suggest that Schaefer regions may not be normally distributed and therefore we re-calculate morphometricity estimates from Schaefer atlas data that has been normalised using rank-based inverse normal transformation (--rint-probe flag in OSCA).
+
+Here, we display the attenuated estimates from the normalised data contrasted with the original estimates. 
+
+```{r eval=T}
+setwd("C:/Users/k1894405/OneDrive - King's College London/PhD/Projects/Comparing labelling protocols/results/empirical")
+
+rint = read.table(list.files(pattern="Schaefer"), header=T)
+rint = rint[,which(names(rint) != "SE" & names(rint) != "pval" & names(rint) != "N" & names(rint) != "LRT")]
+# rename
+names(rint)[4:length(names(rint))] = paste0("rint_", names(rint)[4:length(names(rint))])
+
+orig = read.table("morph_results_QCed_vertices.table", header=T)
+# keep Schaefer data only
+orig = orig[which(orig$atlas == "Schaefer"),]
+orig = orig[,which(names(orig) != "SE" & names(orig) != "pval" & names(orig) != "LRT")]
+
+# rename
+names(orig)[4:length(names(orig))] = paste0("orig_", names(orig)[4:length(names(orig))])
+
+
+# merge the two data sets
+both= merge(orig, rint, by = c("atlas", "meas", "pheno"))
+
+
+DT::datatable(both, rownames=FALSE, filter="top",options= list(pageLength=10,scrollX=T), caption = "Comparison original and normalised Schaefer estimates")
+
+```
+
+
+<br>
+<br>
+<br>
+
+***
+
 
 # 3. Added morphometricity (Likelihood ratio tests)
 
 
-This is probably not the right markdown document, but I'm lazy so for now it will be in the results from the random atlases
+Cross-atlas LRTs were performed to quantify whether a higher dimensional atlas added explained variance in addition to the variance explained by a lower dimensional atlas. For example, first we fitted morphometricity using DK (68 ROIs) and Destrieux (148 ROIs) brain measures in one model. Second, we dropped Destrieux from the model and recalculated morphometricity for DK alone, which allows to quantify the percentage of variance explained by Destrieux in addition to the variance already explained by DK (“added morphometricity”). The LRT quantifies whether the explanatory variance added by the higher dimensional atlas (i.e., Destrieux in this example) is larger than zero.  
 
-Notes:
-
-We conduct the LRT analyses to figure out how much value it adds for the morphometricity estimate if we add a more complex atlas to the less complex atlas. atlas1+atlas2 vs.  atlas1 
-
-We calculated the LRT results by testing whether dropping the second atlas from the analysis significantly improves the morphometricity estimate
-
-The heatmap below will indicate the difference in variance explained (%) by the atlas1+atlas2 minus the variance explained by atlas1 only. The models in which we got a significant improvement are marked with a *
-
-We will have heatmaps for each measurement type and for each phenotype.
-
-Link to the code used to produce this table! 
+The first code chunk displays the raw percentages of variance explained by those models. 
+We chose not to use this in the manuscript as it's hard to interpret and summarise. 
 
 ```{r}
 library(ggplot2)
@@ -832,11 +865,21 @@ dev.off()
 
 Alternative visualisation is to display the relative increase in morphometricity that we get by adding the more complex atlas to the equation. 
 
+
+
+To put the LRT results into perspective, we report the morphometricity estimate of the lower dimensional atlas divided by the sum of the variance explained by both atlases combined, which will reflect the relative improvement made to the model by adding the higher dimensional atlas. A ratio of 1 indicates no increase in morphometricity when adding the higher dimensional atlas to the equation, and a ratio larger than 1 indicates the proportional increase in morphometricity grained by adding the higher dimensional atlas. None of the indices are below 1 as the combined morphometricity estimate from two atlases cannot be smaller than the estimate yielded by one atlas alone. 
+
+
+
+
 We obtain this relative increase as the total variance explained by both atlases divided by the morph estimate of the lower dimensional atlas. 
 For example, DK explains 25% SurfArea morphometricity in age by itself. DK and Des together explain 52% in age. 52%/25% = 2.08 suggesting that adding the higher dimensional atlas increased the estimate by about double.
 
 V_G/ morph = 1 suggests that there was no added morphometricity by adding the more complex atlas.
 V_G/ morph < 1 suggests there was an increase in morphomtricity by adding the more complex atlas.
+
+
+
 
 ```{r}
 library(ggplot2)
@@ -998,6 +1041,9 @@ dev.off()
 ```
 
 
+![](C:/Users/k1894405/Documents/GitHub/Comparing_atlases/other_images/LRT1.PNG)
+
+
 
 <br>
 <br>
@@ -1076,7 +1122,7 @@ If we look at this split by measurement type:
   - average ratio ThickAvg = `r round(mean(results[which(results$meas == "ThickAvg"),"ratio_mean"]),digits=2)`
 
 
-Out of the 588, `r nrow(LRT[which(LRT$p_val > 0.05/588),])` models were not significant suggesting that most models had an increase in morphometricity when adding the more complex/ high dimensional atlas. 
+Out of all models, `r nrow(LRT[which(LRT$p_val > 0.05/588),])` models were not significant suggesting that most models had an increase in morphometricity when adding the more complex/ high dimensional atlas. 
 
 These non-significant models were all for brain measures of SurfArea and for alcohol and cigarette consumption. These models operated very close to the boundaries of the feature space and had very small estimates for individual atlases as well as combined models. The average morphometricity estimates for atlases alone was `r round(mean(LRT[which(LRT$p_val > 0.05/588),"morph"]), digits=2)` and the combined estimate (sum_G) was `r round(mean(LRT[which(LRT$p_val > 0.05/588),"sum_G"]), digits=2)*100`.
 
@@ -1102,13 +1148,14 @@ library(cowplot)
 library(dplyr)
 library(PupillometryR)
 
-setwd("~/Comparing labelling protocols/results/nulldistr")
+wd=getwd()
+setwd(paste0(wd,"/nulldistr"))
 
 save=list()
 
 for(i in c(34, 68, 148, 274, 334, 360, 500)){
 
-null = read.table(paste0("morph_results_",i,"randomROIs.table"), header=T)
+null = read.table(paste0(wd,"nulldistr/morph_results_",i,"randomROIs.table"), header=T)
 
 # change measurement type names from randomaparc
 null$meas[which(null$meas == "area")] = "SurfArea"
@@ -1121,11 +1168,15 @@ names(null)[which(names(null) == "meas")] = "Measurement type"
 #null = null[which(null$atlas == paste0(i,"randomROIs")),]
 
 # filter for pheno
-null = null[which(null$pheno =="age" | null$pheno =="gpheno" | null$pheno =="sex"),]
-
+#null = null[which(null$pheno =="age" | null$pheno =="gpheno" | null$pheno =="sex"),]
+# name phenos
 null$pheno[which(null$pheno =="age")] = "Age"
 null$pheno[which(null$pheno =="gpheno")] = "General\ncognitive\nability"
 null$pheno[which(null$pheno =="sex")] = "Sex"
+null$pheno[which(null$pheno =="alc")] = "Alcohol\nconsumption"
+null$pheno[which(null$pheno =="cig")] = "Cigarette\nconsumption"
+null$pheno[which(null$pheno =="bmi")] = "Body Mass\nindex"
+null$pheno[which(null$pheno =="edu")] = "Education"
 
 
 title_size=22
@@ -1133,8 +1184,9 @@ other_size=20
 axis_text=16
 
 
-# get estimates from empitical atlases
-est = read.table("~/Comparing labelling protocols/results/empirical/morph_results_QCed.table", header=T)
+# get estimates from empirical atlases
+
+est = read.table(paste0(wd,"/empirical/morph_results_QCed.table"), header=T)
 # pheno & morph for DK
 if(i == 68){atlas = "DK"}
 if(i == 148){atlas = "Des"}
@@ -1147,17 +1199,22 @@ if(i == 360){atlas = "Glasser"}
 
 mu=est[which(est$atlas == atlas),c("meas", "morph", "pheno")]
 
-GrayVolnum_age = mu$morph[which(mu$meas=="GrayVol" & mu$pheno=="age")]
-SurfAreanum_age = mu$morph[which(mu$meas=="SurfArea" & mu$pheno=="age")]
-ThickAvgnum_age = mu$morph[which(mu$meas=="ThickAvg" & mu$pheno=="age")]
+#GrayVolnum_age = mu$morph[which(mu$meas=="GrayVol" & mu$pheno=="age")]
+#SurfAreanum_age = mu$morph[which(mu$meas=="SurfArea" & mu$pheno=="age")]
+#ThickAvgnum_age = mu$morph[which(mu$meas=="ThickAvg" & mu$pheno=="age")]
 
-GrayVolnum_sex = mu$morph[which(mu$meas=="GrayVol" & mu$pheno=="sex")]
-SurfAreanum_sex = mu$morph[which(mu$meas=="SurfArea" & mu$pheno=="sex")]
-ThickAvgnum_sex = mu$morph[which(mu$meas=="ThickAvg" & mu$pheno=="sex")]
 
-GrayVolnum_g = mu$morph[which(mu$meas=="GrayVol" & mu$pheno=="gpheno")]
-SurfAreanum_g = mu$morph[which(mu$meas=="SurfArea" & mu$pheno=="gpheno")]
-ThickAvgnum_g = mu$morph[which(mu$meas=="ThickAvg" & mu$pheno=="gpheno")]
+for(l in unique(mu$pheno)){
+  GrayVolnum = mu$morph[which(mu$meas=="GrayVol" & mu$pheno==l)]
+  SurfAreanum = mu$morph[which(mu$meas=="SurfArea" & mu$pheno==l)]
+  ThickAvgnum = mu$morph[which(mu$meas=="ThickAvg" & mu$pheno==l)]
+
+  assign(paste0("GrayVolnum_",l), GrayVolnum)
+  assign(paste0("SurfAreanum_",l), SurfAreanum)
+  assign(paste0("ThickAvgnum_",l), ThickAvgnum)
+}
+
+
 
 title = paste0(i," random ROIs")
   
@@ -1182,12 +1239,24 @@ random_plot <- ggplot(null, aes(y = morph, x = pheno, color = `Measurement type`
     annotate(geom="point", y=SurfAreanum_age, x="Age", shape=4, color="red", size=5, stroke=1.5)+
     annotate(geom="point", y=GrayVolnum_age, x=1-0.25, shape=4, color="red", size=5, stroke=1.5)+
     annotate(geom="point", y=ThickAvgnum_age, x=1+0.25, shape=4, color="red", size=5, stroke=1.5)+
-    annotate(geom="point", y=SurfAreanum_g, x="General\ncognitive\nability", shape=4, color="red", size=5, stroke=1.5)+
-    annotate(geom="point", y=GrayVolnum_g, x=2-0.25, shape=4, color="red", size=5, stroke=1.5)+
-    annotate(geom="point", y=ThickAvgnum_g, x=2+0.25, shape=4, color="red", size=5, stroke=1.5)+
+    annotate(geom="point", y=SurfAreanum_alc, x="Alcohol\nconsumption", shape=4, color="red", size=5, stroke=1.5)+
+    annotate(geom="point", y=GrayVolnum_alc, x=2-0.25, shape=4, color="red", size=5, stroke=1.5)+
+    annotate(geom="point", y=ThickAvgnum_alc, x=2+0.25, shape=4, color="red", size=5, stroke=1.5)+
+    annotate(geom="point", y=SurfAreanum_bmi, x="Body Mass\nindex", shape=4, color="red", size=5, stroke=1.5)+
+    annotate(geom="point", y=GrayVolnum_bmi, x=3-0.25, shape=4, color="red", size=5, stroke=1.5)+
+    annotate(geom="point", y=ThickAvgnum_bmi, x=3+0.25, shape=4, color="red", size=5, stroke=1.5)+
+    annotate(geom="point", y=SurfAreanum_cig, x="Cigarette\nconsumption", shape=4, color="red", size=5, stroke=1.5)+
+    annotate(geom="point", y=GrayVolnum_cig, x=4-0.25, shape=4, color="red", size=5, stroke=1.5)+
+    annotate(geom="point", y=ThickAvgnum_cig, x=4+0.25, shape=4, color="red", size=5, stroke=1.5)+
+    annotate(geom="point", y=SurfAreanum_edu, x="Education", shape=4, color="red", size=5, stroke=1.5)+
+    annotate(geom="point", y=GrayVolnum_edu, x=5-0.25, shape=4, color="red", size=5, stroke=1.5)+
+    annotate(geom="point", y=ThickAvgnum_edu, x=5+0.25, shape=4, color="red", size=5, stroke=1.5)+
+    annotate(geom="point", y=SurfAreanum_gpheno, x="General\ncognitive\nability", shape=4, color="red", size=5, stroke=1.5)+
+    annotate(geom="point", y=GrayVolnum_gpheno, x=6-0.25, shape=4, color="red", size=5, stroke=1.5)+
+    annotate(geom="point", y=ThickAvgnum_gpheno, x=6+0.25, shape=4, color="red", size=5, stroke=1.5)+
     annotate(geom="point", y=SurfAreanum_sex, x="Sex", shape=4, color="red", size=5, stroke=1.5)+
-    annotate(geom="point", y=GrayVolnum_sex, x=3-0.25, shape=4, color="red", size=5, stroke=1.5)+
-    annotate(geom="point", y=ThickAvgnum_sex, x=3+0.25, shape=4, color="red", size=5, stroke=1.5)
+    annotate(geom="point", y=GrayVolnum_sex, x=7-0.25, shape=4, color="red", size=5, stroke=1.5)+
+    annotate(geom="point", y=ThickAvgnum_sex, x=7+0.25, shape=4, color="red", size=5, stroke=1.5)
     
 save[[atlas]] <- random_plot
 }
@@ -1234,3 +1303,91 @@ dev.off()
 
 
 # 5. LASSO regressions
+
+```{r lassoplots}
+
+library(ggplot2)
+setwd("C:/Users/k1894405/OneDrive - King's College London/PhD/Projects/Comparing labelling protocols/results/LASSO_pred")
+
+est = read.table("R2_obs_pred_LASSO.table", header=T)
+names(est)[which(names(est) == "meas")] = "Measurement type"
+
+# save all plots in a list
+save=list()
+
+for(i in unique(est$pheno)){
+    # get subset of pheno
+    subset=est[which(est$pheno == i),]
+    
+    if(i == "sex" | i == "age"){
+    title=paste0(toupper(substr(i, 1,1)),substr(i, 2,nchar(i)))
+  }else if(i == "bmi"){
+    title=paste0("Body Mass Index")
+  }else if(i == "alc"){
+    title=paste0("Alcohol consumption")
+  }else if(i == "cig"){
+    title=paste0("Cigarette consumption")
+  }else if(i == "edu"){
+    title=paste0("Education")
+  }else if(i == "gpheno"){
+    title=paste0("General cognitive ability")
+  }
+      
+    LASSO_plot=ggplot(data = subset, mapping= aes(y = R2, x = atlas, group = `Measurement type`, colour = `Measurement type`))+
+      geom_point(mapping = aes(y = R2, x = atlas), size=2.5, alpha = 1, position=position_dodge(width=0.3))+
+      geom_errorbar(aes(ymin = cl,
+                      ymax = cu, x = atlas), size=.6, alpha = 1, position=position_dodge(width=0.3))+
+      scale_color_manual(values = c("#0492C2", "#63C5DA","#016064"))+
+      ggtitle(title)+
+      ylab(bquote('LASSO prediction accuracy '(R^2)))+
+      xlab("Atlases")+
+      scale_x_discrete(limits=c("Yeo","DK","Des","JulichBrain","Gordon","Glasser","Schaefer","vertices"))+
+      ylim(0,max(subset$cu))+
+      theme_bw()+
+      theme(text = element_text(size=20),
+          axis.text.x = element_text(size=16, colour='#696969', angle = 90, vjust=0.2, hjust = 0.1),
+          axis.text.y = element_text(size=16, colour='#696969'),
+          plot.title = element_text(face="bold", colour='#1A1A1A', size=22, hjust = 0.5),
+          axis.title.y = element_text(face="bold", colour='#1A1A1A', size=20, angle=90),
+          axis.title.x = element_text(face="bold", colour='#1A1A1A', size=20),
+          axis.line.x = element_blank(),
+          axis.line.y = element_blank(),
+          axis.ticks.x = element_blank(),
+          axis.ticks.y = element_blank(),
+          panel.border = element_blank())
+    
+    save[[i]] <- LASSO_plot
+}
+
+for(i in unique(est$pheno)){
+  tiff(paste0("C:/Users/k1894405/OneDrive - King's College London/PhD/Projects/Comparing labelling protocols/results/plots/LASSOpred_", i, ".tiff"), width = 8, height = 4, units = "in", pointsize = 2, bg="white", res=800)
+  save[[i]]
+  dev.off()
+}
+
+```
+
+
+![](C:/Users/k1894405/Documents/GitHub/Comparing_atlases/other_images/LASSO.PNG)
+
+
+<br>
+<br>
+
+*** 
+
+
+
+# Wilcoxon 
+
+```{r eval =T}
+library(stringr)
+setwd("C:/Users/k1894405/OneDrive - King's College London/PhD/Projects/Comparing labelling protocols/results/Wilcoxon")
+
+wil = read.table("Wilcoxon_results.table")
+wil$pheno = str_remove(wil$pheno, pattern="_pheno")
+
+datatable(wil, rownames=FALSE, filter="top",options= list(pageLength=10,scrollX=T), caption = "Full Wilcoxon results")
+
+```
+
