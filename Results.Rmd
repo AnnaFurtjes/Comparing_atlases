@@ -462,6 +462,9 @@ dev.off()
 <br>
 
 ### Create Excel worksheet
+
+Every timeI render this html file, the Excel sheet used as supplementary information in the paper will be updated. 
+
 ```{r eval=T}
 library(xlsx)
 # create a new workbook for outputs
@@ -538,10 +541,11 @@ setColumnWidth(sheet, colIndex=c(1:ncol(est)), colWidth=17)
 
 ```
 
-### Is increase in morphometricity proportional to increase in atlas dimensionality?
+## Is increase in morphometricity proportional to increase in atlas dimensionality?
 
 Non-linear relationship between number of ROIs and morphometricity:
 ```{r}
+library(ggplot2)
 setwd("C:/Users/k1894405/OneDrive - King's College London/PhD/Projects/Comparing labelling protocols/results/empirical")
 # read in results
 est = read.table("morph_results_QCed_vertices.table", header=T)
@@ -571,10 +575,6 @@ est$num_roi[which(est$atlas == "50000randomROIs")] = 50000
 est$num_roi[which(est$atlas == "5000randomROIs")] = 5000
 est$num_roi[which(est$atlas == "vertices")] = 300000
 
-# subset data into measurement type and pheno
-
-datasubset = est[which(est$pheno == i) ,]
-
 
 pheno_loop = c("age", "sex", "gpheno", "bmi", "alc", "edu", "cig")
 
@@ -586,7 +586,7 @@ for(i in pheno_loop){
   # define input pheno & Measurement type
 
   counter = counter+1
-  
+  pheno=i  
   if(pheno == "sex" | pheno == "age"){
     title=paste0(toupper(substr(pheno, 1,1)),substr(pheno, 2,nchar(pheno)))
   }else if(pheno == "bmi"){
@@ -615,14 +615,10 @@ for(i in pheno_loop){
     geom_errorbar(aes(ymin = ci_l,
                       ymax = ci_u, x = log), size=.6, alpha = 1, position=position_dodge(width=0.5))+
     scale_color_manual(values = c("#0492C2", "#63C5DA","#016064"))+
-    xlab("log(Number of ROIs)")+
+    xlab(paste0("log(","Number of ROIs",")"))+
     ylab("Morphometricity (%)")+
     ggtitle(title)+
-    geom_smooth(method="lm", se = TRUE)
-    
-    scale_x_discrete(labels= c("34","68","148","273","333","360","500","1000","5000","10.000","50.000","300.000"))+
-    #scale_x_continuous(limits = c(0,300001), breaks=c(34,68,148,273,333,360,500,1000,5000,10000,50000,300000))+ 
-    #scale_y_discrete(limits = c(0,10,20,30,40,50,60,70))+
+    geom_smooth(method="lm", se = TRUE)+
     ylim(0,max(datasubset$ci_u))+
     theme_bw()+
     #scale_x_discrete(labels= c("34","68","148","273","333","360","500","1000","5000","10.000","50.000"))+
@@ -631,43 +627,178 @@ for(i in pheno_loop){
           axis.text.y = element_text(size=axis_text, colour='#696969'),
           plot.title = element_text(face="bold", colour='#1A1A1A', size=title_size, hjust = 0.5),
           axis.title.y = element_text(face="bold", colour='#1A1A1A', size=20, angle=90),
-          axis.title.x = element_blank(),
+          axis.title.x = element_text(face="bold", colour='#1A1A1A', size=20),
           axis.line.x = element_blank(),
           axis.line.y = element_blank(),
           axis.ticks.x = element_blank(),
           axis.ticks.y = element_blank(),
           panel.border = element_blank())
-  #scale_color_manual(name='Parcellations',
-  #                   breaks=c('Functional', 'Structural', 'Multi-modal'),
-  #                   values=c('Functional'='#E69F00', 'Structural'='#56B4E9', 'Multi-modal'='#009E73'))
-  
-  #if(counter == 1 | counter == 4){
-  #  morphplot+ylab("Morphometricity (%)")+ theme(axis.title.y = element_text(face="bold", colour='#1A1A1A', size=20, angle=90))
-  # }
-  
-  if(counter < length(pheno_loop)){
-    testplot = testplot + theme(legend.position = "none")+xlab("Number of ROIs")+ theme(axis.title.x = element_text(face="bold", colour='#1A1A1A', size=20)) 
-  }
   
   save[[i]] <- testplot
 }
 
+i = "age"
+tiff(paste0("C:/Users/k1894405/OneDrive - King's College London/PhD/Projects/Comparing labelling protocols/results/plots/LOG_", i, ".tiff"), width = 10, height = 5, units = "in", pointsize = 2, bg="white", res=800)
+save[[i]]
+dev.off()
+
+#### used:  ylim(-4,max(datasubset$ci_u)) for i="cig but haven't properly integrated
 
 ```
 
-Does this look like an exponential cumulative distribution function?
-When I transform num_roi with logarithm, I get linear function. Transforming it is good as that way the 300.000 point does not dominate the function.
-Say we found a beta of 2 for Surfarea, it would mean that with an increase of one unit in log(num_roi), we have a doubling of morphometricity. 
-
-Is that in any way helpful to describe the trend?
-Quick google: We don't observe a linear relationship
-https://kenbenoit.net/assets/courses/ME104/logmodels2.pdf#:~:text=Logarithmically%20transforming%20variables%20in%20a%20regression%20model%20is,effectiverelationship%20non-linear%2C%20while%20still%20preserving%20the%20linear%20model.
-"Logarithmically transforming variables in a regression model is a very common way to handle sit-uations where a non-linear relationship exists between the independent and dependent variables.3Using the logarithm of one or more variables instead of the un-logged form makes the effectiverelationship non-linear, while still preserving the linear model."
-Log-linear model: logYi = α + βXi + εi
-• Each 1-unit increase in X multiplies the expected value of Y by e^βˆ
+![](C:/Users/k1894405/Documents/GitHub/Comparing_atlases/other_images/LOG.PNG)
 
 
-- report betas!
+<br>
+<br>
+
+
+These plots suggest that there is a non-linear relationship between morphometricity and number of ROIs contained in the atlas. 
+Below, we present linear regression betas for logarithmically transformed variables; such a linear-log model is a common way to describe non-linear relationships (intuitive explanation [here](https://kenbenoit.net/assets/courses/ME104/logmodels2.pdf#:~:text=Logarithmically%20transforming%20variables%20in%20a%20regression%20model%20is,effectiverelationship%20non-linear%2C%20while%20still%20preserving%20the%20linear%20model)).
+
+Linear-log model: 
+
+<br>
+
+$$Yi = \alpha + \beta log(Xi) + \epsilon i $$
+
+In our case, outcome variable Y is morphometricity and predictor variable X is log transformed number of ROIs in an atlas.
+
+Beta in this equation tells us the expected change in morphometricity when the number of ROIs are multiplied by Euler's number e (approx. 2.72).
+
+Or 
+
+Beta is the expected change in morphometricity when number of ROIs increase by 172%
+
+
+```{r eval=T}
+setwd("C:/Users/k1894405/OneDrive - King's College London/PhD/Projects/Comparing labelling protocols/results/empirical")
+# read in results
+est = read.table("morph_results_QCed_vertices.table", header=T)
+randomest = read.table("morph_results_randomaparc.table", header=T)
+est = rbind(est, randomest)
+
+
+# change measurement type names from randomaparc
+est$meas[which(est$meas == "area")] = "SurfArea"
+est$meas[which(est$meas == "volume")] = "GrayVol"
+est$meas[which(est$meas == "thickness")] = "ThickAvg"
+
+# add to data.frame how any areas each atlas has
+est$num_roi = 0
+est$num_roi[which(est$atlas == "DK")] = 68
+est$num_roi[which(est$atlas == "Des")] = 148
+est$num_roi[which(est$atlas == "Glasser")] = 360
+est$num_roi[which(est$atlas == "Gordon")] = 333
+est$num_roi[which(est$atlas == "Schaefer")] = 500
+est$num_roi[which(est$atlas == "Yeo")] = 34
+est$num_roi[which(est$atlas == "JulichBrain")] = 273
+est$num_roi[which(est$atlas == "10000randomROIs")] = 10000
+est$num_roi[which(est$atlas == "1000randomROIs")] = 1000
+est$num_roi[which(est$atlas == "50000randomROIs")] = 50000
+est$num_roi[which(est$atlas == "5000randomROIs")] = 5000
+est$num_roi[which(est$atlas == "vertices")] = 300000
+
+# log transform num_roi
+est$log_numroi = log(est$num_roi)
+
+# create table that holds betas for data split by measurement type & phenotype
+results = as.data.frame(matrix(nrow=0, ncol=7))
+names(results) = c("meas", "pheno","intercept", "beta", "SE", "p_val", "R2")
+
+for(i in unique(est$pheno)){
+  for(j in unique(est$meas)){
+      datasubset = est[which(est$pheno == i & est$meas == j) ,]
+        
+      model = with(datasubset, lm(morph~log_numroi))
+      #beta = datasubset[,as.list(coef(lm(morph~log_numroi))),by=meas]
+      
+      intercept = summary(model)$coefficients[1,1]
+        
+      beta = summary(model)$coefficients[2,1]
+      se = summary(model)$coefficients[2,2]
+      p_val = summary(model)$coefficients[2,4]
+      R2 = summary(model)$r.squared
+      
+      results[nrow(results)+1,] = c(j,i,intercept,beta,se,p_val,R2)
+  }
+}
+
+# transform to numeric columns
+results[,c(3:ncol(results))] = lapply(results[,c(3:ncol(results))], as.numeric)
+# round results
+results[,c(3:ncol(results))] = lapply(results[,c(3:ncol(results))], signif, digits=2)
+results$R2 = results$R2*100
+
+library(DT)
+datatable(results, rownames=FALSE, filter="top",options= list(pageLength=10,scrollX=T), caption = "Relationship between morphometricity and atlas dimensionality")
+# write.table(results, "C:/Users/k1894405/OneDrive - King's College London/PhD/Projects/Comparing labelling protocols/results/empirical/lm_morph_lognumroi.table", sep="\t",quote=F, col.names=T, row.names=F)
+```
+
+
+The R2 estimates range between `r max(results$R2)` and `r min(results$R2)`, with a mean of `r mean(results$R2)` and a standard deviation of `r sd(results$R2)`
+
+
+<br>
+
+*Interpretation:* 
+
+For morphometricity estimates of age based on SurfArea data, we expect an increase in morphometricity by 4.5 units with an increase of log(number of ROIs).
+
+In order to calculate the expected morphometricity based on the chosen number of ROIs, the user may find the appropriate intercept and beta and calculate the expected morphometricity like so:
+
+$$ morphometricity = \beta * log(numROI) + \alpha $$
+
+For example, the expected morphometricity for age using SurfArea data represented in an atlas with 200.000 ROIs is 66.93%.
+
+$$ 4.5 * log(200.000) + 12 = 66,93 $$
+<br>
+
+It is noteworthy in this data that ThickAvg always (no exception!) yields the smallest betas, followed by GrayVol, while SurfArea always has the largest betas, demonstrating that SurfArea is more susceptible towards change in atlas dimensionality.  
+
+Also, the standard errors of \beta is always smaller for ThickAvg suggesting that the estimates the relationship is calculated on are more consistent. 
+
+#### Trends in regression results (beta vs. morphometricity)
+```{r eval=T}
+library(ggplot2)
+# visualise results
+# rel between beta and morph
+results$ci_l = results$beta - (1.96*results$SE)
+
+results$ci_u = results$beta + (1.96*results$SE)
+
+# merge with max morph estimates
+max=est[which(est$atlas == "vertices"),c("meas","pheno","morph")]
+results=merge(max, results, by=c("meas","pheno"))
+names(results)[which(names(results) == "meas")] = "Measurement type"
+
+#tiff(paste0("C:/Users/k1894405/OneDrive - King's College London/PhD/Projects/Comparing labelling protocols/results/plots/beta_vs_morph.tiff"), width = 10, height = 5, units = "in", pointsize = 2, bg="white", res=800)
+
+ggplot(data=results, mapping= aes(y = morph, x = beta, group = `Measurement type`, colour = `Measurement type`))+
+    geom_point(mapping = aes(y = morph, x = beta), size=2.5, alpha = 1, position=position_dodge(width=0.5))+
+    geom_errorbar(aes(xmin = ci_l,
+                      xmax = ci_u, x = beta), size=.6, alpha = 1, position=position_dodge(width=0.5))+
+    scale_color_manual(values = c("#0492C2", "#63C5DA","#016064"))+
+    geom_text(aes(label = paste0(pheno)), nudge_y = -2, size = 3)+
+    xlab("Regression coefficient")+
+    ylab("Vertex-wise morphometricity (%)")+
+    theme_bw()+
+    theme(text = element_text(size=16),
+          axis.text.x = element_text(size=12, colour='#696969'),
+          axis.text.y = element_text(size=12, colour='#696969'),
+          axis.title.y = element_text(face="bold", colour='#1A1A1A', size=16, angle=90),
+          axis.title.x = element_text(face="bold", colour='#1A1A1A', size=16),
+          axis.line.x = element_blank(),
+          axis.line.y = element_blank(),
+          axis.ticks.x = element_blank(),
+          axis.ticks.y = element_blank(),
+          panel.border = element_blank())
+#dev.off()
+
+```
+
+If a non-brain traits is generally more morphometric, we find larger betas (bigger change associated with change in atlas dimensionality), but also more uncertainty (larger confidence intervals), at least for GrayVol and SurfArea.
+
 
 <br>
 <br>
@@ -1481,13 +1612,13 @@ library(dplyr)
 library(PupillometryR)
 
 wd=getwd()
-setwd(paste0(wd,"/nulldistr"))
+#setwd(paste0(wd,"/nulldistr"))
 
 save=list()
 
 for(i in c(34, 68, 148, 274, 334, 360, 500)){
 
-null = read.table(paste0(wd,"nulldistr/morph_results_",i,"randomROIs.table"), header=T)
+null = read.table(paste0(wd,"/nulldistr/morph_results_",i,"randomROIs.table"), header=T)
 
 # change measurement type names from randomaparc
 null$meas[which(null$meas == "area")] = "SurfArea"
@@ -1511,6 +1642,7 @@ null$pheno[which(null$pheno =="bmi")] = "Body Mass\nindex"
 null$pheno[which(null$pheno =="edu")] = "Education"
 
 
+# sizes in plot
 title_size=22
 other_size=20
 axis_text=16
@@ -1519,6 +1651,20 @@ axis_text=16
 # get estimates from empirical atlases
 
 est = read.table(paste0(wd,"/empirical/morph_results_QCed.table"), header=T)
+
+if(i == 500){
+    # remove Schaefer estimates for surfarea and cortical thickness as we will replace them with the deflated ones
+    est=est[-which(est$atlas == "Schaefer" & est$meas == "GrayVol" | est$atlas == "Schaefer" & est$meas == "SurfArea"),]
+    
+    Schaefer_est = read.table(paste0(wd,"/empirical/morph_results_Schaefer_rankdist.table"), header=T)
+    # only replace surfarea and cortical thickness
+    Schaefer_est=Schaefer_est[-which(Schaefer_est$meas == "ThickAvg"),]
+    
+    # combine/ reintroduce deflated Schaefer estimates
+    est=rbind(est, Schaefer_est)
+}
+
+
 # pheno & morph for DK
 if(i == 68){atlas = "DK"}
 if(i == 148){atlas = "Des"}
@@ -1529,7 +1675,7 @@ if(i == 334){atlas = "Gordon"}
 if(i == 360){atlas = "Glasser"}
 
 
-mu=est[which(est$atlas == atlas),c("meas", "morph", "pheno")]
+mu=est[which(est$atlas == atlas),c("meas", "morph", "pheno","ci_l","ci_u")]
 
 #GrayVolnum_age = mu$morph[which(mu$meas=="GrayVol" & mu$pheno=="age")]
 #SurfAreanum_age = mu$morph[which(mu$meas=="SurfArea" & mu$pheno=="age")]
@@ -1545,8 +1691,24 @@ for(l in unique(mu$pheno)){
   assign(paste0("SurfAreanum_",l), SurfAreanum)
   assign(paste0("ThickAvgnum_",l), ThickAvgnum)
 }
+# rename columns to match null
+names(mu)[which(names(mu) == "meas")] = "Measurement type"
+names(mu)[which(names(mu) == "morph")] = "morph_emp"
+names(mu)[which(names(mu) == "ci_l")] = "ci_l_emp"
+names(mu)[which(names(mu) == "ci_u")] = "ci_u_emp"
 
-
+# rename phenos to match null
+mu$pheno[which(mu$pheno =="age")] = "Age"
+mu$pheno[which(mu$pheno =="gpheno")] = "General\ncognitive\nability"
+mu$pheno[which(mu$pheno =="sex")] = "Sex"
+mu$pheno[which(mu$pheno =="alc")] = "Alcohol\nconsumption"
+mu$pheno[which(mu$pheno =="cig")] = "Cigarette\nconsumption"
+mu$pheno[which(mu$pheno =="bmi")] = "Body Mass\nindex"
+mu$pheno[which(mu$pheno =="edu")] = "Education"
+# merge mu & null to have empirical estimate part of the null frame
+null = merge(null, mu, by=c("pheno","Measurement type"))
+# reduce computational burden by plotting confidence intervall only once per pheno 
+null[setdiff(1:nrow(null),seq(from = 2, to = nrow(null), by =100)),c("ci_l_emp","ci_u_emp")]=NA
 
 title = paste0(i," random ROIs")
   
@@ -1558,7 +1720,7 @@ random_plot <- ggplot(null, aes(y = morph, x = pheno, color = `Measurement type`
     theme_bw()+
     ylab("Morphometricity estimate (%)")+
     theme(text = element_text(size=other_size),
-          axis.text.x = element_text(size=axis_text, colour='#696969'),
+          axis.text.x = element_text(size=axis_text, colour='#696969', angle=45),
           axis.text.y = element_text(size=axis_text, colour='#696969'),
           plot.title = element_text(face="bold", colour='#1A1A1A', size=18, hjust = 0.5),
           axis.title.y = element_text(face="bold", colour='#1A1A1A', size=18),
@@ -1568,68 +1730,73 @@ random_plot <- ggplot(null, aes(y = morph, x = pheno, color = `Measurement type`
           axis.ticks.x = element_blank(),
           axis.ticks.y = element_blank(),
           panel.border = element_blank())+
-    annotate(geom="point", y=SurfAreanum_age, x="Age", shape=4, color="red", size=5, stroke=1.5)+
-    annotate(geom="point", y=GrayVolnum_age, x=1-0.25, shape=4, color="red", size=5, stroke=1.5)+
-    annotate(geom="point", y=ThickAvgnum_age, x=1+0.25, shape=4, color="red", size=5, stroke=1.5)+
-    annotate(geom="point", y=SurfAreanum_alc, x="Alcohol\nconsumption", shape=4, color="red", size=5, stroke=1.5)+
-    annotate(geom="point", y=GrayVolnum_alc, x=2-0.25, shape=4, color="red", size=5, stroke=1.5)+
-    annotate(geom="point", y=ThickAvgnum_alc, x=2+0.25, shape=4, color="red", size=5, stroke=1.5)+
-    annotate(geom="point", y=SurfAreanum_bmi, x="Body Mass\nindex", shape=4, color="red", size=5, stroke=1.5)+
-    annotate(geom="point", y=GrayVolnum_bmi, x=3-0.25, shape=4, color="red", size=5, stroke=1.5)+
-    annotate(geom="point", y=ThickAvgnum_bmi, x=3+0.25, shape=4, color="red", size=5, stroke=1.5)+
-    annotate(geom="point", y=SurfAreanum_cig, x="Cigarette\nconsumption", shape=4, color="red", size=5, stroke=1.5)+
-    annotate(geom="point", y=GrayVolnum_cig, x=4-0.25, shape=4, color="red", size=5, stroke=1.5)+
-    annotate(geom="point", y=ThickAvgnum_cig, x=4+0.25, shape=4, color="red", size=5, stroke=1.5)+
-    annotate(geom="point", y=SurfAreanum_edu, x="Education", shape=4, color="red", size=5, stroke=1.5)+
-    annotate(geom="point", y=GrayVolnum_edu, x=5-0.25, shape=4, color="red", size=5, stroke=1.5)+
-    annotate(geom="point", y=ThickAvgnum_edu, x=5+0.25, shape=4, color="red", size=5, stroke=1.5)+
-    annotate(geom="point", y=SurfAreanum_gpheno, x="General\ncognitive\nability", shape=4, color="red", size=5, stroke=1.5)+
-    annotate(geom="point", y=GrayVolnum_gpheno, x=6-0.25, shape=4, color="red", size=5, stroke=1.5)+
-    annotate(geom="point", y=ThickAvgnum_gpheno, x=6+0.25, shape=4, color="red", size=5, stroke=1.5)+
-    annotate(geom="point", y=SurfAreanum_sex, x="Sex", shape=4, color="red", size=5, stroke=1.5)+
-    annotate(geom="point", y=GrayVolnum_sex, x=7-0.25, shape=4, color="red", size=5, stroke=1.5)+
-    annotate(geom="point", y=ThickAvgnum_sex, x=7+0.25, shape=4, color="red", size=5, stroke=1.5)
+    geom_errorbar(aes(ymin = ci_l_emp,
+                      ymax = ci_u_emp, x = pheno), size=.3, alpha = 0.6, position=position_dodge(width=0.7), color="red")+
+    annotate(geom="point", y=SurfAreanum_age, x="Age", shape=4, color="red", size=4, stroke=1.2)+
+    annotate(geom="point", y=GrayVolnum_age, x=1-0.25, shape=4, color="red", size=4, stroke=1.2)+
+    annotate(geom="point", y=ThickAvgnum_age, x=1+0.25, shape=4, color="red", size=4, stroke=1.2)+
+    annotate(geom="point", y=SurfAreanum_alc, x="Alcohol\nconsumption", shape=4, color="red", size=4, stroke=1.2)+
+    annotate(geom="point", y=GrayVolnum_alc, x=2-0.25, shape=4, color="red", size=4, stroke=1.2)+
+    annotate(geom="point", y=ThickAvgnum_alc, x=2+0.25, shape=4, color="red", size=4, stroke=1.2)+
+    annotate(geom="point", y=SurfAreanum_bmi, x="Body Mass\nindex", shape=4, color="red", size=4, stroke=1.2)+
+    annotate(geom="point", y=GrayVolnum_bmi, x=3-0.25, shape=4, color="red", size=4, stroke=1.2)+
+    annotate(geom="point", y=ThickAvgnum_bmi, x=3+0.25, shape=4, color="red", size=4, stroke=1.2)+
+    annotate(geom="point", y=SurfAreanum_cig, x="Cigarette\nconsumption", shape=4, color="red", size=4, stroke=1.2)+
+    annotate(geom="point", y=GrayVolnum_cig, x=4-0.25, shape=4, color="red", size=4, stroke=1.2)+
+    annotate(geom="point", y=ThickAvgnum_cig, x=4+0.25, shape=4, color="red", size=4, stroke=1.2)+
+    annotate(geom="point", y=SurfAreanum_edu, x="Education", shape=4, color="red", size=4, stroke=1.2)+
+    annotate(geom="point", y=GrayVolnum_edu, x=5-0.25, shape=4, color="red", size=4, stroke=1.2)+
+    annotate(geom="point", y=ThickAvgnum_edu, x=5+0.25, shape=4, color="red", size=4, stroke=1.2)+
+    annotate(geom="point", y=SurfAreanum_gpheno, x="General\ncognitive\nability", shape=4, color="red", size=4, stroke=1.2)+
+    annotate(geom="point", y=GrayVolnum_gpheno, x=6-0.25, shape=4, color="red", size=4, stroke=1.2)+
+    annotate(geom="point", y=ThickAvgnum_gpheno, x=6+0.25, shape=4, color="red", size=4, stroke=1.2)+
+    annotate(geom="point", y=SurfAreanum_sex, x="Sex", shape=4, color="red", size=4, stroke=1.2)+
+    annotate(geom="point", y=GrayVolnum_sex, x=7-0.25, shape=4, color="red", size=4, stroke=1.2)+
+    annotate(geom="point", y=ThickAvgnum_sex, x=7+0.25, shape=4, color="red", size=4, stroke=1.2)
     
 save[[atlas]] <- random_plot
 }
 
 i = "DK"
     
-tiff(paste0("~/Comparing labelling protocols/results/plots/nulldistr_", i, ".tiff"), width = 8, height = 5, units = "in", pointsize = 2, bg="white", res=800)
+tiff(paste0(wd,"/plots/nulldistr_", i, ".tiff"), width = 10, height = 6, units = "in", pointsize = 2, bg="white", res=800)
 save[[i]]
 dev.off()
 
 i = "Des"
-tiff(paste0("~/Comparing labelling protocols/results/plots/nulldistr_", i, ".tiff"), width = 8, height = 5, units = "in", pointsize = 2, bg="white", res=800)
+tiff(paste0(wd,"/plots/nulldistr_", i, ".tiff"), width = 10, height = 6, units = "in", pointsize = 2, bg="white", res=800)
 save[[i]]
 dev.off()
 
 i = "JulichBrain"
-tiff(paste0("~/Comparing labelling protocols/results/plots/nulldistr_", i, ".tiff"), width = 8, height = 5, units = "in", pointsize = 2, bg="white", res=800)
+tiff(paste0(wd,"/plots/nulldistr_", i, ".tiff"), width = 10, height = 6, units = "in", pointsize = 2, bg="white", res=800)
 save[[i]]
 dev.off()
 
 i="Yeo"
-tiff(paste0("~/Comparing labelling protocols/results/plots/nulldistr_", i, ".tiff"), width = 8, height = 5, units = "in", pointsize = 2, bg="white", res=800)
+tiff(paste0(wd,"/plots/nulldistr_", i, ".tiff"), width = 10, height = 6, units = "in", pointsize = 2, bg="white", res=800)
 save[[i]]
 dev.off()
 
 i = "Schaefer"
-tiff(paste0("~/Comparing labelling protocols/results/plots/nulldistr_", i, ".tiff"), width = 8, height = 5, units = "in", pointsize = 2, bg="white", res=800)
+tiff(paste0(wd,"/plots/nulldistr_", i, ".tiff"), width = 10, height = 6, units = "in", pointsize = 2, bg="white", res=800)
 save[[i]]
 dev.off()
 
 i = "Glasser"
-tiff(paste0("~/Comparing labelling protocols/results/plots/nulldistr_", i, ".tiff"), width = 8, height = 5, units = "in", pointsize = 2, bg="white", res=800)
+tiff(paste0(wd,"/plots/nulldistr_", i, ".tiff"), width = 10, height = 6, units = "in", pointsize = 2, bg="white", res=800)
 save[[i]]
 dev.off()
 
 i = "Gordon"
-tiff(paste0("~/Comparing labelling protocols/results/plots/nulldistr_", i, ".tiff"), width = 8, height = 5, units = "in", pointsize = 2, bg="white", res=800)
+tiff(paste0(wd,"/plots/nulldistr_", i, ".tiff"), width = 10, height = 6, units = "in", pointsize = 2, bg="white", res=800)
 save[[i]]
 dev.off()
 ```
 
+![](C:/Users/k1894405/Documents/GitHub/Comparing_atlases/other_images/nulldistr.PNG)
+
+<br>
 
 ### Add data to excel sheet
 ```{r eval=T}
@@ -1814,5 +1981,5 @@ setColumnWidth(sheet, colIndex=c(2:ncol(wil)), colWidth=14)
 setColumnWidth(sheet, colIndex = 1, colWidth=18)
 
 #setwd("C:/Users/k1894405/OneDrive - King's College London/PhD/Projects/Comparing labelling protocols/writing/Results write-up")
-#saveWorkbook(wb, "Supplementary_Tables.xlsx")
+saveWorkbook(wb, "C:/Users/k1894405/OneDrive - King's College London/PhD/Projects/Comparing labelling protocols/writing/Results write-up/Supplementary_Tables.xlsx")
 ```
