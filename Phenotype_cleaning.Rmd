@@ -851,7 +851,11 @@ library(semPlot)
 
 load("model_fit_reverse.RData")
 
-## fit_reserve gives the same results as fit but with fully positive factor loadings 
+## fit_reserve gives the same results as fit but with fully positive factor loadings (by reverse I mean that I have multiplied items with negative polarity by -1 so that all loadings are positive)
+## we now want to get the variance explained by the model:
+## we take the sum of the variance output for each item and divide by the number of items
+total_variance_explained <- mean(1-mean(rowSums(inspect(fit_reverse,what="std")$theta)))
+print(paste0("The total variance explained by this model is ", round(total_variance_explained, digits=2)))
 
 labels <- c("VNR", "Matrix", "Symbol\nDigit", "Pair\nMatching", "RT", "Tower", "Trail\nMaking","Cog")
 

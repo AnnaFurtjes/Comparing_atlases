@@ -246,7 +246,7 @@ $(document).ready(function () {
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
         <li>
-  <a href="Serious_Pipeline.html">Main pre-processing</a>
+  <a href="Serious_Pipeline.html">Neuroimaging pre-processing</a>
 </li>
 <li>
   <a href="index.html">Tab 2</a>
@@ -1099,9 +1099,13 @@ library(semPlot)
 
 load(&quot;model_fit_reverse.RData&quot;)
 
-## fit_reserve gives the same results as fit but with fully positive factor loadings 
-
-labels &lt;- c(&quot;VNR&quot;, &quot;Matrix&quot;, &quot;Symbol\nDigit&quot;, &quot;Pair\nMatching&quot;, &quot;RT&quot;, &quot;Tower&quot;, &quot;Trail\nMaking&quot;,&quot;Cog&quot;)
+## fit_reserve gives the same results as fit but with fully positive factor loadings (by reverse I mean that I have multiplied items with negative polarity by -1 so that all loadings are positive)
+## we now want to get the variance explained by the model:
+## we take the sum of the variance output for each item and divide by the number of items
+total_variance_explained &lt;- mean(1-mean(rowSums(inspect(fit_reverse,what=&quot;std&quot;)$theta)))
+print(paste0(&quot;The total variance explained by this model is &quot;, round(total_variance_explained, digits=2)))</code></pre>
+<pre><code>## [1] &quot;The total variance explained by this model is 0.34&quot;</code></pre>
+<pre class="r"><code>labels &lt;- c(&quot;VNR&quot;, &quot;Matrix&quot;, &quot;Symbol\nDigit&quot;, &quot;Pair\nMatching&quot;, &quot;RT&quot;, &quot;Tower&quot;, &quot;Trail\nMaking&quot;,&quot;Cog&quot;)
 
 #setwd(&quot;C:/Users/k1894405/OneDrive - King&#39;s College London/PhD/Projects/Comparing labelling protocols/analysis/Rmarkdown&quot;)
 #tiff(&quot;sem_reverse.tiff&quot;, width = 10, height = 3, units = &#39;in&#39;, res=1000)

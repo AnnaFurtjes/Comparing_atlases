@@ -461,9 +461,119 @@ dev.off()
 <br>
 <br>
 
+### Increase in morphometricity from the smallest (34 ROIs Yeo atlas) to the largest brain representation (300.000 vertices)
+
+```{r eval=T}
+setwd("C:/Users/k1894405/OneDrive - King's College London/PhD/Projects/Comparing labelling protocols/results/empirical")
+# read in results
+est = read.table("morph_results_QCed_vertices.table", header=T)
+
+# only keep smallest and largest dimensionality
+est = est[which(est$atlas == "vertices" | est$atlas == "Yeo"),]
+
+# change measurement type names from randomaparc
+est$meas[which(est$meas == "area")] = "SurfArea"
+est$meas[which(est$meas == "volume")] = "GrayVol"
+est$meas[which(est$meas == "thickness")] = "ThickAvg"
+
+# save results in table
+names_results = c("meas", "pheno", "est_Yeo","est_vertices","improvement")
+
+results = data.frame(matrix(nrow=0, ncol = length(names_results)))
+names(results) = names_results
+
+for(i in unique(est$meas)){
+  for(j in unique(est$pheno)){
+     
+    subset = est[which(est$pheno == j & est$meas == i),]
+    est1 = subset$morph[1]
+    est2 = subset$morph[2]
+    
+    imp = max(c(est1,est2))/min(c(est1,est2))
+    results[nrow(results)+1,] <- c(i,j,min(c(est1,est2)),max(c(est1,est2)),imp)
+  }
+}
+
+# round numbers
+results$improvement = round(as.numeric(results$improvement), digits = 2)
+# sort by largest increase in morph (max(improvement))
+results = results[order(results$improvement, decreasing=T),]
+
+results[,c(3:ncol(results))] = lapply(results[,c(3:ncol(results))], as.numeric)
+
+
+library(DT)
+datatable(results, rownames=FALSE, filter="top",options= list(pageLength=10,scrollX=T), caption = "Relative improvement in morphometricity from Yeo to vertices")
+
+```
+
+Summarise improvement variable:
+
+  - Smallest increase = `r min(results$imp)`-fold
+  
+  - Largest increase = `r max(results$imp)`-fold
+  
+  - Mean = `r mean(results$imp)`-fold
+  
+  - SD = `r sd(results$imp)`-fold
+  
+  - Median = `r median(results$imp)`-fold
+
+
+
+Summary only for cognitive ability for comparison with [this](https://elifesciences.org/articles/64058#content) study.
+```{r eval=T}
+setwd("C:/Users/k1894405/OneDrive - King's College London/PhD/Projects/Comparing labelling protocols/results/empirical")
+# read in results
+est = read.table("morph_results_QCed_vertices.table", header=T)
+
+# only keep largest dimensionality and Glasser
+est = est[which(est$atlas == "vertices" | est$atlas == "Glasser"),]
+
+# change measurement type names from randomaparc
+est$meas[which(est$meas == "area")] = "SurfArea"
+est$meas[which(est$meas == "volume")] = "GrayVol"
+est$meas[which(est$meas == "thickness")] = "ThickAvg"
+
+# keep only gpheno
+gpheno=est[which(est$pheno == "gpheno"),]
+
+
+# save results in table
+names_results = c("meas", "pheno", "est_Glasser","est_vertices","improvement")
+
+results_g = data.frame(matrix(nrow=0, ncol = length(names_results)))
+names(results_g) = names_results
+
+for(i in unique(gpheno$meas)){
+  for(j in unique(gpheno$pheno)){
+     
+    subset = gpheno[which(gpheno$pheno == j & gpheno$meas == i),]
+    gpheno1 = subset$morph[1]
+    gpheno2 = subset$morph[2]
+    
+    imp = max(c(gpheno1,gpheno2))/min(c(gpheno1,gpheno2))
+    results_g[nrow(results_g)+1,] <- c(i,j,min(c(gpheno1,gpheno2)),max(c(gpheno1,gpheno2)),imp)
+  }
+}
+
+# round numbers
+results_g$improvement = round(as.numeric(results_g$improvement), digits = 2)
+# sort by larggpheno increase in morph (max(improvement))
+results_g = results_g[order(results_g$improvement, decreasing=T),]
+
+knitr::kable(results_g[which(results_g$pheno == "gpheno"),])
+
+```
+
+<br>
+<br>
+
+***
+
 ### Create Excel worksheet
 
-Every timeI render this html file, the Excel sheet used as supplementary information in the paper will be updated. 
+Every time I render this html file, the Excel sheet used as supplementary information in the paper will be updated. 
 
 ```{r eval=T}
 library(xlsx)
@@ -528,9 +638,9 @@ est$meas[which(est$meas == "thickness")] = "ThickAvg"
 
 names(est)[which(names(est) == "meas")] = "Measurement type"
 
+est=est[order(est$pheno, est$`Measurement type`),]
 
-
-# Add a table into a worksheet
+# Add raw table into a worksheet
 #++++++++++++++++++++++++++++++++++++
 addDataFrame(est, sheet, startRow=3, startColumn=1, 
              colnamesStyle = TABLE_COLNAMES_STYLE,
@@ -539,7 +649,37 @@ addDataFrame(est, sheet, startRow=3, startColumn=1,
 setColumnWidth(sheet, colIndex=c(1:ncol(est)), colWidth=17)
 
 
+
+# Add relative improvements table into a worksheet
+#++++++++++++++++++++++++++++++++++++
+### change sheet name
+sheet <-createSheet(wb, sheetName = "Improvement Yeo vs vertex-wise")
+
+##' change title
+xlsx.addTitle(sheet, rowIndex=1, title="Summary statistics improvement Yeo vs vertex-wise measures",
+              titleStyle = TITLE_STYLE)
+## Add sub title
+xlsx.addTitle(sheet, rowIndex=2, 
+              title="We display the relative improvement in morphometricty between Yeo and vertex-wise measures",
+              titleStyle = SUB_TITLE_STYLE)
+
+# indicate table to be sabed
+addDataFrame(results, sheet, startRow=3, startColumn=1, 
+             colnamesStyle = TABLE_COLNAMES_STYLE,
+             rownamesStyle = TABLE_ROWNAMES_STYLE,row.names = F)
+
+# Change column width
+setColumnWidth(sheet, colIndex=c(2:ncol(results)), colWidth=14)
+setColumnWidth(sheet, colIndex = 1, colWidth=18)
+
+
 ```
+
+
+<br>
+<br>
+
+***
 
 ## Is increase in morphometricity proportional to increase in atlas dimensionality?
 
@@ -1151,7 +1291,7 @@ setColumnWidth(sheet, colIndex = 1, colWidth=18)
 ***
 
 
-# 3. Added morphometricity (Likelihood ratio tests)
+# 3. Cross-atlas Likelihood ratio tests (LRTs)
 
 
 Cross-atlas LRTs were performed to quantify whether a higher dimensional atlas added explained variance in addition to the variance explained by a lower dimensional atlas. For example, first we fitted morphometricity using DK (68 ROIs) and Destrieux (148 ROIs) brain measures in one model. Second, we dropped Destrieux from the model and recalculated morphometricity for DK alone, which allows to quantify the percentage of variance explained by Destrieux in addition to the variance already explained by DK (“added morphometricity”). The LRT quantifies whether the explanatory variance added by the higher dimensional atlas (i.e., Destrieux in this example) is larger than zero.  
