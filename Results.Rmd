@@ -1290,8 +1290,283 @@ setColumnWidth(sheet, colIndex = 1, colWidth=18)
 
 ***
 
+# 3. Random distributions of morphometricity
 
-# 3. Cross-atlas Likelihood ratio tests (LRTs)
+```{r}
+library(ggplot2)
+library(cowplot)
+library(dplyr)
+library(PupillometryR)
+
+wd=getwd()
+#setwd(paste0(wd,"/nulldistr"))
+
+save=list()
+
+for(i in c(34, 68, 148, 274, 334, 360, 500)){
+
+null = read.table(paste0(wd,"/nulldistr/morph_results_",i,"randomROIs.table"), header=T)
+
+# change measurement type names from randomaparc
+null$meas[which(null$meas == "area")] = "SurfArea"
+null$meas[which(null$meas == "volume")] = "GrayVol"
+null$meas[which(null$meas == "thickness")] = "ThickAvg"
+
+names(null)[which(names(null) == "meas")] = "Measurement type"
+
+# filter for atlas
+#null = null[which(null$atlas == paste0(i,"randomROIs")),]
+
+# filter for pheno
+#null = null[which(null$pheno =="age" | null$pheno =="gpheno" | null$pheno =="sex"),]
+# name phenos
+null$pheno[which(null$pheno =="age")] = "Age"
+null$pheno[which(null$pheno =="gpheno")] = "General\ncognitive\nability"
+null$pheno[which(null$pheno =="sex")] = "Sex"
+null$pheno[which(null$pheno =="alc")] = "Alcohol\nconsumption"
+null$pheno[which(null$pheno =="cig")] = "Cigarette\nconsumption"
+null$pheno[which(null$pheno =="bmi")] = "Body Mass\nindex"
+null$pheno[which(null$pheno =="edu")] = "Education"
+
+
+# sizes in plot
+title_size=22
+other_size=20
+axis_text=16
+
+
+# get estimates from empirical atlases
+
+est = read.table(paste0(wd,"/empirical/morph_results_QCed.table"), header=T)
+
+if(i == 500){
+    # remove Schaefer estimates for surfarea and cortical thickness as we will replace them with the deflated ones
+    est=est[-which(est$atlas == "Schaefer" & est$meas == "GrayVol" | est$atlas == "Schaefer" & est$meas == "SurfArea"),]
+    
+    Schaefer_est = read.table(paste0(wd,"/empirical/morph_results_Schaefer_rankdist.table"), header=T)
+    # only replace surfarea and cortical thickness
+    Schaefer_est=Schaefer_est[-which(Schaefer_est$meas == "ThickAvg"),]
+    
+    # combine/ reintroduce deflated Schaefer estimates
+    est=rbind(est, Schaefer_est)
+}
+
+
+# pheno & morph for DK
+if(i == 68){atlas = "DK"}
+if(i == 148){atlas = "Des"}
+if(i == 34){atlas = "Yeo"}
+if(i == 274){atlas = "JulichBrain"}
+if(i == 500){atlas = "Schaefer"}
+if(i == 334){atlas = "Gordon"}
+if(i == 360){atlas = "Glasser"}
+
+
+mu=est[which(est$atlas == atlas),c("meas", "morph", "pheno","ci_l","ci_u")]
+
+#GrayVolnum_age = mu$morph[which(mu$meas=="GrayVol" & mu$pheno=="age")]
+#SurfAreanum_age = mu$morph[which(mu$meas=="SurfArea" & mu$pheno=="age")]
+#ThickAvgnum_age = mu$morph[which(mu$meas=="ThickAvg" & mu$pheno=="age")]
+
+
+for(l in unique(mu$pheno)){
+  GrayVolnum = mu$morph[which(mu$meas=="GrayVol" & mu$pheno==l)]
+  SurfAreanum = mu$morph[which(mu$meas=="SurfArea" & mu$pheno==l)]
+  ThickAvgnum = mu$morph[which(mu$meas=="ThickAvg" & mu$pheno==l)]
+
+  assign(paste0("GrayVolnum_",l), GrayVolnum)
+  assign(paste0("SurfAreanum_",l), SurfAreanum)
+  assign(paste0("ThickAvgnum_",l), ThickAvgnum)
+}
+# rename columns to match null
+names(mu)[which(names(mu) == "meas")] = "Measurement type"
+names(mu)[which(names(mu) == "morph")] = "morph_emp"
+names(mu)[which(names(mu) == "ci_l")] = "ci_l_emp"
+names(mu)[which(names(mu) == "ci_u")] = "ci_u_emp"
+
+# rename phenos to match null
+mu$pheno[which(mu$pheno =="age")] = "Age"
+mu$pheno[which(mu$pheno =="gpheno")] = "General\ncognitive\nability"
+mu$pheno[which(mu$pheno =="sex")] = "Sex"
+mu$pheno[which(mu$pheno =="alc")] = "Alcohol\nconsumption"
+mu$pheno[which(mu$pheno =="cig")] = "Cigarette\nconsumption"
+mu$pheno[which(mu$pheno =="bmi")] = "Body Mass\nindex"
+mu$pheno[which(mu$pheno =="edu")] = "Education"
+# merge mu & null to have empirical estimate part of the null frame
+null = merge(null, mu, by=c("pheno","Measurement type"))
+# reduce computational burden by plotting confidence intervall only once per pheno 
+null[setdiff(1:nrow(null),seq(from = 2, to = nrow(null), by =100)),c("ci_l_emp","ci_u_emp")]=NA
+
+title = paste0(i," random ROIs")
+  
+random_plot <- ggplot(null, aes(y = morph, x = pheno, color = `Measurement type`, group = interaction(pheno, `Measurement type`))) +
+    ggtitle(title)+
+    geom_boxplot(alpha = 0.1, width=0.75) +
+    geom_point(position = position_dodge(width=0.75),alpha = 0.2, size=2)+
+    scale_color_manual(values=c("#0492C2","#63C5DA","#016064"))+
+    theme_bw()+
+    ylab("Morphometricity estimate (%)")+
+    theme(text = element_text(size=other_size),
+          axis.text.x = element_text(size=axis_text, colour='#696969', angle=45),
+          axis.text.y = element_text(size=axis_text, colour='#696969'),
+          plot.title = element_text(face="bold", colour='#1A1A1A', size=18, hjust = 0.5),
+          axis.title.y = element_text(face="bold", colour='#1A1A1A', size=18),
+          axis.title.x = element_blank(),
+          axis.line.x = element_blank(),
+          axis.line.y = element_blank(),
+          axis.ticks.x = element_blank(),
+          axis.ticks.y = element_blank(),
+          panel.border = element_blank())+
+    geom_errorbar(aes(ymin = ci_l_emp,
+                      ymax = ci_u_emp, x = pheno), size=.3, alpha = 0.6, position=position_dodge(width=0.7), color="red")+
+    annotate(geom="point", y=SurfAreanum_age, x="Age", shape=4, color="red", size=4, stroke=1.2)+
+    annotate(geom="point", y=GrayVolnum_age, x=1-0.25, shape=4, color="red", size=4, stroke=1.2)+
+    annotate(geom="point", y=ThickAvgnum_age, x=1+0.25, shape=4, color="red", size=4, stroke=1.2)+
+    annotate(geom="point", y=SurfAreanum_alc, x="Alcohol\nconsumption", shape=4, color="red", size=4, stroke=1.2)+
+    annotate(geom="point", y=GrayVolnum_alc, x=2-0.25, shape=4, color="red", size=4, stroke=1.2)+
+    annotate(geom="point", y=ThickAvgnum_alc, x=2+0.25, shape=4, color="red", size=4, stroke=1.2)+
+    annotate(geom="point", y=SurfAreanum_bmi, x="Body Mass\nindex", shape=4, color="red", size=4, stroke=1.2)+
+    annotate(geom="point", y=GrayVolnum_bmi, x=3-0.25, shape=4, color="red", size=4, stroke=1.2)+
+    annotate(geom="point", y=ThickAvgnum_bmi, x=3+0.25, shape=4, color="red", size=4, stroke=1.2)+
+    annotate(geom="point", y=SurfAreanum_cig, x="Cigarette\nconsumption", shape=4, color="red", size=4, stroke=1.2)+
+    annotate(geom="point", y=GrayVolnum_cig, x=4-0.25, shape=4, color="red", size=4, stroke=1.2)+
+    annotate(geom="point", y=ThickAvgnum_cig, x=4+0.25, shape=4, color="red", size=4, stroke=1.2)+
+    annotate(geom="point", y=SurfAreanum_edu, x="Education", shape=4, color="red", size=4, stroke=1.2)+
+    annotate(geom="point", y=GrayVolnum_edu, x=5-0.25, shape=4, color="red", size=4, stroke=1.2)+
+    annotate(geom="point", y=ThickAvgnum_edu, x=5+0.25, shape=4, color="red", size=4, stroke=1.2)+
+    annotate(geom="point", y=SurfAreanum_gpheno, x="General\ncognitive\nability", shape=4, color="red", size=4, stroke=1.2)+
+    annotate(geom="point", y=GrayVolnum_gpheno, x=6-0.25, shape=4, color="red", size=4, stroke=1.2)+
+    annotate(geom="point", y=ThickAvgnum_gpheno, x=6+0.25, shape=4, color="red", size=4, stroke=1.2)+
+    annotate(geom="point", y=SurfAreanum_sex, x="Sex", shape=4, color="red", size=4, stroke=1.2)+
+    annotate(geom="point", y=GrayVolnum_sex, x=7-0.25, shape=4, color="red", size=4, stroke=1.2)+
+    annotate(geom="point", y=ThickAvgnum_sex, x=7+0.25, shape=4, color="red", size=4, stroke=1.2)
+    
+save[[atlas]] <- random_plot
+}
+
+i = "DK"
+    
+tiff(paste0(wd,"/plots/nulldistr_", i, ".tiff"), width = 10, height = 6, units = "in", pointsize = 2, bg="white", res=800)
+save[[i]]
+dev.off()
+
+i = "Des"
+tiff(paste0(wd,"/plots/nulldistr_", i, ".tiff"), width = 10, height = 6, units = "in", pointsize = 2, bg="white", res=800)
+save[[i]]
+dev.off()
+
+i = "JulichBrain"
+tiff(paste0(wd,"/plots/nulldistr_", i, ".tiff"), width = 10, height = 6, units = "in", pointsize = 2, bg="white", res=800)
+save[[i]]
+dev.off()
+
+i="Yeo"
+tiff(paste0(wd,"/plots/nulldistr_", i, ".tiff"), width = 10, height = 6, units = "in", pointsize = 2, bg="white", res=800)
+save[[i]]
+dev.off()
+
+i = "Schaefer"
+tiff(paste0(wd,"/plots/nulldistr_", i, ".tiff"), width = 10, height = 6, units = "in", pointsize = 2, bg="white", res=800)
+save[[i]]
+dev.off()
+
+i = "Glasser"
+tiff(paste0(wd,"/plots/nulldistr_", i, ".tiff"), width = 10, height = 6, units = "in", pointsize = 2, bg="white", res=800)
+save[[i]]
+dev.off()
+
+i = "Gordon"
+tiff(paste0(wd,"/plots/nulldistr_", i, ".tiff"), width = 10, height = 6, units = "in", pointsize = 2, bg="white", res=800)
+save[[i]]
+dev.off()
+```
+
+![](C:/Users/k1894405/Documents/GitHub/Comparing_atlases/other_images/nulldistr.PNG)
+
+<br>
+
+### Add data to excel sheet
+```{r eval=T}
+###
+wd=getwd()
+setwd(paste0(wd,"/nulldistr"))
+
+# store results
+results = as.data.frame(matrix(nrow = 0, ncol=8))
+names(results)=c("num_ROIs","meas","pheno","mean","sd","min","max","median")
+
+
+for(i in c(34, 68, 148, 274, 334, 360, 500)){
+
+null = read.table(paste0(wd,"/nulldistr/morph_results_",i,"randomROIs.table"), header=T)
+
+# change measurement type names from randomaparc
+null$meas[which(null$meas == "area")] = "SurfArea"
+null$meas[which(null$meas == "volume")] = "GrayVol"
+null$meas[which(null$meas == "thickness")] = "ThickAvg"
+
+
+
+  for(j in c("SurfArea","GrayVol","ThickAvg")){
+    
+    for(k in unique(null$pheno)){
+      # subset data.frame
+      subset = null[which(null$meas == j & null$pheno == k),]
+      
+       #### store results
+      # mean morph 
+      results[nrow(results)+1,c("num_ROIs","meas","pheno","mean")] = c(i,j,k,round(mean(subset$morph, na.rm=T), digits = 2))
+      # sd morph
+      results$sd[which(results$meas == j & results$pheno == k & results$num_ROIs == i)] = round(sd(subset$morph, na.rm=T), digits = 2)
+      # min morph
+      results$min[which(results$meas == j & results$pheno == k & results$num_ROIs == i)] = min(subset$morph, na.rm=T)
+      # max morph 
+      results$max[which(results$meas == j & results$pheno == k & results$num_ROIs == i)] = max(subset$morph, na.rm=T)
+      # median morph 
+      results$median[which(results$meas == j & results$pheno == k & results$num_ROIs == i)] = median(subset$morph, na.rm=T)
+
+    }
+  }
+
+}
+# calculate range between maximum and minimum
+results$range = results$max - results$min
+
+DT::datatable(results, rownames=FALSE, filter="top",options= list(pageLength=10,scrollX=T), caption = "Descriptive statistics random parcellations")
+
+### change sheet name
+sheet <-createSheet(wb, sheetName = "Null distributions")
+
+##' change title
+xlsx.addTitle(sheet, rowIndex=1, title="Summary statistics morphometricity null distributions",
+              titleStyle = TITLE_STYLE)
+## Add sub title
+xlsx.addTitle(sheet, rowIndex=2, 
+              title="Morphometricity estimates from atlases with random boundaries",
+              titleStyle = SUB_TITLE_STYLE)
+
+# indicate table to be sabed
+addDataFrame(results, sheet, startRow=3, startColumn=1, 
+             colnamesStyle = TABLE_COLNAMES_STYLE,
+             rownamesStyle = TABLE_ROWNAMES_STYLE,row.names = F)
+
+# Change column width
+setColumnWidth(sheet, colIndex=c(2:ncol(results)), colWidth=14)
+setColumnWidth(sheet, colIndex = 1, colWidth=18)
+
+#setwd("C:/Users/k1894405/OneDrive - King's College London/PhD/Projects/Comparing labelling protocols/writing/Results write-up")
+#saveWorkbook(wb, "Supplementary_Tables.xlsx")
+```
+
+
+<br>
+<br>
+
+***
+
+<br>
+
+# 4. Cross-atlas Likelihood ratio tests (LRTs)
 
 
 Cross-atlas LRTs were performed to quantify whether a higher dimensional atlas added explained variance in addition to the variance explained by a lower dimensional atlas. For example, first we fitted morphometricity using DK (68 ROIs) and Destrieux (148 ROIs) brain measures in one model. Second, we dropped Destrieux from the model and recalculated morphometricity for DK alone, which allows to quantify the percentage of variance explained by Destrieux in addition to the variance already explained by DK (“added morphometricity”). The LRT quantifies whether the explanatory variance added by the higher dimensional atlas (i.e., Destrieux in this example) is larger than zero.  
@@ -1742,270 +2017,6 @@ setColumnWidth(sheet, colIndex = 1, colWidth=18)
 <br>
 
 
-
-# 4. Random distributions of morphometricity
-
-```{r}
-library(ggplot2)
-library(cowplot)
-library(dplyr)
-library(PupillometryR)
-
-wd=getwd()
-#setwd(paste0(wd,"/nulldistr"))
-
-save=list()
-
-for(i in c(34, 68, 148, 274, 334, 360, 500)){
-
-null = read.table(paste0(wd,"/nulldistr/morph_results_",i,"randomROIs.table"), header=T)
-
-# change measurement type names from randomaparc
-null$meas[which(null$meas == "area")] = "SurfArea"
-null$meas[which(null$meas == "volume")] = "GrayVol"
-null$meas[which(null$meas == "thickness")] = "ThickAvg"
-
-names(null)[which(names(null) == "meas")] = "Measurement type"
-
-# filter for atlas
-#null = null[which(null$atlas == paste0(i,"randomROIs")),]
-
-# filter for pheno
-#null = null[which(null$pheno =="age" | null$pheno =="gpheno" | null$pheno =="sex"),]
-# name phenos
-null$pheno[which(null$pheno =="age")] = "Age"
-null$pheno[which(null$pheno =="gpheno")] = "General\ncognitive\nability"
-null$pheno[which(null$pheno =="sex")] = "Sex"
-null$pheno[which(null$pheno =="alc")] = "Alcohol\nconsumption"
-null$pheno[which(null$pheno =="cig")] = "Cigarette\nconsumption"
-null$pheno[which(null$pheno =="bmi")] = "Body Mass\nindex"
-null$pheno[which(null$pheno =="edu")] = "Education"
-
-
-# sizes in plot
-title_size=22
-other_size=20
-axis_text=16
-
-
-# get estimates from empirical atlases
-
-est = read.table(paste0(wd,"/empirical/morph_results_QCed.table"), header=T)
-
-if(i == 500){
-    # remove Schaefer estimates for surfarea and cortical thickness as we will replace them with the deflated ones
-    est=est[-which(est$atlas == "Schaefer" & est$meas == "GrayVol" | est$atlas == "Schaefer" & est$meas == "SurfArea"),]
-    
-    Schaefer_est = read.table(paste0(wd,"/empirical/morph_results_Schaefer_rankdist.table"), header=T)
-    # only replace surfarea and cortical thickness
-    Schaefer_est=Schaefer_est[-which(Schaefer_est$meas == "ThickAvg"),]
-    
-    # combine/ reintroduce deflated Schaefer estimates
-    est=rbind(est, Schaefer_est)
-}
-
-
-# pheno & morph for DK
-if(i == 68){atlas = "DK"}
-if(i == 148){atlas = "Des"}
-if(i == 34){atlas = "Yeo"}
-if(i == 274){atlas = "JulichBrain"}
-if(i == 500){atlas = "Schaefer"}
-if(i == 334){atlas = "Gordon"}
-if(i == 360){atlas = "Glasser"}
-
-
-mu=est[which(est$atlas == atlas),c("meas", "morph", "pheno","ci_l","ci_u")]
-
-#GrayVolnum_age = mu$morph[which(mu$meas=="GrayVol" & mu$pheno=="age")]
-#SurfAreanum_age = mu$morph[which(mu$meas=="SurfArea" & mu$pheno=="age")]
-#ThickAvgnum_age = mu$morph[which(mu$meas=="ThickAvg" & mu$pheno=="age")]
-
-
-for(l in unique(mu$pheno)){
-  GrayVolnum = mu$morph[which(mu$meas=="GrayVol" & mu$pheno==l)]
-  SurfAreanum = mu$morph[which(mu$meas=="SurfArea" & mu$pheno==l)]
-  ThickAvgnum = mu$morph[which(mu$meas=="ThickAvg" & mu$pheno==l)]
-
-  assign(paste0("GrayVolnum_",l), GrayVolnum)
-  assign(paste0("SurfAreanum_",l), SurfAreanum)
-  assign(paste0("ThickAvgnum_",l), ThickAvgnum)
-}
-# rename columns to match null
-names(mu)[which(names(mu) == "meas")] = "Measurement type"
-names(mu)[which(names(mu) == "morph")] = "morph_emp"
-names(mu)[which(names(mu) == "ci_l")] = "ci_l_emp"
-names(mu)[which(names(mu) == "ci_u")] = "ci_u_emp"
-
-# rename phenos to match null
-mu$pheno[which(mu$pheno =="age")] = "Age"
-mu$pheno[which(mu$pheno =="gpheno")] = "General\ncognitive\nability"
-mu$pheno[which(mu$pheno =="sex")] = "Sex"
-mu$pheno[which(mu$pheno =="alc")] = "Alcohol\nconsumption"
-mu$pheno[which(mu$pheno =="cig")] = "Cigarette\nconsumption"
-mu$pheno[which(mu$pheno =="bmi")] = "Body Mass\nindex"
-mu$pheno[which(mu$pheno =="edu")] = "Education"
-# merge mu & null to have empirical estimate part of the null frame
-null = merge(null, mu, by=c("pheno","Measurement type"))
-# reduce computational burden by plotting confidence intervall only once per pheno 
-null[setdiff(1:nrow(null),seq(from = 2, to = nrow(null), by =100)),c("ci_l_emp","ci_u_emp")]=NA
-
-title = paste0(i," random ROIs")
-  
-random_plot <- ggplot(null, aes(y = morph, x = pheno, color = `Measurement type`, group = interaction(pheno, `Measurement type`))) +
-    ggtitle(title)+
-    geom_boxplot(alpha = 0.1, width=0.75) +
-    geom_point(position = position_dodge(width=0.75),alpha = 0.2, size=2)+
-    scale_color_manual(values=c("#0492C2","#63C5DA","#016064"))+
-    theme_bw()+
-    ylab("Morphometricity estimate (%)")+
-    theme(text = element_text(size=other_size),
-          axis.text.x = element_text(size=axis_text, colour='#696969', angle=45),
-          axis.text.y = element_text(size=axis_text, colour='#696969'),
-          plot.title = element_text(face="bold", colour='#1A1A1A', size=18, hjust = 0.5),
-          axis.title.y = element_text(face="bold", colour='#1A1A1A', size=18),
-          axis.title.x = element_blank(),
-          axis.line.x = element_blank(),
-          axis.line.y = element_blank(),
-          axis.ticks.x = element_blank(),
-          axis.ticks.y = element_blank(),
-          panel.border = element_blank())+
-    geom_errorbar(aes(ymin = ci_l_emp,
-                      ymax = ci_u_emp, x = pheno), size=.3, alpha = 0.6, position=position_dodge(width=0.7), color="red")+
-    annotate(geom="point", y=SurfAreanum_age, x="Age", shape=4, color="red", size=4, stroke=1.2)+
-    annotate(geom="point", y=GrayVolnum_age, x=1-0.25, shape=4, color="red", size=4, stroke=1.2)+
-    annotate(geom="point", y=ThickAvgnum_age, x=1+0.25, shape=4, color="red", size=4, stroke=1.2)+
-    annotate(geom="point", y=SurfAreanum_alc, x="Alcohol\nconsumption", shape=4, color="red", size=4, stroke=1.2)+
-    annotate(geom="point", y=GrayVolnum_alc, x=2-0.25, shape=4, color="red", size=4, stroke=1.2)+
-    annotate(geom="point", y=ThickAvgnum_alc, x=2+0.25, shape=4, color="red", size=4, stroke=1.2)+
-    annotate(geom="point", y=SurfAreanum_bmi, x="Body Mass\nindex", shape=4, color="red", size=4, stroke=1.2)+
-    annotate(geom="point", y=GrayVolnum_bmi, x=3-0.25, shape=4, color="red", size=4, stroke=1.2)+
-    annotate(geom="point", y=ThickAvgnum_bmi, x=3+0.25, shape=4, color="red", size=4, stroke=1.2)+
-    annotate(geom="point", y=SurfAreanum_cig, x="Cigarette\nconsumption", shape=4, color="red", size=4, stroke=1.2)+
-    annotate(geom="point", y=GrayVolnum_cig, x=4-0.25, shape=4, color="red", size=4, stroke=1.2)+
-    annotate(geom="point", y=ThickAvgnum_cig, x=4+0.25, shape=4, color="red", size=4, stroke=1.2)+
-    annotate(geom="point", y=SurfAreanum_edu, x="Education", shape=4, color="red", size=4, stroke=1.2)+
-    annotate(geom="point", y=GrayVolnum_edu, x=5-0.25, shape=4, color="red", size=4, stroke=1.2)+
-    annotate(geom="point", y=ThickAvgnum_edu, x=5+0.25, shape=4, color="red", size=4, stroke=1.2)+
-    annotate(geom="point", y=SurfAreanum_gpheno, x="General\ncognitive\nability", shape=4, color="red", size=4, stroke=1.2)+
-    annotate(geom="point", y=GrayVolnum_gpheno, x=6-0.25, shape=4, color="red", size=4, stroke=1.2)+
-    annotate(geom="point", y=ThickAvgnum_gpheno, x=6+0.25, shape=4, color="red", size=4, stroke=1.2)+
-    annotate(geom="point", y=SurfAreanum_sex, x="Sex", shape=4, color="red", size=4, stroke=1.2)+
-    annotate(geom="point", y=GrayVolnum_sex, x=7-0.25, shape=4, color="red", size=4, stroke=1.2)+
-    annotate(geom="point", y=ThickAvgnum_sex, x=7+0.25, shape=4, color="red", size=4, stroke=1.2)
-    
-save[[atlas]] <- random_plot
-}
-
-i = "DK"
-    
-tiff(paste0(wd,"/plots/nulldistr_", i, ".tiff"), width = 10, height = 6, units = "in", pointsize = 2, bg="white", res=800)
-save[[i]]
-dev.off()
-
-i = "Des"
-tiff(paste0(wd,"/plots/nulldistr_", i, ".tiff"), width = 10, height = 6, units = "in", pointsize = 2, bg="white", res=800)
-save[[i]]
-dev.off()
-
-i = "JulichBrain"
-tiff(paste0(wd,"/plots/nulldistr_", i, ".tiff"), width = 10, height = 6, units = "in", pointsize = 2, bg="white", res=800)
-save[[i]]
-dev.off()
-
-i="Yeo"
-tiff(paste0(wd,"/plots/nulldistr_", i, ".tiff"), width = 10, height = 6, units = "in", pointsize = 2, bg="white", res=800)
-save[[i]]
-dev.off()
-
-i = "Schaefer"
-tiff(paste0(wd,"/plots/nulldistr_", i, ".tiff"), width = 10, height = 6, units = "in", pointsize = 2, bg="white", res=800)
-save[[i]]
-dev.off()
-
-i = "Glasser"
-tiff(paste0(wd,"/plots/nulldistr_", i, ".tiff"), width = 10, height = 6, units = "in", pointsize = 2, bg="white", res=800)
-save[[i]]
-dev.off()
-
-i = "Gordon"
-tiff(paste0(wd,"/plots/nulldistr_", i, ".tiff"), width = 10, height = 6, units = "in", pointsize = 2, bg="white", res=800)
-save[[i]]
-dev.off()
-```
-
-![](C:/Users/k1894405/Documents/GitHub/Comparing_atlases/other_images/nulldistr.PNG)
-
-<br>
-
-### Add data to excel sheet
-```{r eval=T}
-###
-wd=getwd()
-setwd(paste0(wd,"/nulldistr"))
-
-# store results
-results = as.data.frame(matrix(nrow = 0, ncol=8))
-names(results)=c("num_ROIs","meas","pheno","mean","sd","min","max","median")
-
-
-for(i in c(34, 68, 148, 274, 334, 360, 500)){
-
-null = read.table(paste0(wd,"/nulldistr/morph_results_",i,"randomROIs.table"), header=T)
-
-# change measurement type names from randomaparc
-null$meas[which(null$meas == "area")] = "SurfArea"
-null$meas[which(null$meas == "volume")] = "GrayVol"
-null$meas[which(null$meas == "thickness")] = "ThickAvg"
-
-
-
-  for(j in c("SurfArea","GrayVol","ThickAvg")){
-    
-    for(k in unique(null$pheno)){
-      # subset data.frame
-      subset = null[which(null$meas == j & null$pheno == k),]
-      
-       #### store results
-      # mean morph 
-      results[nrow(results)+1,c("num_ROIs","meas","pheno","mean")] = c(i,j,k,round(mean(subset$morph, na.rm=T), digits = 2))
-      # sd morph
-      results$sd[which(results$meas == j & results$pheno == k)] = round(sd(subset$morph, na.rm=T), digits = 2)
-      # min morph
-      results$min[which(results$meas == j & results$pheno == k)] = min(subset$morph, na.rm=T)
-      # max morph 
-      results$max[which(results$meas == j & results$pheno == k)] = max(subset$morph, na.rm=T)
-      # median morph 
-      results$median[which(results$meas == j & results$pheno == k)] = median(subset$morph, na.rm=T)
-
-    }
-  }
-
-}
-
-### change sheet name
-sheet <-createSheet(wb, sheetName = "Null distributions")
-
-##' change title
-xlsx.addTitle(sheet, rowIndex=1, title="Summary statistics morphometricity null distributions",
-              titleStyle = TITLE_STYLE)
-## Add sub title
-xlsx.addTitle(sheet, rowIndex=2, 
-              title="Morphometricity estimates from atlases with random boundaries",
-              titleStyle = SUB_TITLE_STYLE)
-
-# indicate table to be sabed
-addDataFrame(results, sheet, startRow=3, startColumn=1, 
-             colnamesStyle = TABLE_COLNAMES_STYLE,
-             rownamesStyle = TABLE_ROWNAMES_STYLE,row.names = F)
-
-# Change column width
-setColumnWidth(sheet, colIndex=c(2:ncol(results)), colWidth=14)
-setColumnWidth(sheet, colIndex = 1, colWidth=18)
-
-#setwd("C:/Users/k1894405/OneDrive - King's College London/PhD/Projects/Comparing labelling protocols/writing/Results write-up")
-#saveWorkbook(wb, "Supplementary_Tables.xlsx")
-```
 
 
 # 5. LASSO regressions
