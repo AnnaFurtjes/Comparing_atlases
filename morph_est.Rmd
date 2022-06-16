@@ -463,3 +463,97 @@ done
 ##### sbatch -p brc,shared ~/morphometricity/scripts/vertices_get_morph_est.sh
 ```
 
+
+<br>
+<br>
+
+***
+
+# Detect BRM outliers
+
+<br>
+
+Launch this Rscript (and specify the brain measurement type to be cleaned) in order to read in BRMs and detect outliers of participants that are too similar or dissimilar to the rest of the sample (BRM cut-off 8SDs).
+Based on this script, we excluded 4 participants altogether.
+
+
+
+```{r}
+args <- commandArgs(trailingOnly = TRUE)
+
+meas=args[1]
+print(paste("Looking for outliers in ", meas))
+
+
+## define functions
+## taken from Baptistes Github
+## https://github.com/baptisteCD/Brain-LMM/blob/master/RR_4.0_BRM_QC_functions.R
+## this may require ~220GB RAM
+
+ReadORMBin=function(prefix, AllN=F, size=4){
+  sum_i=function(i){
+    return(sum(1:i))
+  }
+  BinFileName=paste(prefix,".orm.bin",sep="")
+  NFileName=paste(prefix,".orm.N.bin",sep="")
+  IDFileName=paste(prefix,".orm.id",sep="")
+  id = read.table(IDFileName)
+  n=dim(id)[1]
+  BinFile=file(BinFileName, "rb");
+  grm=readBin(BinFile, n=n*(n+1)/2, what=numeric(0), size=size)
+  NFile=file(NFileName, "rb");
+  if(AllN==T){
+    N=readBin(NFile, n=n*(n+1)/2, what=numeric(0), size=size)
+  }
+  else N=readBin(NFile, n=1, what=numeric(0), size=size)
+  i=sapply(1:n, sum_i)
+  return(list(diag=grm[i], off=grm[-i], id=id, N=N))
+}
+
+# Format matrix
+asBRM<-function(BRMbin){
+  mat<-matrix(0, nrow = length(BRMbin$diag), ncol = length(BRMbin$diag))
+mat[upper.tri(mat)]<-BRMbin$off
+mat<-mat+t(mat)
+diag(mat)<-BRMbin$diag
+colnames(mat)<-BRMbin$id[,2]
+rownames(mat)<-BRMbin$id[,2]
+  return(mat)
+}
+
+################################################################################################
+setwd("/mnt/lustre/users/k1894405/morphometricity/data/BRM")
+
+hemi = c("rh","lh")
+
+for(i in meas){
+	for(j in hemi){
+		# read in BRM from binary file
+		bin_mat <- ReadORMBin(prefix=paste0("BRM_vertices_",j,".",i))
+		
+		# format as BRM
+		mat <- asBRM(BRMbin = bin_mat)
+		
+		# clean up
+		rm("bin_mat")
+		
+		# calculate rowMeans to get average assoc of each participants with the rest of the sample
+		rs <- rowMeans(abs(mat))
+		
+		# clean up
+		rm("mat")
+		
+		# extract Ids of participants whos rowMeans are outside of 8SDs
+		outliers <- names(rs[which(rs > (mean(rs)+8*sd(rs)) ) ])
+	
+		# if outliers is not empty, save IDs to exclude from analysis
+		if(length(outliers) > 0){
+			print(paste0("Outliers in ",j,".",i," are printed in ","IDs_BRM_outliers_",j,".",i,".txt")); write.table(outliers, paste0("IDs_BRM_outliers_",j,".",i,".txt"), col.names = F, row.names = F, quote = F )
+			}else{print(paste0(j,".",i," did not have any outliers"))}
+	}
+}
+
+
+print("Done identifying outliers for all atlases")
+```
+

@@ -12,7 +12,7 @@
 <meta name="author" content="Anna Elisabeth Furtjes" />
 
 
-<title>Developing atlas processing pipeline</title>
+<title>Developing atlas pre-processing pipeline</title>
 
 <script src="site_libs/header-attrs-2.10/header-attrs.js"></script>
 <script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
@@ -326,6 +326,9 @@ div.tocify {
   <a href="Serious_Pipeline.html">Neuroimaging pre-processing</a>
 </li>
 <li>
+  <a href="morph_est.html">Morphometricity estimation</a>
+</li>
+<li>
   <a href="Results.html">Results</a>
 </li>
       </ul>
@@ -348,7 +351,7 @@ div.tocify {
 
 
 
-<h1 class="title toc-ignore">Developing atlas processing pipeline</h1>
+<h1 class="title toc-ignore">Developing atlas pre-processing pipeline</h1>
 <h4 class="author">Anna Elisabeth Furtjes</h4>
 
 </div>
@@ -359,12 +362,13 @@ div.tocify {
 <p>The final pipeline used to process individual-level neuroimaging data is <a href="Serious_Pipeline.html#9_The_final_pipeline">here</a>.</p>
 <p><br> <br></p>
 <p><br> <br></p>
-<div id="data-processing" class="section level1">
-<h1>Data processing</h1>
-<p>The UK Biobank study provides field ID 20263 as processed neuroimaging data in FreeSurfer formats. We use field 20263 to extract our atlases and vertex-wise measures. As the data is very large, we proceed to process each participant individually, so we can then save the information we need, and delete the rest to make space for more data.</p>
+<div id="uk-biobank-data" class="section level1">
+<h1>1. UK Biobank data</h1>
+<p>The UK Biobank study provides field ID 20263 as processed neuroimaging data in FreeSurfer formats. We use field 20263 to extract our atlases and vertex-wise measures. As the data is very large, we proceed to process each participant individually (about 300 in parallel), so we can then save the information we need, and delete the rest to make space for more data.</p>
 <p><br> <br></p>
-<div id="installing-freesurfer-v6.0.0" class="section level2">
-<h2>1. Installing FreeSurfer v6.0.0</h2>
+</div>
+<div id="installing-freesurfer-v6.0.0" class="section level1">
+<h1>2. Installing FreeSurfer v6.0.0</h1>
 <p>We downloaded the software <a href="https://surfer.nmr.mgh.harvard.edu/fswiki/rel6downloads">here</a>, and installed it on our Linux system. The software will only work if a license file is generated and saved in the FreeSurfer directory.</p>
 <pre class="bash"><code>#download
 wget https://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/6.0.0/freesurfer-Linux-centos6_x86_64-stable-pub-v6.0.0.tar.gz
@@ -383,15 +387,15 @@ source $FREESURFER_HOME/SetUpFreeSurfer.sh
 rm freesurfer-Linux-centos6_x86_64-stable-pub-v6.0.0.tar.gz</code></pre>
 <p><br> <br></p>
 </div>
-<div id="download-atlas-annotation-files" class="section level2">
-<h2>2. Download atlas annotation files</h2>
+<div id="download-atlas-annotation-files" class="section level1">
+<h1>3. Download atlas annotation files</h1>
 <p>The Desikan-Killiany and the Destrieux atlases have previously been processed by UKB and are provided as anatomical stats as part of field 20263 (stats/?h.aparc.a2009s.stats for Destrieux; stats/?h.aparc.stats for DK). For all other atlases, we need annotation files in order to be able to map then onto our individuals brains, and to know which vertices fall into specific regions-of-interest (ROIs). Ideally, we use .gcs mapping files, because the mapping of the atlas onto each participant is straightforward (find an illustration <a href="https://surfer.nmr.mgh.harvard.edu/fswiki/SurfaceLabelAtlas">here</a>). We obtain .gcs files for most of our atlases from the multiAtlasTT repository <a href="https://figshare.com/ndownloader/files/25079594">here</a>. However, we could only find annotation files in .annot format for the Julich-Brain (<a href="https://search.kg.ebrains.eu/instances/ff1bae02-857d-4d1b-8b2d-b9dbd583a459">here</a>), and Yeo (?h.Yeo2011_17Networks.annot files are included when downloading FreeSurfer software). To process the latter, we use a pipeline from the <a href="https://cjneurolab.org/2016/11/22/hcp-mmp1-0-volumetric-nifti-masks-in-native-structural-space/">CJNeuroLab</a>. Throughout this document, I may sometimes refer to this pipeline as the <em>Barcelona pipeline</em>.</p>
 <p><br> <br></p>
 </div>
-<div id="extract-atlases-on-individual-level" class="section level2">
-<h2>3. Extract atlases on individual level</h2>
-<div id="mapping-from-.gcs-files" class="section level3">
-<h3>3.1 Mapping from .gcs files</h3>
+<div id="extract-atlases-on-individual-level" class="section level1">
+<h1>4. Extract atlases on individual level</h1>
+<div id="mapping-from-.gcs-files" class="section level2">
+<h2>4.1 Mapping from .gcs files</h2>
 <pre class="bash"><code>    ####################################################################################
     ### Process mris_ca_label script to obtain atlases from gcs files
     ### illustration of what it does here: https://surfer.nmr.mgh.harvard.edu/fswiki/SurfaceLabelAtlas
@@ -541,8 +545,8 @@ for(i in 1:nrow(ref)){
 print(paste0(&quot;Done saving results from &quot;,subjectID,&quot; as outfiles in &quot;,outputdir))</code></pre>
 <p><br> <br></p>
 </div>
-<div id="mapping-from-.annot-file-barcelona-pipeline-from-cjneurolab" class="section level3">
-<h3>3.2 Mapping from .annot file (Barcelona pipeline from CJNeuroLab)</h3>
+<div id="mapping-from-.annot-file-barcelona-pipeline-from-cjneurolab" class="section level2">
+<h2>4.2 Mapping from .annot file (Barcelona pipeline from CJNeuroLab)</h2>
 <pre class="bash"><code>    ####################################################################################################
     ### Run Barcelona pipeline for Yeo and Julich atlases
     ### https://cjneurolab.org/2016/11/22/hcp-mmp1-0-volumetric-nifti-masks-in-native-structural-space/
@@ -698,8 +702,8 @@ print(paste0(&quot;Done saving results from &quot;,subjectID,&quot; as outfiles 
 <p><br> <br></p>
 </div>
 </div>
-<div id="prepare-barcelona-pipeline" class="section level2">
-<h2>4. Prepare Barcelona pipeline</h2>
+<div id="prepare-barcelona-pipeline" class="section level1">
+<h1>5. Prepare Barcelona pipeline</h1>
 <pre class="bash"><code>#!/usr/bin/env bash
 
 # Creates subject-level parcellation image from annotation files in fsaverage space. Can be used with the HCP-MMP1.0 projected on fsaverage annotation files available from https://figshare.com/articles/HCP-MMP1_0_projected_on_fsaverage/3498446
@@ -1051,9 +1055,15 @@ fi
 <p>However, there is one region in the JulichBrain atlas that cannot be rescued with this fix: Area TPJ (STG/SMG). Linux and FreeSurfer cannot deal with a backslash in the directory name which is why this region is entirely missing in the final mapping of the atlas onto the individuals brain. I have contacted the developers of the annotation files to ask if they either knew of a tool that allowed me to edit annotation files, and output them in their binary format, or if they could provide a version of the annotation file without the backslash in the label (something like Area TPJ (STG_SMG)). They agreed it was not best practice to name their regions with backslashes, but also said there was nothing they could do for me. I decided to proceed by excluding this one region. As I am assessing atlas performances as they are implemented in FS, I think this remains a genuine representation of atlas performance as provided by the developers.</p>
 <p>With the JulichBrain processing so far, we end up with 137 in right hemisphere, 136 in left hemisphere, after we deleting unlabelled regions. This is one ROI less than pre-registered.</p>
 <p><br> <br></p>
+<div id="a.-test-barcelona-pipeline" class="section level2">
+<h2>5a. Test Barcelona pipeline</h2>
+<p>As indicated above, I test the Barcelona pipeline by processing Desikan-Killiany and comparing the output with the Desikan-Killiany anatomical stats as they are provided by UKB. To get a sense of the accuracy, I have processed all subjects with the lh.aparc.annot files (re-named it to lh.test.aparc.annot so that files stats files don’t overwrite each other).</p>
+<p>Refer to <a href="Validating_Barcelona.html">this site</a> for a comparison between the original UKB DK estimates, and estimates we get from processing data with .annot files. We used the original DK estimates in any subsequent analysis.</p>
+<p><br> <br></p>
 </div>
-<div id="problems-with-schaefer-atlas" class="section level2">
-<h2>5. Problems with Schaefer atlas</h2>
+</div>
+<div id="problems-with-schaefer-atlas" class="section level1">
+<h1>6. Problems with Schaefer atlas</h1>
 <p>Some of the individual’s Schaefer output have glitches. I realised that if a participants size of the “Background+FreeSurfer_Defined_Medial_Wall” crosses a certain threshold, the output does not generate a space between the label (i.e. Background+FreeSurfer_Defined_Medial_Wall) and the first value. Consequently, my formatting scripts will not be able to read the Schaefer atlas files into R because there is an inconsistency of column names and actual columns. I added the following piece of code that checks whether that has happened, and fixes it.</p>
 <pre class="bash"><code>    ###################################################################################################
     ## LAZY FIX: Schaefer atlas produces some weird formatting in some participants 
@@ -1086,14 +1096,8 @@ fi
     done
 </code></pre>
 </div>
-<div id="test-barcelona-pipeline" class="section level2">
-<h2>6. Test Barcelona pipeline</h2>
-<p>As indicated above, I test the Barcelona pipeline by processing Desikan-Killiany and comparing the output with the Desikan-Killiany anatomical stats as they are provided by UKB. To get a sense of the accuracy, I have processed all subjects with the lh.aparc.annot files (re-named it to lh.test.aparc.annot so that files stats files don’t overwrite each other).</p>
-<p>Refer to <a href="Validating_Barcelona.html">this site</a> for a comparison between the original UKB DK estimates, and estimates we get from processing data with .annot files. We used the original DK estimates in any subsequent analysis.</p>
-<p><br> <br></p>
-</div>
-<div id="get-vertex-wise-data-from-a-subject" class="section level2">
-<h2>7. Get vertex-wise data from a subject</h2>
+<div id="get-vertex-wise-data-from-a-subject" class="section level1">
+<h1>7. Get vertex-wise data from a subject</h1>
 <pre class="bash"><code>    ######################################################################################################################## 
     ##### extract vertex-wise tables
     ##### convert .mgh format into .asc
@@ -1119,8 +1123,8 @@ fi
 </code></pre>
 <p><br> <br></p>
 </div>
-<div id="extract-vertex-coordinates-from-a-test-subject" class="section level2">
-<h2>8. Extract vertex coordinates from a test subject</h2>
+<div id="extract-vertex-coordinates-from-a-test-subject" class="section level1">
+<h1>8. Extract vertex coordinates from a test subject</h1>
 <p>The vertex coordinates should be the same across all participants, because they are mapped into fsaverage standard space. For a sanity check, I compared the vertex coordinates in my subjects with the ones used by <a href="https://github.com/baptisteCD/Brain-Mapping-LMM/blob/main/atlas/lh.vertexCoordinates.asc">Baptiste</a> and they are identical.</p>
 <pre class="bash"><code>awk &#39;{print $1 &quot; &quot; $2 &quot; &quot; $3 &quot; &quot; $4}&#39; lh.area.fwhm0.fsaverage.asc &gt; lh.fsaverage_vertex_coordinates
 mv lh.fsaverage_vertex_coordinates /mnt/lustre/datasets/ukbiobank/ukb40933/imaging/output/lh.fsaverage_vertex_coordinates
@@ -1131,8 +1135,8 @@ mv rh.fsaverage_vertex_coordinates /mnt/lustre/datasets/ukbiobank/ukb40933/imagi
 # 163842 vertices</code></pre>
 <p><br> <br></p>
 </div>
-<div id="the-final-pipeline" class="section level2">
-<h2>9. The final pipeline</h2>
+<div id="the-final-pipeline" class="section level1">
+<h1>9. The final pipeline</h1>
 <p>In addition to the individual bits of the script explained above, the final script also includes some sanity checks (e.g., whether download was successful), and it keeps a record of all successful and failed processes. This is because with 40.000 participants, it would be too much to double check every participant manually.</p>
 <pre class="bash"><code>#!/bin/bash -l
 #SBATCH --job-name=FS_processing
@@ -1428,10 +1432,6 @@ subjNUM=$(awk &quot;FNR==$SLURM_ARRAY_TASK_ID&quot; ${download_dir}resubmitIDs_1
 ######### Here I download, process and save the data we need for the morphometricity project
 ######### sbatch -p brc,shared ~/datasets/ukbiobank/ukb40933/imaging/scripts/Serious_pipeline09122021.sh
 </code></pre>
-<div id="add-detect-outliers-script" class="section level4">
-<h4>add detect outliers script</h4>
-</div>
-</div>
 </div>
 
 &nbsp;

@@ -6,5 +6,7 @@ navbar:
   left: 
    - text: "Neuroimaging pre-processing"
      href: Serious_Pipeline.html
+   - text: "Morphometricity estimation"
+     href: morph_est.html
    - text: "Results"
      href: Results.html

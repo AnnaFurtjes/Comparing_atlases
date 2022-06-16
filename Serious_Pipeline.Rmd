@@ -1,5 +1,5 @@
 ---
-title: "Developing atlas processing pipeline"
+title: "Developing atlas pre-processing pipeline"
 author: "Anna Elisabeth Furtjes"
 highlighter: prettify
 output: 
@@ -32,14 +32,14 @@ The final pipeline used to process individual-level neuroimaging data is [here](
 <br>
 <br>
 
-# Data processing
+# 1. UK Biobank data
 The UK Biobank study provides field ID 20263 as processed neuroimaging data in FreeSurfer formats. We use field 20263 to extract our atlases and vertex-wise measures. 
-As the data is very large, we proceed to process each participant individually, so we can then save the information we need, and delete the rest to make space for more data. 
+As the data is very large, we proceed to process each participant individually (about 300 in parallel), so we can then save the information we need, and delete the rest to make space for more data. 
 
 <br>
 <br>
 
-## 1. Installing FreeSurfer v6.0.0
+# 2. Installing FreeSurfer v6.0.0
 We downloaded the software [here](https://surfer.nmr.mgh.harvard.edu/fswiki/rel6downloads), and installed it on our Linux system. The software will only work if a license file is generated and saved in the FreeSurfer directory.
 
 ```{bash downloading_FS, eval=F}
@@ -63,19 +63,20 @@ rm freesurfer-Linux-centos6_x86_64-stable-pub-v6.0.0.tar.gz
 <br>
 <br>
 
-## 2. Download atlas annotation files
+# 3. Download atlas annotation files
 The Desikan-Killiany and the Destrieux atlases have previously been processed by UKB and are provided as anatomical stats as part of field 20263 (stats/?h.aparc.a2009s.stats for Destrieux;  stats/?h.aparc.stats for DK). 
 For all other atlases, we need annotation files in order to be able to map then onto our individuals brains, and to know which vertices fall into specific regions-of-interest (ROIs). Ideally, we use .gcs mapping files, because the mapping of the atlas onto each participant is straightforward (find an illustration [here](https://surfer.nmr.mgh.harvard.edu/fswiki/SurfaceLabelAtlas)). We obtain .gcs files for most of our atlases from the multiAtlasTT repository [here](https://figshare.com/ndownloader/files/25079594). 
 However, we could only find annotation files in .annot format for the Julich-Brain ([here](https://search.kg.ebrains.eu/instances/ff1bae02-857d-4d1b-8b2d-b9dbd583a459)),  and Yeo (?h.Yeo2011_17Networks.annot files are included when downloading FreeSurfer software). To process the latter, we use a pipeline from the [CJNeuroLab](https://cjneurolab.org/2016/11/22/hcp-mmp1-0-volumetric-nifti-masks-in-native-structural-space/). Throughout this document, I may sometimes refer to this pipeline as the *Barcelona pipeline*.
 
 
+
 <br>
 <br>
 
 
-## 3. Extract atlases on individual level
+# 4. Extract atlases on individual level
 
-### 3.1 Mapping from .gcs files 
+## 4.1 Mapping from .gcs files 
 ```{bash}
 	####################################################################################
 	### Process mris_ca_label script to obtain atlases from gcs files
@@ -245,7 +246,7 @@ print(paste0("Done saving results from ",subjectID," as outfiles in ",outputdir)
 <br>
 
 
-### 3.2 Mapping from .annot file (Barcelona pipeline from CJNeuroLab)
+## 4.2 Mapping from .annot file (Barcelona pipeline from CJNeuroLab)
 
 ```{bash}
 	####################################################################################################
@@ -418,7 +419,7 @@ Note that here we also process the "test_aparc" atlas. I have only introduced th
 <br>
 
 
-## 4. Prepare Barcelona pipeline
+# 5. Prepare Barcelona pipeline
 
 ```{bash}
 #!/usr/bin/env bash
@@ -786,7 +787,18 @@ With the JulichBrain processing so far, we end up with 137 in right hemisphere, 
 <br>
 
 
-## 5. Problems with Schaefer atlas
+## 5a. Test Barcelona pipeline
+As indicated above, I test the Barcelona pipeline by processing Desikan-Killiany and comparing the output with the Desikan-Killiany anatomical stats as they are provided by UKB. To get a sense of the accuracy, I have processed all subjects with the lh.aparc.annot files (re-named it to lh.test.aparc.annot so that files stats files don't overwrite each other). 
+
+Refer to [this site](Validating_Barcelona.html) for a comparison between the original UKB DK estimates, and estimates we get from processing data with .annot files. We used the original DK estimates in any subsequent analysis. 
+
+
+
+<br>
+<br>
+
+
+# 6. Problems with Schaefer atlas
 
 Some of the individual's Schaefer output have glitches. I realised that if a participants size of the "Background+FreeSurfer_Defined_Medial_Wall" crosses a certain threshold, the output does not generate a space between the label (i.e. Background+FreeSurfer_Defined_Medial_Wall) and the first value. Consequently, my formatting scripts will not be able to read the Schaefer atlas files into R because there is an inconsistency of column names and actual columns. I added the following piece of code that checks whether that has happened, and fixes it.
 
@@ -825,18 +837,7 @@ Some of the individual's Schaefer output have glitches. I realised that if a par
 
 
 
-## 6. Test Barcelona pipeline
-As indicated above, I test the Barcelona pipeline by processing Desikan-Killiany and comparing the output with the Desikan-Killiany anatomical stats as they are provided by UKB. To get a sense of the accuracy, I have processed all subjects with the lh.aparc.annot files (re-named it to lh.test.aparc.annot so that files stats files don't overwrite each other). 
-
-Refer to [this site](Validating_Barcelona.html) for a comparison between the original UKB DK estimates, and estimates we get from processing data with .annot files. We used the original DK estimates in any subsequent analysis. 
-
-
-
-<br>
-<br>
-
-
-## 7. Get vertex-wise data from a subject
+# 7. Get vertex-wise data from a subject
 ```{bash}
 	######################################################################################################################## 
 	##### extract vertex-wise tables
@@ -869,7 +870,7 @@ Refer to [this site](Validating_Barcelona.html) for a comparison between the ori
 <br>
 
 
-## 8. Extract vertex coordinates from a test subject
+# 8. Extract vertex coordinates from a test subject
 The vertex coordinates should be the same across all participants, because they are mapped into fsaverage standard space. For a sanity check, I compared the vertex coordinates in my subjects with the ones used by [Baptiste](https://github.com/baptisteCD/Brain-Mapping-LMM/blob/main/atlas/lh.vertexCoordinates.asc) and they are identical.
 
 ```{bash, vertexdata, eval=F}
@@ -888,7 +889,7 @@ mv rh.fsaverage_vertex_coordinates /mnt/lustre/datasets/ukbiobank/ukb40933/imagi
 
 
 
-## 9. The final pipeline 
+# 9. The final pipeline 
 
 In addition to the individual bits of the script explained above, the final script also includes some sanity checks (e.g., whether download was successful), and it keeps a record of all successful and failed processes. This is because with 40.000 participants, it would be too much to double check every participant manually. 
 
@@ -1190,5 +1191,3 @@ subjNUM=$(awk "FNR==$SLURM_ARRAY_TASK_ID" ${download_dir}resubmitIDs_10122021.bu
 
 ```
 
-
-#### add detect outliers script
