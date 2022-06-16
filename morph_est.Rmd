@@ -24,16 +24,21 @@ knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE, eval = FALS
 <br>
 
 
+The scripts below follow a number of steps using [OSCA](https://yanglab.westlake.edu.cn/software/osca/#Overview) which are necessary to fir mixed linear models and obtain morphometricity estimates. Because data structures between atlas data and vertex-wise measures differ, some steps also differ for the analysis of either atlases or vertex-wise measures. The [first](morph_est.html#Morphometricity_from_atlas_data) example here is for atlases, and the second example [below](morph_est.html#Morphometricity_from_vertex-wise_data) is for vertex-wise measures that require more computation due to large file sizes. 
+
+
 ***
 
 
-# Example script empirical and random atlases
+# Morphometricity from atlas data
+
+
 
 <br>
 <br>
 
 
-## Make bod files
+## 1. Make bod files
 
 ```{bash}
 #!/bin/bash -l
@@ -104,7 +109,7 @@ done
 
 <br>
 
-## Calculate Brain-Relatedness-Matrix
+## 2. Calculate Brain-Relatedness-Matrix
 
 ```{bash}
 #!/bin/bash -l
@@ -165,7 +170,7 @@ done
 
 <br>
 
-## Get morphometricity estimate
+## 3. Get morphometricity estimate
 
 ```{bash}
 #!/bin/bash -l
@@ -230,11 +235,11 @@ done
 <br>
 
 
-# Example script vertices
+# Morphometricity from vertex-wise data
 
 <br>
 
-## Make bod files
+## 1. Make bod files
 
 ```{bash}
 #!/bin/bash -l
@@ -289,7 +294,7 @@ done
 
 <br>
 
-## Calculate Brain-Relatedness-Matrix per hemisphere
+## 2. Calculate Brain-Relatedness-Matrix per hemisphere
 
 
 ```{bash}
@@ -354,7 +359,7 @@ done
 
 <br>
 
-## Merge Brain-Relatedness-Matrix
+## 3. Merge Brain-Relatedness-Matrix
 
 ```{r}
 #!/bin/bash -l
@@ -407,7 +412,7 @@ echo "Merging " $meas
 
 <br>
 
-## Get morphometricity estimate
+## 4. Get morphometricity estimate
 
 ```{bash}
 #!/bin/bash -l

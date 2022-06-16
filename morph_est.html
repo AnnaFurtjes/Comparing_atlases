@@ -326,7 +326,7 @@ div.tocify {
   <a href="Serious_Pipeline.html">Neuroimaging pre-processing</a>
 </li>
 <li>
-  <a href="index.html">Tab 2</a>
+  <a href="Results.html">Results</a>
 </li>
       </ul>
       <ul class="nav navbar-nav navbar-right">
@@ -355,12 +355,13 @@ div.tocify {
 
 
 <p><br> <br></p>
+<p>The scripts below follow a number of steps using <a href="https://yanglab.westlake.edu.cn/software/osca/#Overview">OSCA</a> which are necessary to fir mixed linear models and obtain morphometricity estimates. Because data structures between atlas data and vertex-wise measures differ, some steps also differ for the analysis of either atlases or vertex-wise measures. The <a href="morph_est.html#Morphometricity_from_atlas_data">first</a> example here is for atlases, and the second example <a href="morph_est.html#Morphometricity_from_vertex-wise_data">below</a> is for vertex-wise measures that require more computation due to large file sizes.</p>
 <hr />
-<div id="example-script-empirical-and-random-atlases" class="section level1">
-<h1>Example script empirical and random atlases</h1>
+<div id="morphometricity-from-atlas-data" class="section level1">
+<h1>Morphometricity from atlas data</h1>
 <p><br> <br></p>
 <div id="make-bod-files" class="section level2">
-<h2>Make bod files</h2>
+<h2>1. Make bod files</h2>
 <pre class="bash"><code>#!/bin/bash -l
 #SBATCH --job-name=make_bod
 #SBATCH --output=~/morphometricity/output/make_bod_%A_%a.out
@@ -428,7 +429,7 @@ done
 <p><br></p>
 </div>
 <div id="calculate-brain-relatedness-matrix" class="section level2">
-<h2>Calculate Brain-Relatedness-Matrix</h2>
+<h2>2. Calculate Brain-Relatedness-Matrix</h2>
 <pre class="bash"><code>#!/bin/bash -l
 #SBATCH --job-name=calculate_BRM
 #SBATCH --output=~/morphometricity/output/calculate_BRM_%A_%a.out
@@ -486,7 +487,7 @@ done
 <p><br></p>
 </div>
 <div id="get-morphometricity-estimate" class="section level2">
-<h2>Get morphometricity estimate</h2>
+<h2>3. Get morphometricity estimate</h2>
 <pre class="bash"><code>#!/bin/bash -l
 #SBATCH --job-name=DK_morph_est
 #SBATCH --output=~/morphometricity/output/upd_morph_est_DK_%A_%a.out
@@ -544,11 +545,11 @@ done
 <p><br> <br></p>
 </div>
 </div>
-<div id="example-script-vertices" class="section level1">
-<h1>Example script vertices</h1>
+<div id="morphometricity-from-vertex-wise-data" class="section level1">
+<h1>Morphometricity from vertex-wise data</h1>
 <p><br></p>
 <div id="make-bod-files-1" class="section level2">
-<h2>Make bod files</h2>
+<h2>1. Make bod files</h2>
 <pre class="bash"><code>#!/bin/bash -l
 #SBATCH --job-name=vertex_bod
 #SBATCH --output=~/morphometricity/output/vertices_make_bod_%A_%a.out
@@ -600,7 +601,7 @@ done
 <p><br></p>
 </div>
 <div id="calculate-brain-relatedness-matrix-per-hemisphere" class="section level2">
-<h2>Calculate Brain-Relatedness-Matrix per hemisphere</h2>
+<h2>2. Calculate Brain-Relatedness-Matrix per hemisphere</h2>
 <pre class="bash"><code>#!/bin/bash -l
 #SBATCH --job-name=vertex_BRM
 #SBATCH --output=~/morphometricity/output/vertex_calculate_BRM_%A_%a.out
@@ -661,7 +662,7 @@ done
 <p><br></p>
 </div>
 <div id="merge-brain-relatedness-matrix" class="section level2">
-<h2>Merge Brain-Relatedness-Matrix</h2>
+<h2>3. Merge Brain-Relatedness-Matrix</h2>
 <pre class="r"><code>#!/bin/bash -l
 #SBATCH --job-name=merge_vertexBRM
 #SBATCH --output=~/morphometricity/output/merge_orm_vertex_%A_%a.out
@@ -709,7 +710,7 @@ echo &quot;Merging &quot; $meas
 <p><br></p>
 </div>
 <div id="get-morphometricity-estimate-1" class="section level2">
-<h2>Get morphometricity estimate</h2>
+<h2>4. Get morphometricity estimate</h2>
 <pre class="bash"><code>#!/bin/bash -l
 #SBATCH --job-name=vertex_morph
 #SBATCH --output=~/morphometricity/output/vertex_morph_%A_%a.out

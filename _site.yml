@@ -6,5 +6,5 @@ navbar:
   left: 
    - text: "Neuroimaging pre-processing"
      href: Serious_Pipeline.html
-   - text: "Tab 2"
-     href: index.html
+   - text: "Results"
+     href: Results.html

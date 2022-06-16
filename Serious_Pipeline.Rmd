@@ -21,6 +21,11 @@ knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE, eval = FALS
 <br>
 <br>
 
+This document outlines step-by-step how we built our pipeline to obtain atlas-wise individual-level brain representations.
+This is my attempt to make the decisions processes as transparent as possible. 
+
+The final pipeline used to process individual-level neuroimaging data is [here](Serious_Pipeline.html#9_The_final_pipeline).
+
 <br>
 <br>
 

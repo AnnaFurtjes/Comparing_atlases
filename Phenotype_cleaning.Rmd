@@ -1,5 +1,5 @@
 ---
-title: "Phenotype cleaning"
+title: "Behavioural trait definitions"
 highlighter: prettify
 output: 
   html_document:
@@ -17,9 +17,11 @@ knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE, eval = FALS
 <br>
 <br>
 
-The following scripts defines my UKB phenotypes for the analyses. 
+The following scripts defines my UKB behavioural traits used for the analyses. 
 
-The script refers to a file named `var_name.lis` which stored the variable names used for analysis. It can be found [here]().
+The script refers to a file named `var_name.lis` which stored the variable names used for analysis. It can be found [here](https://github.com/AnnaFurtjes/Comparing_atlases/blob/main/var_name.lis).
+
+Summary statistics for the behavioural traits are displayed [here](Results.html##1_Descriptive_statistics).
 
 
 <br>

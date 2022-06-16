@@ -250,7 +250,7 @@ $(document).ready(function () {
   <a href="Serious_Pipeline.html">Neuroimaging pre-processing</a>
 </li>
 <li>
-  <a href="index.html">Tab 2</a>
+  <a href="Results.html">Results</a>
 </li>
       </ul>
       <ul class="nav navbar-nav navbar-right">
@@ -279,10 +279,16 @@ $(document).ready(function () {
 
 
 <p><br> <br></p>
+<p>We created random parcellations for two purposes:</p>
+<ol style="list-style-type: decimal">
+<li><p>Obtain parcellations comprising 1,000 5,000 10,000 50,000 ROIs with random boundaries. Morphometricity estimates from these random parcellations are reported <a href="Results.html#2_Morphometricity_estimates">here</a>, alongside morphometricity estimated from empirical brain atlases.</p></li>
+<li><p>Obtain parcellations comprising random regional boundaries matched with the number of ROIs in empirical atlases. Morphometricity estimates from these parcellations can be found <a href="Results.html#3_Morphometricity_from_random_parcellations">here</a>.</p></li>
+</ol>
+<p><br> <br></p>
 <hr />
 <div id="cluster-random-parcellation" class="section level1">
 <h1>Cluster random parcellation</h1>
-<p>First, we feed the fsaverage 3-dimensional coordinates of the ~300.000 vertices as input to a clustering algorithm (<code>vcgKDtree()</code> in Rvcg package).</p>
+<p>First, we feed the fsaverage 3-dimensional coordinates of the ~300.000 vertices as input to a clustering algorithm (<code>vcgKDtree()</code> in Rvcg package). We repeat this for the right and left hemisphere.</p>
 <pre class="r"><code>####### create random vertices on Rosalind
 # We pre-registered atlases with 1.000, 5.000, 10.000 and 50.000 randon ROIs
 # Here we create the base files that contain the vertexIDs assigned to their random ROI and their allocated colors so we can plot the random ROIs
@@ -306,7 +312,7 @@ library(Rvcg)
 library(data.table)
 
 # read in vertex coordinates and name columns appropriately
-vertex_coord &lt;-fread(&quot;/mnt/lustre/datasets/ukbiobank/ukb40933/imaging/output/rh.fsaverage_vertex_coordinates&quot;,header=F)
+vertex_coord &lt;-fread(&quot;~/datasets/ukbiobank/ukb40933/imaging/output/rh.fsaverage_vertex_coordinates&quot;,header=F)
 
 
 names(vertex_coord) &lt;- c(&quot;vertex_ID&quot;,&quot;X&quot;,&quot;Y&quot;,&quot;Z&quot;)
@@ -377,7 +383,7 @@ jjj=jjj+1
 #vertex_coord$radius[which(is.na(vertex_coord$ROI))]=3
 
 # save vertex_coord
-setwd(paste0(&quot;/mnt/lustre/users/k1894405/morphometricity/data/null_distributions/&quot;,array))
+setwd(paste0(&quot;~/morphometricity/data/null_distributions/&quot;,array))
 
 
 fwrite(vertex_coord, file=paste0(&quot;rh_vertex_coord_seed12345_ROIs&quot;,nseeds,&quot;_k&quot;,k), quote=F, col.names=T, sep=&quot;\t&quot;)
@@ -393,7 +399,7 @@ rm(list = setdiff(ls(), c(&quot;nseeds&quot;,&quot;k&quot;,&quot;array&quot;)))
 
 
 # read in vertex coordinates and name columns appropriately
-vertex_coord &lt;-fread(&quot;/mnt/lustre/datasets/ukbiobank/ukb40933/imaging/output/lh.fsaverage_vertex_coordinates&quot;,header=F)
+vertex_coord &lt;-fread(&quot;~/datasets/ukbiobank/ukb40933/imaging/output/lh.fsaverage_vertex_coordinates&quot;,header=F)
 
 
 names(vertex_coord) &lt;- c(&quot;vertex_ID&quot;,&quot;X&quot;,&quot;Y&quot;,&quot;Z&quot;)
@@ -462,7 +468,7 @@ jjj=jjj+1
 # Visualise the vertex without a ROI
 #vertex_coord$radius[which(is.na(vertex_coord$ROI))]=3
 
-setwd(paste0(&quot;/mnt/lustre/users/k1894405/morphometricity/data/null_distributions/&quot;,as.numeric(array)))
+setwd(paste0(&quot;~/morphometricity/data/null_distributions/&quot;,as.numeric(array)))
 
 fwrite(vertex_coord, file=paste0(&quot;lh_vertex_coord_seed12345_ROIs&quot;,nseeds,&quot;_k&quot;,k), quote=F, col.names=T, sep=&quot;\t&quot;)     
     
@@ -472,7 +478,7 @@ fwrite(as.data.frame(restot), file=paste0(&quot;lh_restot_seed12345_ROIs&quot;,n
 </div>
 <div id="apply-random-atlas-to-individual-vertex-wise-data" class="section level1">
 <h1>Apply random atlas to individual vertex-wise data</h1>
-<p>Second, we apply the random parcellation to the vertex-wise data to get a random atlas representation for each individual. This script successively reads in chunks of individuals, and averages the vertex-wise measures across random ROIs.</p>
+<p>Second, we apply the random parcellation to the vertex-wise data to get a random atlas representation for each individual. This script successively reads in chunks of individuals, and averages the vertex-wise measures across random ROIs to cut down on RAM requirements.</p>
 <pre class="r"><code>###### calculate morph for random atlases
 ## Analysis steps:
 ## 1. Read in data (not whole but in chunks)
@@ -509,9 +515,9 @@ library(data.table)
 library(stringr)
 library(dplyr)
 
-setwd(&quot;/mnt/lustre/users/k1894405/morphometricity/&quot;)
-data_dir &lt;- &quot;/mnt/lustre/users/k1894405/morphometricity/data/vertices&quot;
-random_dir &lt;- &quot;/mnt/lustre/users/k1894405/morphometricity/data/Random_parcellation&quot;
+setwd(&quot;~/morphometricity/&quot;)
+data_dir &lt;- &quot;~/morphometricity/data/vertices&quot;
+random_dir &lt;- &quot;~/morphometricity/data/Random_parcellation&quot;
 
 # read in header to figure out unique columns, e.g., header_lh.volume
 headerNames&lt;-fread(paste0(random_dir,&quot;/&quot;,headerName), header=T)
@@ -679,7 +685,7 @@ if(file.exists(alternative)){
 
 }else{print(paste(&quot;Counterpart for &quot;, mod, &quot;does not yet exist.&quot;))}</code></pre>
 <p><br> <br></p>
-<p>Example of running this last script:</p>
+<p>Example of launching this last script in the chunk below.</p>
 <pre class="bash"><code>#!/bin/bash -l
 
 #SBATCH --output=~/morphometricity/output/get_random_atlases_%A_%a.out
@@ -716,6 +722,128 @@ done
 #/usr/bin/sacct --format=&quot;CPUTime,MaxRSS&quot;
 
 #### sbatch -p shared,brc ~/morphometricity/scripts/Run_get_random_atlases.sh</code></pre>
+</div>
+<div id="null-distributions" class="section level1">
+<h1>Null distributions</h1>
+<p>The following script generates morphometricity estimates for random atlases.</p>
+<pre class="bash"><code>#!/bin/bash -l
+#SBATCH --job-name=eff_null_morph
+#SBATCH --output=~/morphometricity/output/area_null_morph_%A_%a.out
+#SBATCH -D ~/morphometricity
+#SBATCH --mem-per-cpu=80G 
+#SBATCH --time=2-00:00
+#SBATCH --array=1-100 # 100 distributions
+
+
+pheno_dir=&quot;~/datasets/ukbiobank/ukb40933/phenotypes&quot;
+wd=&quot;~/morphometricity/data/null_distributions/$SLURM_ARRAY_TASK_ID&quot;
+ref_dir=&quot;~/morphometricity/data&quot;
+scripts_dir=&quot;~/morphometricity/scripts&quot;
+results_dir=&quot;~/morphometricity/results/morph_est_nulldistr&quot;
+
+nroi=68
+mod=&quot;area&quot;
+
+cd $wd
+
+for pheno in sex_pheno bmi_pheno edu_pheno alc_pheno cig_pheno gpheno age_pheno
+do
+    
+    # only calculate BRM if it doesn&#39;t already exist (if a previous job ran out of time, it won&#39;t have deleted the BRM, so we don&#39;t have to re-calculate it) OR if we already have a morph estimate
+    if [ ! -f ${wd}/BRM/BRM_${mod}_${nroi}randomROIs_${SLURM_ARRAY_TASK_ID}.orm.bin ] &amp;&amp; [ ! -f ${results_dir}/morph_est_${nroi}randomROIs_${mod}_${pheno}_${SLURM_ARRAY_TASK_ID}.rsq ]
+    then
+    
+    mkdir -p ${wd}/bod_files
+
+        ############################################################################
+        # MAKE BOD FILES
+        # Make binary input files for LMM analyses
+        # delete all vertices with a SD of zero
+        ############################################################################
+            
+        osca_Linux \
+        --efile ${wd}/both_hemi_${mod}_${nroi}randomROIs \
+        --make-bod \
+        --sd-min 0.000001 \
+        --no-fid \
+        --out ${wd}/bod_files/Bod_${mod}_${nroi}randomROIs_${SLURM_ARRAY_TASK_ID}
+        
+        ###########################################################################
+        ## OSCA analyses: 
+        ## manage bod files to include subset of individuals that all atlases &amp; vertices have in common
+        ## Saved in indi.list
+        ############################################################################
+
+        osca_Linux \
+        --befile ${wd}/bod_files/Bod_${mod}_${nroi}randomROIs_${SLURM_ARRAY_TASK_ID} \
+        --keep ${ref_dir}/indi.list.fid \
+        --make-bod \
+        --out ${wd}/bod_files/Bod_${mod}_${nroi}randomROIs_${SLURM_ARRAY_TASK_ID}
+        
+        echo &quot;Created bod files for $mod $nroi random areas&quot;
+
+    echo &quot;Calculating BRM for $nroi random ROIs $mod&quot;
+    mkdir -p ${wd}/BRM
+    
+            ############################################################################
+            # CALCULATE BRAIN-RELATEDNESS-MATRIX
+            ############################################################################
+            
+            osca_Linux \
+            --befile ${wd}/bod_files/Bod_${mod}_${nroi}randomROIs_${SLURM_ARRAY_TASK_ID} \
+            --make-orm \
+            --out ${wd}/BRM/BRM_${mod}_${nroi}randomROIs_${SLURM_ARRAY_TASK_ID}
+            
+            echo &quot;Calculated BRMs for ${mod} ${nroi} randomROIs&quot;
+            
+            #####################################
+            ## Clean up bod files to make space
+            #####################################
+            rm ${wd}/bod_files/Bod_${mod}_${nroi}randomROIs_*
+                    
+            echo &quot;Cleaned up bod files&quot;
+
+
+    else
+        echo &quot;BRM already exists&quot;
+    fi
+
+
+        # only calculate morph est if it doesn&#39;t already exist
+        if [ ! -f ${results_dir}/morph_est_${nroi}randomROIs_${mod}_${pheno}_${SLURM_ARRAY_TASK_ID}.rsq ]
+        then
+        
+                #####################################
+                ## Get morph estimate
+                #####################################       
+                osca_Linux \
+                --reml \
+                --orm ${wd}/BRM/BRM_${mod}_${nroi}randomROIs_${SLURM_ARRAY_TASK_ID} \
+                --pheno ${pheno_dir}/${pheno}_nofid.txt \
+                --covar ${pheno_dir}/bcovariates_nofid.txt \
+                --qcovar ${pheno_dir}/qcovariates_nofid.txt \
+                --out ${results_dir}/morph_est_${nroi}randomROIs_${mod}_${pheno}_${SLURM_ARRAY_TASK_ID} \
+                --reml-est-fix \
+                --reml-maxit 10000
+
+            echo &quot;Calculated morph estimate for $nroi $mod $pheno ${SLURM_ARRAY_TASK_ID}&quot;   
+
+    else
+        echo &quot;Morph results already exist for $nroi $mod $pheno ${SLURM_ARRAY_TASK_ID}. Skipping&quot;
+    fi
+
+done
+
+
+
+        
+#####################################
+## Clean up BRM files to make space
+#####################################
+rm ${wd}/BRM/BRM_${mod}_${nroi}randomROIs_*
+        
+
+################ sbatch -p brc,shared ~/morphometricity/scripts/Efficient_null_distrib_morph_area.sh</code></pre>
 </div>
 
 &nbsp;

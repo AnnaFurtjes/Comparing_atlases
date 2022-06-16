@@ -528,9 +528,3 @@ write.table(results, "~/morphometricity/results/Wilcoxon/Wilcoxon_results.table"
 
 ***
 
-
-This table is included in the supplementary materials of the manuscript. It is displayed in an Excel document that was formatted using the code below. 
-```{r}
-library()
-```
-

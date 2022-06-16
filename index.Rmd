@@ -1,5 +1,5 @@
 ---
-title: "Comparing Brain Atlases"
+title: "Comparing Brain Atlases using Morphometricity Estimates"
 author: "Anna Elisabeth Fürtjes"
 output:
   html_document:
@@ -35,7 +35,7 @@ knitr::opts_chunk$set(echo = TRUE, warning = F, message = F)
 
   1. [Phenotype cleaning](Phenotype_cleaning.html)
   
-  2. [Creating empirical atlases](Serious_Pipeline.html)
+  2. [Creating empirical atlases (FreeSurfer pre-processing)](Serious_Pipeline.html)
   
   3. [Creating random atlases](Creating_random_atlases.html)
   
@@ -55,13 +55,15 @@ knitr::opts_chunk$set(echo = TRUE, warning = F, message = F)
 
 <br>
 
-  1. [Morphometricity]()
+  1. [Descriptive statistics](Results.html##1_Descriptive_statistics)
   
-  2. [Added morphometricity (LRT)](Results.html#)
+  2. [Morphometricity (mixed linear models)](Results.html#2_Morphometricity_estimates)
   
-  3. [Random distributions of morphometricity](Results.html#)
+  3. [Morphometricity from random parcellations](Results.html#3_Morphometricity_from_random_parcellations)
   
-  3. [LASSO]()
+  4. [Atlas comparisons (likelihood ratio tests)](Results.html#4_Cross-atlas_Likelihood_ratio_tests_(LRTs))
+  
+  5. [LASSO](Results.html#5_LASSO_regressions)
   
   
 
@@ -75,7 +77,8 @@ knitr::opts_chunk$set(echo = TRUE, warning = F, message = F)
 
 # Abstract
 
-Neuroscientists working with structural magnetic resonance imaging (sMRI) must decide how to represent their participants’ brains. Many rely on brain atlases to subdivide the cortex into dozens or hundreds of regions-of-interest (ROIs). Others consider hundreds of thousands of “vertex-wise” measurements across the cortex. To date, there is no data-driven guideline about which atlas is most suitable to maximise associations between brain and non-brain traits when running prediction models. By calculating morphometricity estimates—which index the proportion of variance explained by a given atlas—previous work suggested that hundreds of thousands of vertex-wise measurements captured more interindividual variance in an age variable (as well as many other variables) than the much coarser 68 ROI-averaged measures in the Desikan-Killiany atlas. Our study will compare morphometricity estimates of vertex-wise measurements, seven empirical atlases (Desikan-Killiany, Destrieux, Glasser, Gordon, Schaefer, Yeo, Jülich-Brain), and multiple randomly generated parcellations to determine whether empirical data represented in one or the other brain atlas is superior in capturing interindividual variance across a variety of morphometric traits, including age, body-mass index, cognitive abilities, and alcohol consumption. We hypothesise that more fine-grained brain representations will yield larger morphometricity estimates than coarser atlases, since explanatory variance is lost when averaging across ROIs. It is also reasonable to expect that sufficiently highly-resolved atlases will capture about the same or more variance as vertex-wise measurements, because they should be less effected by anatomical variability. Our findings will provide a basis for future studies to choose a brain atlas that maximises the relationship between brain and non-brain traits.
 
+Many different brain atlases exist that subdivide the human cortex into dozens or hundreds of regions-of-interest (ROIs). The choice of which brain atlas to use in neuroimaging studies is rarely justified, it affects study results, and studies using different atlases are hard to compare, which may contribute to the replication crisis across the neurosciences. Here, we attempt to provide a fair comparison between seven popular brain atlases (Yeo, Desikan-Killiany, Destrieux, Jülich-Brain, Gordon, Glasser, Schaefer, vertex-wise measures), to determine which atlas is most suitable to explain behavioural traits in the UK Biobank sample (N~40,000). Across seven behavioural traits including age, sex, body mass index, and cognitive ability, we use linear mixed models to estimate whole-brain morphometricity, which is the proportion of trait variance explained by a given atlas. Likelihood ratio tests are used to compare predictive performances between brain atlases. We found a median 3.41-fold increase in morphometricity between the lowest (34 ROIs, Yeo atlas) and the highest dimensional atlas (300,000 vertices), which widely differed but remained substantial across behavioural traits and brain measurement types (range of 1.49-fold to 15.17-fold increases). Atlas dimensionality reliably predicted trait morphometricty using linear-log models, and we provide a simple formula to infer morphometricity expected dependent on the number of atlas regions. None of the empirical atlases (from Yeo to Schaefer) yielded brain-behaviour associations any larger than expected by random parcellations. Furthermore, we found that atlases were complimentary rather than redundant in the trait variance they explained, suggesting that analyses considering low dimensional atlases tend to be restricted to atlas-specific dimensions of variance. Taken together, our findings should motivate future studies to favour vertex-wise brain representations over coarser atlases whenever possible, or to consider repeating analyses across multiple atlases, should the use of low-dimensional atlases be necessary. Alongside small sample sizes and large sampling variation, the insights uncovered here highlight brain atlas choices to be a contributor to the lack of reproducibility in neuroimaging studies. 
+	
 <br>
 <br>

@@ -20,12 +20,22 @@ knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE, eval = FALS
 <br>
 
 
+We created random parcellations for two purposes:
+
+ 1. Obtain parcellations comprising 1,000 5,000 10,000 50,000 ROIs with random boundaries. Morphometricity estimates from these random parcellations are reported [here](Results.html#2_Morphometricity_estimates), alongside morphometricity estimated from empirical brain atlases.
+ 
+ 2. Obtain parcellations comprising random regional boundaries matched with the number of ROIs in empirical atlases. Morphometricity estimates from these parcellations can be found [here](Results.html#3_Morphometricity_from_random_parcellations).
+
+<br>
+<br>
+
+
 ***
 
 
 # Cluster random parcellation
 
-First, we feed the fsaverage 3-dimensional coordinates of the ~300.000 vertices as input to a clustering algorithm (`vcgKDtree()` in Rvcg package).
+First, we feed the fsaverage 3-dimensional coordinates of the ~300.000 vertices as input to a clustering algorithm (`vcgKDtree()` in Rvcg package). We repeat this for the right and left hemisphere. 
 
 ```{r Create_random_atlases_tested.R}
 ####### create random vertices on Rosalind
@@ -51,7 +61,7 @@ library(Rvcg)
 library(data.table)
 
 # read in vertex coordinates and name columns appropriately
-vertex_coord <-fread("/mnt/lustre/datasets/ukbiobank/ukb40933/imaging/output/rh.fsaverage_vertex_coordinates",header=F)
+vertex_coord <-fread("~/datasets/ukbiobank/ukb40933/imaging/output/rh.fsaverage_vertex_coordinates",header=F)
 
 
 names(vertex_coord) <- c("vertex_ID","X","Y","Z")
@@ -138,7 +148,7 @@ rm(list = setdiff(ls(), c("nseeds","k","array")))
 
 
 # read in vertex coordinates and name columns appropriately
-vertex_coord <-fread("/mnt/lustre/datasets/ukbiobank/ukb40933/imaging/output/lh.fsaverage_vertex_coordinates",header=F)
+vertex_coord <-fread("~/datasets/ukbiobank/ukb40933/imaging/output/lh.fsaverage_vertex_coordinates",header=F)
 
 
 names(vertex_coord) <- c("vertex_ID","X","Y","Z")
@@ -226,7 +236,7 @@ fwrite(as.data.frame(restot), file=paste0("lh_restot_seed12345_ROIs",nseeds,"_k"
 
 # Apply random atlas to individual vertex-wise data
 
-Second, we apply the random parcellation to the vertex-wise data to get a random atlas representation for each individual. This script successively reads in chunks of individuals, and averages the vertex-wise measures across random ROIs.
+Second, we apply the random parcellation to the vertex-wise data to get a random atlas representation for each individual. This script successively reads in chunks of individuals, and averages the vertex-wise measures across random ROIs to cut down on RAM requirements.
 
 
 
@@ -449,7 +459,7 @@ if(file.exists(alternative)){
 <br>
 
 
-Example of running this last script:
+Example of launching this last script in the chunk below.
 
 ```{bash}
 #!/bin/bash -l
@@ -506,7 +516,7 @@ The following script generates morphometricity estimates for random atlases.
 #SBATCH --array=1-100 # 100 distributions
 
 
-pheno_dir="/mnt/lustre/datasets/ukbiobank/ukb40933/phenotypes"
+pheno_dir="~/datasets/ukbiobank/ukb40933/phenotypes"
 wd="~/morphometricity/data/null_distributions/$SLURM_ARRAY_TASK_ID"
 ref_dir="~/morphometricity/data"
 scripts_dir="~/morphometricity/scripts"
@@ -532,7 +542,7 @@ do
 		# delete all vertices with a SD of zero
 		############################################################################
 			
-		/users/k1894405/osca_Linux \
+		osca_Linux \
 		--efile ${wd}/both_hemi_${mod}_${nroi}randomROIs \
 		--make-bod \
 		--sd-min 0.000001 \
@@ -545,7 +555,7 @@ do
 		## Saved in indi.list
 		############################################################################
 
-		/users/k1894405/osca_Linux \
+		osca_Linux \
 		--befile ${wd}/bod_files/Bod_${mod}_${nroi}randomROIs_${SLURM_ARRAY_TASK_ID} \
 		--keep ${ref_dir}/indi.list.fid \
 		--make-bod \
@@ -560,7 +570,7 @@ do
 			# CALCULATE BRAIN-RELATEDNESS-MATRIX
 			############################################################################
 			
-			/users/k1894405/osca_Linux \
+			osca_Linux \
 			--befile ${wd}/bod_files/Bod_${mod}_${nroi}randomROIs_${SLURM_ARRAY_TASK_ID} \
 			--make-orm \
 			--out ${wd}/BRM/BRM_${mod}_${nroi}randomROIs_${SLURM_ARRAY_TASK_ID}
@@ -587,7 +597,7 @@ do
 				#####################################
 				## Get morph estimate
 				#####################################		
-				/users/k1894405/osca_Linux \
+				osca_Linux \
 				--reml \
 				--orm ${wd}/BRM/BRM_${mod}_${nroi}randomROIs_${SLURM_ARRAY_TASK_ID} \
 				--pheno ${pheno_dir}/${pheno}_nofid.txt \

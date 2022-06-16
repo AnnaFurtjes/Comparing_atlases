@@ -323,10 +323,10 @@ div.tocify {
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
         <li>
-  <a href="Serious_Pipeline.html">Main pre-processing</a>
+  <a href="Serious_Pipeline.html">Neuroimaging pre-processing</a>
 </li>
 <li>
-  <a href="index.html">Tab 2</a>
+  <a href="Results.html">Results</a>
 </li>
       </ul>
       <ul class="nav navbar-nav navbar-right">
@@ -355,6 +355,8 @@ div.tocify {
 
 
 <p><br> <br></p>
+<p>This document outlines step-by-step how we built our pipeline to obtain atlas-wise individual-level brain representations. This is my attempt to make the decisions processes as transparent as possible.</p>
+<p>The final pipeline used to process individual-level neuroimaging data is <a href="Serious_Pipeline.html#9_The_final_pipeline">here</a>.</p>
 <p><br> <br></p>
 <p><br> <br></p>
 <div id="data-processing" class="section level1">
@@ -1426,6 +1428,9 @@ subjNUM=$(awk &quot;FNR==$SLURM_ARRAY_TASK_ID&quot; ${download_dir}resubmitIDs_1
 ######### Here I download, process and save the data we need for the morphometricity project
 ######### sbatch -p brc,shared ~/datasets/ukbiobank/ukb40933/imaging/scripts/Serious_pipeline09122021.sh
 </code></pre>
+<div id="add-detect-outliers-script" class="section level4">
+<h4>add detect outliers script</h4>
+</div>
 </div>
 </div>
 
