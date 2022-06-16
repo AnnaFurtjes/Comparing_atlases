@@ -33,7 +33,7 @@ knitr::opts_chunk$set(echo = TRUE, warning = F, message = F)
 
 <br>
 
-  1. [Phenotype cleaning](Phenotype_cleaning.html)
+  1. [Phenotype definition](Phenotype_cleaning.html)
   
   2. [Creating empirical atlases (FreeSurfer pre-processing)](Serious_Pipeline.html)
   
