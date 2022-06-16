@@ -900,7 +900,7 @@ In addition to the individual bits of the script explained above, the final scri
 #SBATCH -D ~/datasets/ukbiobank/ukb40933/imaging/FS_processing
 #SBATCH --time=7-00:00
 #SBATCH --mem-per-cpu=2G 
-#SBATCH --array=1-20%20 ### later more something like 1-40000%300 which should finish within the 7day (168h) limit
+#SBATCH --array=1-400000%300
 
 start_date=$(date)
 start=$(date +%s)
