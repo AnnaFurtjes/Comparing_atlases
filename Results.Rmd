@@ -461,6 +461,30 @@ dev.off()
 <br>
 <br>
 
+```{r, eval =T}
+setwd("C:/Users/k1894405/OneDrive - King's College London/PhD/Projects/Comparing labelling protocols/results/empirical")
+
+est = read.table("morph_results_QCed_vertices.table", header=T)
+randomest = read.table("morph_results_randomaparc.table", header=T)
+est = rbind(est, randomest)
+
+# change measurement type names from randomaparc
+est$meas[which(est$meas == "area")] = "SurfArea"
+est$meas[which(est$meas == "volume")] = "GrayVol"
+est$meas[which(est$meas == "thickness")] = "ThickAvg"
+
+names(est)[which(names(est) == "meas")] = "Measurement type"
+
+est=est[order(est$pheno, est$`Measurement type`),]
+
+library(DT)
+datatable(est, rownames=FALSE, filter="top",options= list(pageLength=10,scrollX=T), caption = "Morphometricity estimates")
+
+```
+
+<br>
+<br>
+
 ### Increase in morphometricity from the smallest (34 ROIs Yeo atlas) to the largest brain representation (300.000 vertices)
 
 ```{r eval=T}
