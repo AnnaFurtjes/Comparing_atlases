@@ -1432,6 +1432,224 @@ subjNUM=$(awk &quot;FNR==$SLURM_ARRAY_TASK_ID&quot; ${download_dir}resubmitIDs_1
 ######### Here I download, process and save the data we need for the morphometricity project
 ######### sbatch -p brc,shared ~/datasets/ukbiobank/ukb40933/imaging/scripts/Serious_pipeline09122021.sh
 </code></pre>
+<p><br></p>
+<p>Sometimes scripts stopped running and most cases were picked up by the pipeline and saved in <code>${od}/error/download_failed</code>. To double check we’ve captured all kills, the following script reads the failed output files created by the pipeline and finds which participants have not been processed. We then print a table with the missing IDs, and can use this table as input to the pipeline to re-run these participants.</p>
+<pre class="r"><code>### here we identify participants whos processing has prematurely stopped
+
+setwd(&quot;/mnt/lustre/datasets/ukbiobank/ukb40933/imaging/output/bash_output&quot;)
+
+bash_output &lt;- list.files(pattern=&quot;FS_&quot;)
+
+# only keep the ones that are too small
+bash_output &lt;- bash_output[which(file.size(bash_output) &lt; 700000)]
+
+print(length(bash_output))
+
+# extract sub_ with
+# https://statisticsglobe.com/extract-substring-before-or-after-pattern-in-r
+
+missing_IDs &lt;- NULL
+
+for(i in bash_output){
+    lines &lt;- readLines(i, n=30)
+    # identify line that contains &quot;sub_&quot;
+    keep &lt;- grep(&quot;sub_&quot;, lines)[1]
+    # keep the line that contains subj ID
+    lines &lt;- lines[keep]
+    # remove strong before &quot;sub_&quot;
+    subjID &lt;- gsub(&quot;.*sub_&quot;,&quot;&quot;,lines)
+    
+    #print(lines)
+    subjID &lt;- regmatches(subjID,regexpr(&quot;[0-9]+&quot;,subjID))
+    
+    # save subjID in an object
+    missing_IDs &lt;- append(missing_IDs, subjID)
+}
+
+# only keep the ones that are unique
+missing_IDs &lt;- as.data.frame(unique(missing_IDs))
+
+print(nrow(missing_IDs))
+
+write.table(missing_IDs, &quot;~/ukbiobank/ukb40933/imaging/output/error/processing_suddenly_stopped_26122021&quot;,quote=F, col.names=F, row.names=F, sep = &quot;\t&quot;)</code></pre>
+<p><br> <br></p>
+<hr />
+<div id="merging-individual-level-files" class="section level2">
+<h2>Merging individual-level files</h2>
+<p>This pipeline creates individual-level output data. We now need to merge atlas and vertex-wise data. We merge atlases and vertices individually because they have different computational requirements, and we also check that the vertex-wise files have the correct number of vertices.</p>
+<p><br></p>
+</div>
+<div id="merge-atlases" class="section level2">
+<h2>Merge atlases</h2>
+<pre class="r"><code>###### merge all individual-level atlases
+
+setwd(&quot;~/morphometricity/data/atlases&quot;)
+
+library(data.table)
+
+atlases &lt;- c(&quot;DK&quot;,&quot;Des&quot;,&quot;Glasser&quot;,&quot;Gordon&quot;,&quot;Schaefer&quot;,&quot;JulichBrain&quot;,&quot;Yeo&quot;,&quot;test.aparc&quot;)
+
+mod &lt;- c(&quot;GrayVol&quot;,&quot;SurfArea&quot;,&quot;ThickAvg&quot;)
+
+for(i in mod){
+
+
+    for(j in atlases){
+        
+        print(paste0(&quot;Starting &quot;,j,&quot;_&quot;,i))
+        
+        #make new object to store data
+        output&lt;-NULL
+        
+        # list files of same modality
+        #target &lt;- list.files(pattern=paste0(j,&quot;_&quot;,i))
+        
+        target &lt;- append(list.files(pattern=paste0(j,&quot;_&quot;,i,&quot;_all&quot;)),list.files(pattern=paste0(&quot;remains_&quot;,j,&quot;_&quot;,i)))
+        
+        # test that there are 4
+        #if(length(target) != 4){print(paste0(&quot;There are not enough files for &quot;, j,&quot;_&quot;,i,&quot;; only &quot;, length(target))); next}
+        
+            for(k in target){
+                
+                # read in one file 
+                newfile &lt;- fread(k, header=T)
+                
+                print(paste0(&quot;File &quot;,k,&quot; has &quot;, nrow(newfile),&quot; participants included and has &quot;, (ncol(newfile)-1), &quot; ROIs&quot;))
+                
+                # merge with output file
+                output &lt;- rbind(output, newfile)
+                
+        }
+    
+    # get rid of duplicated participants
+    output &lt;- output[-which(duplicated(output$IID)),]
+    
+    # how many participants are included?
+    numsubj &lt;- (nrow(output)-1)
+    
+    fwrite(output, file=paste0(j,&quot;_&quot;,i,&quot;_all_&quot;,numsubj), na=NA, quote=FALSE, col.names=T, row.names=F, sep = &quot;\t&quot;)
+    
+    print(paste0(&quot;There are &quot;,sum(duplicated(output$IID)),&quot; duplicated IIDs.&quot;))
+    }
+}
+
+
+print(&quot;Done all atlases&quot;)</code></pre>
+<p><br> <br></p>
+</div>
+<div id="merge-vertices" class="section level2">
+<h2>Merge vertices</h2>
+<pre class="r"><code>##### merge all big vertex files
+
+setwd(&quot;~/morphometricity/data/vertices&quot;)
+
+library(data.table)
+
+# save all mods in vector
+mods &lt;- c(&quot;lh.volume&quot;,&quot;rh.volume&quot;,&quot;lh.area&quot;,&quot;rh.area&quot;,&quot;lh.thickness&quot;,&quot;rh.thickness&quot;)
+
+##### loop through all mods
+
+for(i in 1:length(mods)){
+        
+        output&lt;-NULL
+        
+        # list files that hold mods
+        files &lt;- list.files(pattern = mods[i])
+
+        # test if that indexes 4 files
+        if(length(list.files(pattern = mods[i])) != 4){print(paste0(&quot;There are &quot;, length(list.files(pattern = mods[i])), &quot; files in &quot;, mods[i], &quot;; there should be 4&quot;)); next}
+
+        ## loop through files, merge and delete
+        for(j in files){
+            
+            # read in file
+            newfile &lt;- fread(j, header=T)
+            print(paste0(&quot;File &quot;,j,&quot; has &quot;, ncol(newfile),&quot; participants included&quot;))
+            
+            # test that all files have correct number of vertices
+            if(nrow(newfile)!= 163842){print(paste0(&quot;Wrong number of included vertices: &quot;,nrow(newfile), &quot; instead of 163842 (fsaverage)&quot;)); next}
+            
+            # merge with output file
+            output &lt;- cbind(output, newfile)
+            
+            # clean up
+            rm(&quot;newfile&quot;)
+    }
+    
+    # delete duplicated participants
+    #which(duplicated(names(output)))
+    
+    # how many participants are included?
+    numsubj &lt;- (ncol(output)-1)
+    
+    # save
+    fwrite(output, file=paste0(mods[i],&quot;_all_vertices_&quot;,numsubj), na=NA, quote=FALSE, col.names=T, row.names=F, sep = &quot;\t&quot;)
+    
+    # clean up
+    rm(&quot;output&quot;)
+    Sys.sleep(5)
+}</code></pre>
+<p><br> <br></p>
+</div>
+<div id="clean-individual-level-output" class="section level2">
+<h2>Clean individual-level output</h2>
+<p>We now have large files that contain all individual-level data in one place. We can go ahead and clean up the data to save storage.</p>
+<pre class="r"><code>####### delete indiv_output if it&#39;s contained in output files by combine_atlases.R
+####### Strategy:
+### 1. Read in output files as ref
+### 2. Navigate to folder with indiv_output
+### 3. If subjID contained in ref, delete file: file.remove(&quot;some_other_file.csv&quot;)
+### 4. Check if file really deleted: file.exists(&quot;C:/path/to/file/some_file.txt&quot;)
+### 5. loop this script through each atlas &amp; modality
+### 6. submit straight after the combine_atlases script to clean up (and it will only clean if the combine script successfully ran)
+
+
+combined_dir=&quot;~/ukbiobank/ukb40933/imaging/output/atlases_formatted_OSCA&quot;
+
+delete_dir=&quot;/mnt/lustre/datasets/ukbiobank/ukb40933/imaging/output/indiv_output_OSCA&quot;
+
+library(data.table)
+
+# list atlases and modality
+atlases &lt;- c(&quot;DK&quot;,&quot;Des&quot;,&quot;Glasser&quot;,&quot;Gordon&quot;,&quot;Schaefer&quot;,&quot;JulichBrain&quot;,&quot;Yeo&quot;,&quot;test.aparc&quot;)
+mod &lt;- c(&quot;ThickAvg&quot;,&quot;SurfArea&quot;,&quot;GrayVol&quot;)
+
+# list output_files
+
+output_files&lt;-list.files()
+
+for(i in atlases){
+    for(j in mod){
+        
+        # select file of interest (combined output file)
+        file_name &lt;- paste0(combined_dir,&quot;/&quot;,i,&quot;_&quot;,j)
+
+        # read in file of interest
+        file &lt;- fread(as.character(file_name), header=T)
+        
+        # save subjIDs in var name
+        IID &lt;- file$IID
+        
+        rm(&quot;file&quot;)
+        
+        #iterate through each subjID
+        
+            for(k in IID){
+            
+                # piece together name of files to delete based on waht exists in ref file
+                to_delete &lt;- paste0(&quot;sub_&quot;,k, &quot;_&quot;,i,&quot;_&quot;,j)
+                
+                # check if this file exists, if TRUE, delete it
+                if(file.exists(paste0(delete_dir,&quot;/&quot;,to_delete))){file.remove(paste0(delete_dir,&quot;/&quot;,to_delete))}
+            
+            }
+    }
+    print(paste0(&quot;Done &quot;,i))
+}
+
+print(&quot;Cleaned up all atlases indiv output&quot;)</code></pre>
+</div>
 </div>
 
 &nbsp;
