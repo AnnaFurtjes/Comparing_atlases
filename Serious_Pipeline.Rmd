@@ -1191,3 +1191,244 @@ subjNUM=$(awk "FNR==$SLURM_ARRAY_TASK_ID" ${download_dir}resubmitIDs_10122021.bu
 
 ```
 
+
+<br>
+
+Sometimes scripts stopped running and most cases were picked up by the pipeline and saved in `${od}/error/download_failed`. To double check we've captured all kills, the following script reads the failed output files created by the pipeline and finds which participants have not been processed. We then print a table with the missing IDs, and can use this table as input to the pipeline to re-run these participants. 
+
+```{r}
+### here we identify participants whos processing has prematurely stopped
+
+setwd("/mnt/lustre/datasets/ukbiobank/ukb40933/imaging/output/bash_output")
+
+bash_output <- list.files(pattern="FS_")
+
+# only keep the ones that are too small
+bash_output <- bash_output[which(file.size(bash_output) < 700000)]
+
+print(length(bash_output))
+
+# extract sub_ with
+# https://statisticsglobe.com/extract-substring-before-or-after-pattern-in-r
+
+missing_IDs <- NULL
+
+for(i in bash_output){
+	lines <- readLines(i, n=30)
+	# identify line that contains "sub_"
+	keep <- grep("sub_", lines)[1]
+	# keep the line that contains subj ID
+	lines <- lines[keep]
+	# remove strong before "sub_"
+	subjID <- gsub(".*sub_","",lines)
+	
+	#print(lines)
+	subjID <- regmatches(subjID,regexpr("[0-9]+",subjID))
+	
+	# save subjID in an object
+	missing_IDs <- append(missing_IDs, subjID)
+}
+
+# only keep the ones that are unique
+missing_IDs <- as.data.frame(unique(missing_IDs))
+
+print(nrow(missing_IDs))
+
+write.table(missing_IDs, "~/ukbiobank/ukb40933/imaging/output/error/processing_suddenly_stopped_26122021",quote=F, col.names=F, row.names=F, sep = "\t")
+
+```
+
+
+<br>
+<br>
+
+***
+
+
+## Merging individual-level files
+This pipeline creates individual-level output data. We now need to merge atlas and vertex-wise data. We merge atlases and vertices individually because they have different computational requirements, and we also check that the vertex-wise files have the correct number of vertices. 
+
+<br>
+
+## Merge atlases
+
+```{r}
+###### merge all individual-level atlases
+
+setwd("~/morphometricity/data/atlases")
+
+library(data.table)
+
+atlases <- c("DK","Des","Glasser","Gordon","Schaefer","JulichBrain","Yeo","test.aparc")
+
+mod <- c("GrayVol","SurfArea","ThickAvg")
+
+for(i in mod){
+
+
+	for(j in atlases){
+		
+		print(paste0("Starting ",j,"_",i))
+		
+		#make new object to store data
+		output<-NULL
+		
+		# list files of same modality
+		#target <- list.files(pattern=paste0(j,"_",i))
+		
+		target <- append(list.files(pattern=paste0(j,"_",i,"_all")),list.files(pattern=paste0("remains_",j,"_",i)))
+		
+		# test that there are 4
+		#if(length(target) != 4){print(paste0("There are not enough files for ", j,"_",i,"; only ", length(target))); next}
+		
+			for(k in target){
+				
+				# read in one file 
+				newfile <- fread(k, header=T)
+				
+				print(paste0("File ",k," has ", nrow(newfile)," participants included and has ", (ncol(newfile)-1), " ROIs"))
+				
+				# merge with output file
+				output <- rbind(output, newfile)
+				
+		}
+	
+	# get rid of duplicated participants
+	output <- output[-which(duplicated(output$IID)),]
+	
+	# how many participants are included?
+	numsubj <- (nrow(output)-1)
+	
+	fwrite(output, file=paste0(j,"_",i,"_all_",numsubj), na=NA, quote=FALSE, col.names=T, row.names=F, sep = "\t")
+	
+	print(paste0("There are ",sum(duplicated(output$IID))," duplicated IIDs."))
+	}
+}
+
+
+print("Done all atlases")
+```
+
+<br>
+<br>
+
+## Merge vertices
+```{r}
+##### merge all big vertex files
+
+setwd("~/morphometricity/data/vertices")
+
+library(data.table)
+
+# save all mods in vector
+mods <- c("lh.volume","rh.volume","lh.area","rh.area","lh.thickness","rh.thickness")
+
+##### loop through all mods
+
+for(i in 1:length(mods)){
+		
+		output<-NULL
+		
+		# list files that hold mods
+		files <- list.files(pattern = mods[i])
+
+		# test if that indexes 4 files
+		if(length(list.files(pattern = mods[i])) != 4){print(paste0("There are ", length(list.files(pattern = mods[i])), " files in ", mods[i], "; there should be 4")); next}
+
+		## loop through files, merge and delete
+		for(j in files){
+			
+			# read in file
+			newfile <- fread(j, header=T)
+			print(paste0("File ",j," has ", ncol(newfile)," participants included"))
+			
+			# test that all files have correct number of vertices
+			if(nrow(newfile)!= 163842){print(paste0("Wrong number of included vertices: ",nrow(newfile), " instead of 163842 (fsaverage)")); next}
+			
+			# merge with output file
+			output <- cbind(output, newfile)
+			
+			# clean up
+			rm("newfile")
+	}
+	
+	# delete duplicated participants
+	#which(duplicated(names(output)))
+	
+	# how many participants are included?
+	numsubj <- (ncol(output)-1)
+	
+	# save
+	fwrite(output, file=paste0(mods[i],"_all_vertices_",numsubj), na=NA, quote=FALSE, col.names=T, row.names=F, sep = "\t")
+	
+	# clean up
+	rm("output")
+	Sys.sleep(5)
+}
+```
+
+
+<br>
+<br>
+
+
+## Clean individual-level output
+We now have large files that contain all individual-level data in one place. We can go ahead and clean up the data to save storage.
+
+```{r}
+####### delete indiv_output if it's contained in output files by combine_atlases.R
+####### Strategy:
+### 1. Read in output files as ref
+### 2. Navigate to folder with indiv_output
+### 3. If subjID contained in ref, delete file: file.remove("some_other_file.csv")
+### 4. Check if file really deleted: file.exists("C:/path/to/file/some_file.txt")
+### 5. loop this script through each atlas & modality
+### 6. submit straight after the combine_atlases script to clean up (and it will only clean if the combine script successfully ran)
+
+
+combined_dir="~/ukbiobank/ukb40933/imaging/output/atlases_formatted_OSCA"
+
+delete_dir="/mnt/lustre/datasets/ukbiobank/ukb40933/imaging/output/indiv_output_OSCA"
+
+library(data.table)
+
+# list atlases and modality
+atlases <- c("DK","Des","Glasser","Gordon","Schaefer","JulichBrain","Yeo","test.aparc")
+mod <- c("ThickAvg","SurfArea","GrayVol")
+
+# list output_files
+
+output_files<-list.files()
+
+for(i in atlases){
+	for(j in mod){
+		
+		# select file of interest (combined output file)
+		file_name <- paste0(combined_dir,"/",i,"_",j)
+
+		# read in file of interest
+		file <- fread(as.character(file_name), header=T)
+		
+		# save subjIDs in var name
+		IID <- file$IID
+		
+		rm("file")
+		
+		#iterate through each subjID
+		
+			for(k in IID){
+			
+				# piece together name of files to delete based on waht exists in ref file
+				to_delete <- paste0("sub_",k, "_",i,"_",j)
+				
+				# check if this file exists, if TRUE, delete it
+				if(file.exists(paste0(delete_dir,"/",to_delete))){file.remove(paste0(delete_dir,"/",to_delete))}
+			
+			}
+	}
+	print(paste0("Done ",i))
+}
+
+print("Cleaned up all atlases indiv output")
+```
+
