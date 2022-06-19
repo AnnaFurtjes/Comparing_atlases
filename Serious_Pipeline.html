@@ -1433,7 +1433,7 @@ subjNUM=$(awk &quot;FNR==$SLURM_ARRAY_TASK_ID&quot; ${download_dir}resubmitIDs_1
 ######### sbatch -p brc,shared ~/datasets/ukbiobank/ukb40933/imaging/scripts/Serious_pipeline09122021.sh
 </code></pre>
 <p><br></p>
-<p>Sometimes scripts stopped running and most cases were picked up by the pipeline and saved in <code>${od}/error/download_failed</code>. To double check we’ve captured all kills, the following script reads the failed output files created by the pipeline and finds which participants have not been processed. We then print a table with the missing IDs, and can use this table as input to the pipeline to re-run these participants.</p>
+<p>For some participants, the pipeline stopped running and most cases were picked up by the pipeline and saved in <code>${od}/error/download_failed</code>. To double check we’ve captured all kills, the following script reads the failed output files created by the pipeline and finds which participants have not been processed. We then print a table with the missing IDs, and can use this table as input to the pipeline to re-run these participants.</p>
 <pre class="r"><code>### here we identify participants whos processing has prematurely stopped
 
 setwd(&quot;/mnt/lustre/datasets/ukbiobank/ukb40933/imaging/output/bash_output&quot;)

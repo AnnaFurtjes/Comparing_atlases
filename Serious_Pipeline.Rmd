@@ -1194,7 +1194,7 @@ subjNUM=$(awk "FNR==$SLURM_ARRAY_TASK_ID" ${download_dir}resubmitIDs_10122021.bu
 
 <br>
 
-Sometimes scripts stopped running and most cases were picked up by the pipeline and saved in `${od}/error/download_failed`. To double check we've captured all kills, the following script reads the failed output files created by the pipeline and finds which participants have not been processed. We then print a table with the missing IDs, and can use this table as input to the pipeline to re-run these participants. 
+For some participants, the pipeline stopped running and most cases were picked up by the pipeline and saved in `${od}/error/download_failed`. To double check we've captured all kills, the following script reads the failed output files created by the pipeline and finds which participants have not been processed. We then print a table with the missing IDs, and can use this table as input to the pipeline to re-run these participants. 
 
 ```{r}
 ### here we identify participants whos processing has prematurely stopped
