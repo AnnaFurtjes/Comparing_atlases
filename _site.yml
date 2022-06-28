@@ -1,7 +1,7 @@
 name: "Anna E. Fürtjes"
 output_dir: "."
 navbar:
-  title: "Morphometricity"
+  title: "Overview"
   type: inverse
   left: 
    - text: "Neuroimaging pre-processing"

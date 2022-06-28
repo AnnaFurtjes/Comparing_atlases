@@ -2171,3 +2171,74 @@ setColumnWidth(sheet, colIndex = 1, colWidth=18)
 #setwd("C:/Users/k1894405/OneDrive - King's College London/PhD/Projects/Comparing labelling protocols/writing/Results write-up")
 saveWorkbook(wb, "C:/Users/k1894405/OneDrive - King's College London/PhD/Projects/Comparing labelling protocols/writing/Results write-up/Supplementary_Tables.xlsx")
 ```
+
+<br>
+<br>
+
+
+# 6. Exploratory analyses
+
+
+These analyses were not pre-registered and are only reported in the supplementary materials of the study.
+
+
+<br>
+
+## 6.1 Sanity checking cross-atlas comparisons (cortical thickness, age & sex)
+
+
+Unexpectedly, there was a divergence from the general pattern (vertex-wise measures accounting for the most variance) for morphometricity of age and sex, specifically from cortical thickness measures. Across these two sets of estimates, we found that two lower-dimensional atlases together explained more variance than the vertex-wise measures. Average thickness estimates for age were 29% [21-35%] for DK alone, and 30% [25-36%] for Destrieux alone, but together DK and Destrieux explained 63% [58-68%] which was substantially larger than the vertex-wise estimates of 37% [36-39%]. Note that confidence intervals from the latter two estimates are not overlapping. Similarly, average thickness estimates for sex were 31% [24-38%] for DK alone, 33% [28-38%] for Destrieux alone, but 72% [67-76%] for DK and Destrieux together, compared with only 49% [47-50%] explained by the vertex-wise measurements. 
+
+<br>
+
+It is possible that these effects were inflated as the variance attributed to the second atlas was dominated by few ROIs with large effects. 
+As we force the random effects in the LMMs to be normally distributed this could shift the distribution and artificially increase the variance explained. 
+We can test this by fitting two variance components for each atlas in which we split the features into two parts (median split of effect sizes). 
+
+<br>
+Analysis steps:
+
+  1. Get linear association betas between each ROI in the individual atlases & behavioural traits
+  
+  2. Perform median split based on the association betas
+  
+  3. Create bod and BRM files for split atlases 
+  
+  4. Fit linear models with two variance components per atlas (i.e., 4 variance components altogether) and report joint variance explained 
+  
+  
+<br>  
+<br>
+  
+## 6.2 Sanity checking LASSO
+
+<br>
+
+
+## 6.2.1 Normalise Schaefer atlas data and fit LASSO model again 
+
+We saw in the LMMs that Schaefer estimates were inflated due to non-normal distributions. In the LASSO models, we see a drop in prediction accuracy probably for the same reason (violation of the normal assumption). Here we test whether the estimates increase when we normalise the Schaefer atlas data first.
+
+
+
+## 6.2.2 Fit PCs to predict behaviours
+
+Here we're predicting phenotypes with the first PC of an atlas in a linear regression model.
+We aim to explore why we find better predicitve ability for thickness in some traits, and better predicitve ability for surface area in other traits. 
+
+We suggest the results depend on how well the LASSO model picks up on shared variance between features (as it's dropping non-representative features).
+
+If we found that this first PC did better for thickness than surface area in predicting age and BMI, but worse than surface area in predicting sex (and made no difference for cognitive ability), then maybe we could take that as evidence that these LASSO models mainly pick up on variance shared between features.
+Potentially that could explain why we observe an asymptote in the LASSO [Figure above](Results.html#5_LASSO_regressions); more fine-grained atlases only do better when you substantially increase the number of features to 300,000.
+
+
+<br>
+Analysis steps:
+
+  1. Extract first PC of an atlas and represent in individual-level space.
+  
+  2. Use linear regression model to predict behavioural phenotype with PC.
+  
+  3. Report variance explained. 
+  
+  
