@@ -474,7 +474,7 @@ done
 <br>
 
 Launch this Rscript (and specify the brain measurement type to be cleaned) in order to read in BRMs and detect outliers of participants that are too similar or dissimilar to the rest of the sample (BRM cut-off 8SDs).
-Based on this script, we excluded 4 participants altogether.
+Based on this script, we excluded 4 participants altogether. If any participants get excluded based on this, you will have to re-run the step making bod files, BRMs and morphometricity estimation. 
 
 
 
@@ -555,5 +555,82 @@ for(i in meas){
 
 
 print("Done identifying outliers for all atlases")
+```
+
+
+# Formatting OSCA output
+
+When all analyses ran, you will have seperate output files from each model. The script below reads all these seperate files in and summarises them in a table. It also calculates BIC.
+
+```{r}
+##### Get morphometricity estimates from OSCA output
+
+
+#setwd("~/morphometricity/results/morp_results_update")
+#setwd("~/morphometricity/results/morph_results_null")
+setwd("~/morphometricity/results/morph_est_nulldistr")
+
+library(stringr)
+
+files <- list.files(pattern=".rsq")
+
+## formatting for null distributions
+#files=files[grep(pattern="68randomROIs", files)]
+# for files with 34: files = files[!grepl("334", files)]
+
+## format empty output file: 7 atlases x 3 measurements x 7 phenotypes = 147 rows
+## information we want: 1. morphometricity estimate, 2. SE, 3. LRT, 4. BIC, 5. N, 6. pheno, 7. atlas, 8. measurements
+output <- as.data.frame(matrix(ncol = 9, nrow = length(files)))
+names(output) <- c("atlas", "meas", "pheno", "morph", "SE", "pval","LRT", "BIC", "N")
+
+for(i in 1:length(files)){
+	# read in raw file
+	raw <-read.table(files[i], fill=T,  stringsAsFactors = F, header=T)
+	
+	# extract info from file name about atlas, pheno & meas
+	info <- str_remove(files[i], pattern = "morph_est_")
+	info <- str_remove(info, pattern = "_pheno.rsq")
+	info <- str_remove(info, pattern = ".rsq")
+	# split all characters by _
+	info <- strsplit(info, "_")[[1]][1:3]
+	
+	# calculate BIC
+	n = as.numeric(raw[10,2])
+	p = 1 # same for all atlases because they estimate only one variance component
+	logL = as.numeric(raw[5,2])
+	
+	# (log(n)*p) for model complexity, (2*logL) for model performance
+	# the smaller BIC, the better
+	BIC <- (log(n)*p) - (2*logL)
+	
+	# col bind info, morph, SE, LRT, BIC, N
+	output[i,] <- c(unlist(info), (as.numeric(raw[4,2])*100), raw[4,3], raw[9,2], raw[7,2], BIC, n)
+}
+
+# convert numeric columns
+output[,4:9] <- apply(output[,4:9], 2, as.numeric)
+
+# calculate confidence interval
+output$ci_l <- output$morph - 1.96*output$SE*100 
+output$ci_u <- output$morph + 1.96*output$SE*100 
+
+# order output by pheno
+output <- output[order(output$meas, output$pheno, output$atlas),]
+
+# Document how many more are missing
+## expecting 100*3*7=2100 for each nulldistrib
+print(paste("Processed", nrow(output), "out of", (7*3*7),"estimates"))
+
+# inspect available results 
+table(output$meas, output$pheno)
+
+#write.table(output, "morph_results_QCed.table", sep = "\t", col.names =T, row.names = F, quote = F)
+
+#write.table(output, "morph_results_68randomROIs.table", sep = "\t", col.names =T, row.names = F, quote = F)
+
+# Notes: 
+# Can Bayesian Information Criterion negative?
+# Generally, the aim is to minimize BIC, so if you are in a negative territory, a negative number that has the largest modulus (deepest down in the negative territory) indicates the preferred model. 
+# https://www.sidmartinbio.org/how-do-you-calculate-bayesian-information-criterion-in-r/#:~:text=Can%20Bayesian%20Information%20Criterion%20negative%3F%20Generally%2C%20the%20aim,be%20%E2%80%9C2%E2%80%9D.%20Should%20AIC%20be%20high%20or%20low%3F
 ```
 

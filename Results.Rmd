@@ -2191,22 +2191,249 @@ Unexpectedly, there was a divergence from the general pattern (vertex-wise measu
 
 <br>
 
-It is possible that these effects were inflated as the variance attributed to the second atlas was dominated by few ROIs with large effects. 
-As we force the random effects in the LMMs to be normally distributed this could shift the distribution and artificially increase the variance explained. 
-We can test this by fitting two variance components for each atlas in which we split the features into two parts (median split of effect sizes). 
+LMMs enforces constraints on the distributions of effect sizes. To test whether those constraints influenced the cross-atlas comparisons, we can fit simple linear regression to see if we find similar variance explained.
 
-<br>
-Analysis steps:
+```{r}
+wd=getwd()
+######################################################################################
+############# pool together cross-atlas comparisons
+######################################################################################
+# read in LRT/LMM results
+LRT=read.table(paste0(wd,"/LRT/LRT_results.table"), header=T)
+# keep age & sex, ThickAvg only
+LRT = LRT[which(LRT$meas == "ThickAvg"),]
 
-  1. Get linear association betas between each ROI in the individual atlases & behavioural traits
+###########################################
+# read in LM results
+setwd(paste0(wd,"/exploratory/cross_atlas LMs"))
+files = list.files(pattern = ".table")
+
+# create frame to hold r2 values
+names_lm = c("atlas1", "atlas2", "meas", "pheno", "lm_R2")
+lm_results = data.frame(matrix(nrow = length(files), ncol = length(names_lm)))
+names(lm_results) = names_lm
+
+for(i in files){
+  result = read.table(i, header=T)
   
-  2. Perform median split based on the association betas
+  # get model_R2
+  r2=result[which(result$var == "model_R2"),"beta"]
   
-  3. Create bod and BRM files for split atlases 
+  # save results in lm_results
+  lm_results[which(files == i),] = c(strsplit(i, "_")[[1]][2:3], strsplit(i, "_")[[1]][4], strsplit(i, "_")[[1]][5], r2)
   
-  4. Fit linear models with two variance components per atlas (i.e., 4 variance components altogether) and report joint variance explained 
+
+}
+
+# make pretty
+lm_results$pheno = stringr::str_remove(lm_results$pheno, pattern = ".table")
+lm_results$lm_R2 = as.numeric(lm_results$lm_R2)
+###########################################
+# merge data.frames
+both = merge(LRT, lm_results, by = c("atlas1", "atlas2", "meas", "pheno"))
+# keep only columns needed for visualisation
+both = both[,c("atlas1", "atlas2", "meas", "pheno", "sum_G", "lm_R2")]
+
+###########################################
+# read in LASSO predictions
+setwd(paste0(wd,"/exploratory/cross_atlas_LASSO"))
+files = list.files(pattern = ".table")
+# create frame to hold r2 values
+names_lasso = c("atlas1", "atlas2", "meas", "pheno", "lasso_R2","ci_l","ci_u","p")
+
+lasso_results = data.frame(matrix(nrow = 0, ncol = length(names_lasso)))
+names(lasso_results) = names_lasso
+
+for(i in 1:length(files)){
+  result = read.table(files[i], header=T)
   
+  # store in results table
+  lasso_results[i,]=result
+
+}
+
+lasso_results = lasso_results[,c("atlas1", "atlas2", "meas", "pheno","lasso_R2")]
+
+lasso_results$pheno[which(lasso_results$pheno == "g")] <- "gpheno"
+
+###########################################
+# merge with data.frames from above
+all = merge(both, lasso_results, by = c("atlas1", "atlas2", "meas", "pheno"))
+# keep only columns needed for visualisation
+all = all[,c("atlas1", "atlas2", "meas", "pheno", "sum_G", "lm_R2","lasso_R2")]
+
+######################################################################################
+############# pool together indiv-level predictions
+######################################################################################
+## LMM morph est
+LMM_indiv=read.table(paste0(wd,"/empirical/morph_results_QCed_vertices.table"), header=T)
+# change measurement type names from randomaparc
+LMM_indiv$meas[which(LMM_indiv$meas == "thickness")] = "ThickAvg"
+
+# only keep thickavg estimates
+LMM_indiv=LMM_indiv[which(LMM_indiv$meas == "ThickAvg"),c("atlas", "meas", "pheno", "morph")]
+names(LMM_indiv)[which(names(LMM_indiv) == "morph")] = "LMM_indiv"
+
+####################################
+## LASSO prediction accuracy
+LASSO_indiv = read.table(paste0(wd, "/LASSO_pred/R2_obs_pred_LASSO.table"), header=T)
+# only keep thickavg estimates
+LASSO_indiv=LASSO_indiv[which(LASSO_indiv$meas == "ThickAvg"),c("atlas", "meas", "pheno", "R2")]
+names(LASSO_indiv)[which(names(LASSO_indiv) == "R2")] = "LASSO_indiv"
+LASSO_indiv$LASSO_indiv = LASSO_indiv$LASSO_indiv*100
+
+####################################
+## LM R2
+setwd(paste0(wd,"exploratory/indiv_atlas_LM"))
+
+files = list.files(pattern = ".table")
+# create frame to hold r2 values
+names_lm = c("atlas","meas", "pheno", "LM_indiv")
+
+lm_indiv = data.frame(matrix(nrow = 0, ncol = length(names_lm)))
+names(lm_indiv) = names_lm
+
+for(i in files){
+  result = read.table(i, header=T)
   
+ # get model_R2
+  r2=result[which(result$var == "model_R2"),"beta"]
+  
+  # save results in lm_indiv
+  lm_indiv[which(files == i),] = c(strsplit(i, "_")[[1]][2:3], strsplit(i, "_")[[1]][4], r2)
+
+}
+
+# make pretty
+lm_indiv$pheno = stringr::str_remove(lm_indiv$pheno, pattern = ".table")
+lm_indiv$LM_indiv = as.numeric(lm_indiv$LM_indiv)*100
+lm_indiv$pheno[which(lm_indiv$pheno == "g")] = "gpheno"
+
+#############################################################
+# merge indiv data 
+all_indiv = merge(LMM_indiv, lm_indiv, by = c("atlas", "meas", "pheno"))
+all_indiv = merge(all_indiv, LASSO_indiv, by = c("atlas", "meas", "pheno"))
+names(all_indiv)[which(names(all_indiv)=="atlas")]= "atlas1"
+all_indiv$LMM_indiv=round(all_indiv$LMM_indiv)
+all_indiv$LM_indiv=round(all_indiv$LM_indiv)
+all_indiv$LASSO_indiv=round(all_indiv$LASSO_indiv)
+
+
+###################################################
+# plot
+library(ggplot2)
+library(stringr)
+
+# get percentages
+all$sum_G = round(all$sum_G, digits=2)*100
+all$lm_R2 = round(all$lm_R2, digits = 2)*100
+all$lasso_R2 = round(all$lasso_R2, digits = 2)*100
+
+save=list()
+
+# iterate over measurement type & phenotype
+for(i in unique(all$meas)){
+
+  for(j in unique(all$pheno)){
+      # subset the LRT data frame 
+      subset=all[which(all$meas == i & all$pheno == j),c("atlas1","atlas2","sum_G","lm_R2","lasso_R2")]
+      subset$LMM_indiv = NA
+      subset$LM_indiv = NA
+      subset$LASSO_indiv = NA
+      
+    
+      
+      #############################################################
+      # merge indiv data with cross-atlas comparisons
+      # subset indiv data frame
+      subset_indiv = all_indiv[which(all_indiv$meas == i & all_indiv$pheno == j),c("atlas1","LMM_indiv","LM_indiv" ,"LASSO_indiv")]
+      subset_indiv$atlas2 <- subset_indiv$atlas1
+      subset_indiv$sum_G = NA
+      subset_indiv$lm_R2 = NA
+      subset_indiv$lasso_R2 = NA
+      subset_indiv = subset_indiv[,c("atlas1","atlas2","sum_G","lm_R2","lasso_R2","LMM_indiv","LM_indiv" ,"LASSO_indiv")]
+
+      # combine data sets
+      subset = rbind(subset, subset_indiv)
+      
+      # print estimates
+      subset$sig = ifelse(is.na(subset$sum_G),
+                          paste0("LMM: ",subset$LMM_indiv,"%\nLM: ", subset$LM_indiv,"%\nLASSO: ",subset$LASSO_indiv,"%"), 
+                          paste0("LMM: ",subset$sum_G,"%\nLM: ", subset$lm_R2,"%\nLASSO: ",subset$lasso_R2,"%"))
+
+      
+      # plot heatmap
+      
+
+      # order to have smaller atlas first
+      subset$ordered1 = factor(subset$atlas1, levels=c("Yeo","DK","Des","JulichBrain","Gordon","Glasser","Schaefer"))
+      subset$ordered2 = factor(subset$atlas2, levels=c("Yeo","DK","Des","JulichBrain","Gordon","Glasser","Schaefer"))
+      
+      # chose colors depending on measurement type
+      if(i == "GrayVol"){color = "#63C5DA"}
+      if(i == "SurfArea"){color = "#0492C2"}
+      if(i == "ThickAvg"){color = "#016064"}
+      subset$ratio = round(subset$sum_G - subset$lm_R2, digits=2)
+      #63C5DA GrayVol
+      #0492C2 SurfArea
+      #016064 ThickAvg
+
+        # change naming
+          mod_name=j
+          mod_name = str_replace(mod_name, pattern="gpheno", replacement = "General cognitive ability")
+          mod_name = str_replace(mod_name, pattern="age", replacement = "Age")
+          mod_name = str_replace(mod_name, pattern="sex", replacement = "Sex")
+          mod_name = str_replace(mod_name, pattern="alc", replacement = "Alcohol consumption")
+          mod_name = str_replace(mod_name, pattern="cig", replacement = "Cigarette consumption")
+          mod_name = str_replace(mod_name, pattern="bmi", replacement = "Body Mass Index")
+          mod_name = str_replace(mod_name, pattern="edu", replacement = "Education")
+          
+      title = paste0("Non-brain trait = ", mod_name)
+      
+      # display vertex-wise estimates for comparison
+      vertex_lmm = round(LMM_indiv$LMM_indiv[which(LMM_indiv$meas == i & LMM_indiv$pheno == j & LMM_indiv$atlas == "vertices")], digits = 2)
+      vertex_lm = round(lm_indiv$LM_indiv[which(lm_indiv$meas == i & lm_indiv$pheno == j & lm_indiv$atlas == "vertices")], digits = 2)
+      vertex_lasso = round(LASSO_indiv$LASSO_indiv[which(LASSO_indiv$meas == i & LASSO_indiv$pheno == j & LASSO_indiv$atlas == "vertices")], digits = 2)
+      
+      subtitle = paste0("Vertex-wise estimates\nLMM = ", vertex_lmm, "%\nLM = ", vertex_lm, "%\nLASSO = ", vertex_lasso, "%")
+      
+      map = ggplot(subset, aes(ordered2, ordered1)) +
+        geom_tile(aes(fill = ratio), colour = "white") +
+        scale_fill_gradient(low = "white", high = color,breaks=c(0,10,20,30,40,50,60,70))+
+        theme_minimal()+ 
+        xlab("Higher dimensional atlas")+
+        ylab("")+
+        ggtitle(title, subtitle = subtitle)+
+        theme(legend.position="top",legend.justification="right",
+        plot.title = element_text(face="bold", colour='#1A1A1A', size=18),
+        axis.text.x = element_text(angle = 45, vjust=0.6))+
+        labs(fill = "Total added\nmorpho-\nmetricity")+
+        geom_text(aes(ordered2, ordered1,label=sig),color="black",size=3)+
+        theme(legend.position = "none") # decided to remove legend
+      
+      
+      plot_name=paste0(i,"_",j)
+      
+      save[[plot_name]] <- map
+  }
+}
+
+
+```
+
+
+It seems as though the LM and LMM estimate diverge more when considering coarse atlases (compared with fine-grained ones) which suggests that the assumptions enforced by the LMM result in an overestimation of variance explained. The more high-dimensional the atlases are, the more similar the LMM and LM estimates are to one another and the more similar both LM and LMM estimates are compared with the vertex-wise estimates. However, there is a point where LMMs give estimates close to the vertex-wise measures, and LM starts to overestimate the R2 with more predictors. 
+
+This suggests that LMM results comparing low-dimensional atlases reported in the primary analysis should be interpreted with caution as they are likely overestimating the overall explained variance based on the LMM assumptions of a normal distribution of effects. 
+
+The same effect is less likely happening for atlases with higher dimensions where LMM models provide smaller R2 estimates, probably because they account for the correlation structure between predictors which LMs do not. 
+
+Different methods seem to overestimate depending on whether we're dealing with few variables or more variables
+
+  - LMM assumption is problematic for coarse atlases with few ROIs
+  
+  - LM and LASSO overestimate the effects for high-dimensional atlases probably because they don't account for population structure
+
 <br>  
 <br>
   
