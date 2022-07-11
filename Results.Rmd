@@ -1510,7 +1510,9 @@ dev.off()
 
 ![](C:/Users/k1894405/Documents/GitHub/Comparing_atlases/other_images/nulldistr.PNG)
 
+
 <br>
+
 
 ### Add data to excel sheet
 ```{r eval=T}
@@ -1590,6 +1592,160 @@ setColumnWidth(sheet, colIndex = 1, colWidth=18)
 
 <br>
 <br>
+
+***
+
+### Quantify empirical estimates vs. random estimates
+
+Work out the percentage of how many estimates from random atlases are larger than the one by the empirical estimate. 
+
+The `percentage_larger` column below must be interpreted as the percentage of estimates from random distributions that was smaller than the empirical estimates. That means, 99% in this column represents that the empirical estimate was larger than 99% of the estimates from random distributions. 
+
+
+```{r eval=T}
+wd=getwd()
+
+# make data frame to store into 
+names_results = c("atlas", "pheno", "meas", "emp_est", "percentage_larger")
+frame = data.frame(matrix(nrow = 0, ncol = length(names_results)))
+names(frame) = names_results
+
+# iterate over all atlas sizes
+for(i in c(34, 68, 148, 274, 334, 360, 500)){
+    
+    if(i == 68){atlas = "DK"}
+    if(i == 148){atlas = "Des"}
+    if(i == 34){atlas = "Yeo"}
+    if(i == 274){atlas = "JulichBrain"}
+    if(i == 500){atlas = "Schaefer"}
+    if(i == 334){atlas = "Gordon"}
+    if(i == 360){atlas = "Glasser"}
+    
+    null = read.table(paste0(wd,"/nulldistr/morph_results_",i,"randomROIs.table"), header=T)
+    
+    # change measurement type names from randomaparc
+    null$meas[which(null$meas == "area")] = "SurfArea"
+    null$meas[which(null$meas == "volume")] = "GrayVol"
+    null$meas[which(null$meas == "thickness")] = "ThickAvg"
+    
+    # get estimates from empirical atlases
+    
+    est = read.table(paste0(wd,"/empirical/morph_results_QCed.table"), header=T)
+    
+    if(i == 500){
+        # remove Schaefer estimates for surfarea and cortical thickness as we will replace them with the deflated ones
+        est=est[-which(est$atlas == "Schaefer" & est$meas == "GrayVol" | est$atlas == "Schaefer" & est$meas == "SurfArea"),]
+        
+        Schaefer_est = read.table(paste0(wd,"/empirical/morph_results_Schaefer_rankdist.table"), header=T)
+        # only replace surfarea and cortical thickness
+        Schaefer_est=Schaefer_est[-which(Schaefer_est$meas == "ThickAvg"),]
+        
+        # combine/ reintroduce deflated Schaefer estimates
+        est=rbind(est, Schaefer_est)
+    }
+
+##### Iterate over all phenotypes and measurement types
+  for(meas in unique(null$meas)){
+    for(pheno in unique(null$pheno)){
+    
+  
+    # subset to have comparisons specific to trait and measurement type
+    subset=null[which(null$pheno == pheno & null$meas == meas),]
+    # order by size of the morphometricity estimate
+    subset = subset[order(subset$morph),]
+    
+    # get empirical estimate
+    emp_est = est[which(est$pheno == pheno & est$meas == meas & est$atlas == atlas),"morph"]
+
+    # work out how many random estimates are smaller than empirical estimate and divide by number of random estimates
+    # "The empirical estimate by Yeo did better than X% of the estimates from random parcellations"
+
+    percent = sum(subset$morph < emp_est)/nrow(subset)
+
+    frame[nrow(frame)+1,] <- c(atlas, pheno, meas, emp_est, percent)
+
+    }
+  }
+}
+# the resulting frame has 147 entries because we calculate 21 comparisons (3 measurement types and 7 phenotypes) for 7 atlases = 3*7*7 = 147
+
+# transform numeric vars as numeric
+frame[,c("emp_est", "percentage_larger")] = lapply(frame[,c("emp_est", "percentage_larger")], as.numeric)
+frame[,c("emp_est", "percentage_larger")] = lapply(frame[,c("emp_est", "percentage_larger")], round, digits = 2)
+
+
+# order frame by magnitude in percantage_larger
+frame = frame[order(frame$percentage_larger, decreasing = TRUE),]
+
+DT::datatable(frame, rownames=FALSE, filter="top",options= list(pageLength=10,scrollX=T), caption = "How well does empirical atlas compared with random atlas?")
+
+```
+
+
+<br>
+
+
+  - `r round(sum(frame$percentage_larger <= 0.5)/nrow(frame), digits=2)*100`% of the models associating empirical atlases with behavioral traits (across three measurement types) yielded morphometricity estimates smaller than at least 50% of the estimates obtained from random parcellations. 
+
+  
+```{r, eval=F}
+knitr::kable(frame[which(frame$percentage_larger <= 0.5),])# too big to be worth displaying
+```
+
+  
+  - `r round(sum(frame$percentage_larger >= 0.99)/nrow(frame), digits = 2)*100`% of the empirical atlases yielded estimates that were larger than at least 99% of the null estimates (from random parcellations).
+
+```{r, eval=F}
+knitr::kable(frame[which(frame$percentage_larger >= 0.99),], row.names=F)
+```
+
+
+  - `r round(sum(frame$percentage_larger <= 0.01)/nrow(frame), digits = 2)*100`% of the empirical atlases yielded estimates that were smaller than at least 1% of the null estimates (from random parcellations).
+
+```{r, eval=F}
+knitr::kable(frame[which(frame$percentage_larger <= 0.01),], row.names=F)
+```
+
+
+  - `r round(sum(frame$percentage_larger == 0.0)/nrow(frame), digits = 2)*100`% of the empirical atlases yielded estimates that were below any of the null estimates (from random parcellations), mostly involving surface area estimates.
+
+```{r, eval=F}
+knitr::kable(frame[which(frame$percentage_larger == 0.0),], row.names=F)
+```
+
+
+
+<br>
+
+### Add data to excel sheet
+```{r eval=T}
+
+### change sheet name
+sheet <-createSheet(wb, sheetName = "ST4.1 Null distributions (percentage larger than random estimates)")
+
+##' change title
+xlsx.addTitle(sheet, rowIndex=1, title="STable 4.1: Summary statistics morphometricity null distributions",
+              titleStyle = TITLE_STYLE)
+## Add sub title
+xlsx.addTitle(sheet, rowIndex=2, 
+              title="Here we aim to compare how well empirical estimates did compared with estimates obtained from random parcellations. We calculate the percentage of random estimates that were smaller than the empirical estimate. A percentage of 99%, for example, means that the empirical estimate was larger than 99% of the random estimates. Keep in mind this is comparing point estimates only, and Fig.5 displays that the confidence intervals from the empirical estimates map well onto the spread in estimates from the random parcellations.",
+              titleStyle = SUB_TITLE_STYLE)
+
+# indicate table to be saved
+addDataFrame(frame, sheet, startRow=3, startColumn=1, 
+             colnamesStyle = TABLE_COLNAMES_STYLE,
+             rownamesStyle = TABLE_ROWNAMES_STYLE,row.names = F)
+
+# Change column width
+setColumnWidth(sheet, colIndex=c(2:ncol(frame)), colWidth=14)
+setColumnWidth(sheet, colIndex = 1, colWidth=18)
+
+```
+
+
+<br>
+<br>
+
 
 ***
 
@@ -2128,11 +2284,105 @@ for(i in unique(est$pheno)){
 <br>
 <br>
 
+### Increase in prediction accuracy from the smallest (Yeo) to the largest brain representation (vertices)
+
+```{r eval=T}
+# read in results
+est = read.table(paste0(wd,"/LASSO_pred/R2_obs_pred_LASSO.table"), header=T)
+
+# only keep smallest and largest dimensionality
+est = est[which(est$atlas == "vertices" | est$atlas == "Yeo"),]
+
+# change measurement type names from randomaparc
+est$meas[which(est$meas == "area")] = "SurfArea"
+est$meas[which(est$meas == "volume")] = "GrayVol"
+est$meas[which(est$meas == "thickness")] = "ThickAvg"
+
+# save results in table
+names_results = c("meas", "pheno", "est_Yeo","est_vertices","improvement")
+
+results = data.frame(matrix(nrow=0, ncol = length(names_results)))
+names(results) = names_results
+
+for(i in unique(est$meas)){
+  for(j in unique(est$pheno)){
+     
+    subset = est[which(est$pheno == j & est$meas == i),]
+    est1 = subset$R2[1]
+    est2 = subset$R2[2]
+    
+    imp = max(c(est1,est2))/min(c(est1,est2))
+    results[nrow(results)+1,] <- c(i,j,min(c(est1,est2)),max(c(est1,est2)),imp)
+  }
+}
+
+# round numbers
+results$improvement = round(as.numeric(results$improvement), digits = 2)
+# sort by largest increase in morph (max(improvement))
+results = results[order(results$improvement, decreasing=T),]
+
+results[,c(3:ncol(results))] = lapply(results[,c(3:ncol(results))], as.numeric)
+results[,c(3:ncol(results))] = lapply(results[,c(3:ncol(results))], round, digits=2)
+
+
+library(DT)
+datatable(results, rownames=FALSE, filter="top",options= list(pageLength=10,scrollX=T), caption = "Relative improvement in prediction accuracy from Yeo to vertices")
+```
+
+
+
+Summarise improvement variable:
+
+  - Smallest increase = `r min(results$imp)`-fold
+  
+  - Largest increase = `r max(results$imp)`-fold
+  
+  - Mean = `r mean(results$imp)`-fold
+  
+  - SD = `r sd(results$imp)`-fold
+  
+  - Median = `r median(results$imp)`-fold
+
+
+<br>
+<br>
+
+
+### Add data to excel sheet
+```{r eval=T}
+wd=getwd()
+est = read.table(paste0(wd,"/LASSO_pred/R2_obs_pred_LASSO.table"), header=T)
+names(est)[which(names(est) == "meas")] = "Measurement type"
+
+
+### change sheet name
+sheet <-createSheet(wb, sheetName = "ST6 LASSO prediction accuracy")
+
+##' change title
+xlsx.addTitle(sheet, rowIndex=1, title="STable 6: LASSO prediction accuracy",
+              titleStyle = TITLE_STYLE)
+## Add sub title
+xlsx.addTitle(sheet, rowIndex=2, 
+              title="LASSO prediction accuracy calculated as the correlation (R2) between predicted and observed trait values.",
+              titleStyle = SUB_TITLE_STYLE)
+
+# indicate table to be saved
+addDataFrame(est, sheet, startRow=3, startColumn=1, 
+             colnamesStyle = TABLE_COLNAMES_STYLE,
+             rownamesStyle = TABLE_ROWNAMES_STYLE,row.names = F)
+
+# Change column width
+setColumnWidth(sheet, colIndex=c(2:ncol(est)), colWidth=14)
+setColumnWidth(sheet, colIndex = 1, colWidth=18)
+
+```
+
+
 *** 
 
 
 
-# Wilcoxon 
+## Wilcoxon 
 
 ```{r eval =T}
 library(stringr)
@@ -2149,10 +2399,10 @@ datatable(wil, rownames=FALSE, filter="top",options= list(pageLength=10,scrollX=
 ```{r eval=T}
 
 ### change sheet name
-sheet <-createSheet(wb, sheetName = "ST6 Wilcoxon sign rank tests")
+sheet <-createSheet(wb, sheetName = "ST7 Wilcoxon sign rank tests")
 
 ##' change title
-xlsx.addTitle(sheet, rowIndex=1, title="STable 6: Wilcoxon sign rank tests",
+xlsx.addTitle(sheet, rowIndex=1, title="STable 7: Wilcoxon sign rank tests",
               titleStyle = TITLE_STYLE)
 ## Add sub title
 xlsx.addTitle(sheet, rowIndex=2, 

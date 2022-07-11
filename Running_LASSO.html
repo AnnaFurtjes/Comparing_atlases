@@ -14,8 +14,8 @@
 
 <title>Running LASSO regressions</title>
 
-<script src="site_libs/header-attrs-2.10/header-attrs.js"></script>
-<script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
+<script src="site_libs/header-attrs-2.14/header-attrs.js"></script>
+<script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link href="site_libs/bootstrap-3.3.5/css/spacelab.min.css" rel="stylesheet" />
 <script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
@@ -62,6 +62,7 @@ if (window.hljs) {
 
 
 
+
 <style type = "text/css">
 .main-container {
   max-width: 940px;
@@ -82,6 +83,9 @@ button.code-folding-btn:focus {
 }
 summary {
   display: list-item;
+}
+details > summary > p:only-child {
+  display: inline;
 }
 pre code {
   padding: 0;
@@ -237,7 +241,7 @@ $(document).ready(function () {
 <div class="navbar navbar-inverse  navbar-fixed-top" role="navigation">
   <div class="container">
     <div class="navbar-header">
-      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-bs-toggle="collapse" data-target="#navbar" data-bs-target="#navbar">
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
@@ -266,7 +270,7 @@ $(document).ready(function () {
 <div id="header">
 
 <div class="btn-group pull-right float-right">
-<button type="button" class="btn btn-default btn-xs btn-secondary btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span>Code</span> <span class="caret"></span></button>
+<button type="button" class="btn btn-default btn-xs btn-secondary btn-sm dropdown-toggle" data-toggle="dropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span>Code</span> <span class="caret"></span></button>
 <ul class="dropdown-menu dropdown-menu-right" style="min-width: 50px;">
 <li><a id="rmd-show-all-code" href="#">Show All Code</a></li>
 <li><a id="rmd-hide-all-code" href="#">Hide All Code</a></li>
@@ -523,7 +527,91 @@ done
 
 #### sbatch -p brc,shared ~/morphometricity/scripts/Run_LASSO_atlases.sh</code></pre>
 <p><br> <br></p>
+<div id="get-lasso-prediction-accuracy" class="section level3">
+<h3>Get LASSO prediction accuracy</h3>
+<p>Prediction accuracy is calculated as the variance of observed trait values explained by the variance of LASSO predicted trait values.</p>
+<pre class="r"><code>### calculate R2 for LASSO models as the correlation between predicted and observed values
+
+library(data.table)
+
+
+phenos = c(&quot;age_pheno&quot;, &quot;sex_pheno&quot;, &quot;bmi_pheno&quot;, &quot;gpheno&quot;, &quot;cig_pheno&quot;, &quot;alc_pheno&quot;, &quot;edu_pheno&quot;)
+
+pheno_dir = &quot;~/datasets/ukbiobank/ukb40933/phenotypes&quot;
+
+# create frame to store results
+results = as.data.frame(matrix(nrow=0, ncol=7))
+names(results) = c(&quot;atlas&quot;, &quot;meas&quot;, &quot;pheno&quot;, &quot;R2&quot;, &quot;cl&quot;, &quot;cu&quot;, &quot;p&quot;)
+
+for(i in phenos){
+    
+    # read in observed pheno file
+    # read in atlas 1
+    pheno.txt = list.files(path = pheno_dir, pattern=paste0(i, &quot;.txt&quot;))
+    pheno = fread(paste0(pheno_dir, &quot;/&quot;, pheno.txt))
+
+    # keep only one IID column
+    pheno = pheno[,2:3]
+
+    # name columns
+    names(pheno) = c(&quot;IID&quot;, &quot;obs&quot;)
+
+    #######
+    # cycle through predictions from different atlases
+    #######
+    
+    # list all predicted values in pheno 
+    pred = list.files(pattern=paste0(i,&quot;.txt&quot;))
+
+
+    # should end up with 24 estimates
+    if(length(pred) != 24){print(&quot;Wrong number estimates. Double check LASSO output.&quot;)}
+        
+        for(j in 1:length(pred)){
+            # read in predicted pheno data from LASSO analysis
+            pheno_pred = read.table(paste0(pred[j]))
+            names(pheno_pred) = c(&quot;IID&quot;, &quot;pred&quot;)
+            
+            # merge observed phenot and predicted pheno
+            pheno_comp = merge(pheno, pheno_pred)
+            
+            # somehow some values were duplicated -  delete
+            pheno_comp=pheno_comp[!duplicated(pheno_comp$IID),]
+            
+            # make sure merged data has same number of rows as predicted data
+            if(nrow(pheno_comp) != nrow(pheno_pred)){
+                print(&quot;Data has not expected number of rows&quot;)
+                print(pred[j])
+            }
+            
+            # get info to be saved
+            info = unlist(strsplit(pred[j], &quot;_&quot;))[3:5]
+            
+            # get correlation between pred and obs and store in results
+                    
+            R2=(cor.test(pheno_comp$obs,pheno_comp$pred)$estimate)^2
+            int = cor.test(pheno_comp$obs,pheno_comp$pred)$conf.int^2
+            p = cor.test(pheno_comp$obs,pheno_comp$pred)$p.value
+            
+            # save in results
+            results[nrow(results)+1,] = c(info, R2, int, p)
+        }
+
+}
+
+results$pheno = stringr::str_remove(results$pheno, pattern=&quot;.txt&quot;)
+results$meas = stringr::str_remove(results$meas, pattern=&quot;.txt&quot;)
+
+# harmonise naming of meas
+results[which(results$meas == &quot;volume&quot;),&quot;meas&quot;]=&quot;GrayVol&quot;
+results[which(results$meas == &quot;thickness&quot;),&quot;meas&quot;]=&quot;ThickAvg&quot;
+results[which(results$meas == &quot;area&quot;),&quot;meas&quot;]=&quot;SurfArea&quot;
+
+
+
+write.table(results, &quot;~/results/LASSO/R2_obs_pred_LASSO.table&quot;, sep=&quot;\t&quot;, quote = F, col.names=T, row.names=F)</code></pre>
 <hr />
+</div>
 </div>
 <div id="wilcoxon-sign-ranked-tests" class="section level1">
 <h1>Wilcoxon Sign Ranked tests</h1>
