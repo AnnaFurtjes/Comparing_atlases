@@ -34,17 +34,17 @@ library(reshape2)
 library(PupillometryR)
 library(cowplot)
 
+wd = getwd()
 
-setwd("~/phenotypes")
 
-pheno<-read.table("age_pheno.txt",header=F)
+pheno<-read.table(paste0(wd, "/pheno/age_pheno.txt"),header=F)
 
 names(pheno) <- c("IID","FID","age_in_months")
 
 pheno$name <- rep("Age in months",nrow(pheno))
 
 # restrict to overlapping participants with brain data
-ids <- read.table("indi.list.fid")
+ids <- read.table(paste0(wd, "/pheno/indi.list.fid"))
 names(ids)[1]="IID"
 pheno = merge(pheno, ids, by="IID")
 
@@ -54,12 +54,12 @@ age_plot <- ggplot(data=pheno, aes(x=name, y=age_in_months))+
   geom_boxplot(width = .2, guides = FALSE, outlier.shape = NA, alpha = 0.5, colour="#1A1A1A", lwd=1.3)+ 
    expand_limits(x=2)+
   ylab("Age in months")+
-  annotate(geom = "text", x=1, y=500,label=paste0("N = ",nrow(pheno)),color="#696969")+
+  annotate(geom = "text", x=1, y=500,label=paste0("N = ",nrow(pheno)),color="#444444", size = 7)+
   theme_bw()+
-  theme(text = element_text(size=12),#, colour='lemonchiffon4'
+  theme(text = element_text(size=15),#, colour='lemonchiffon4'
         axis.text.x = element_blank(),
-        axis.text.y = element_text(size=13, colour='#696969'),
-        axis.title.y = element_text(face="bold", colour='#1A1A1A', size=17),
+        axis.text.y = element_text(size=15, colour='#696969'),
+        axis.title.y = element_text(face="bold", colour='#1A1A1A', size=20),
         axis.title.x = element_blank(),
         axis.line.x = element_blank(),
         axis.line.y = element_blank(),
@@ -71,7 +71,7 @@ age_plot
 
 ############################################################
 
-pheno<-read.table("bmi_pheno.txt",header=F)
+pheno<-read.table(paste0(wd,"/pheno/bmi_pheno.txt"),header=F)
 
 names(pheno) <- c("IID","FID","bmi")
 
@@ -85,12 +85,12 @@ bmi_plot <- ggplot(data=pheno, aes(x=name, y=bmi))+
   geom_boxplot(width = .2, guides = FALSE, outlier.shape = NA, alpha = 0.5, colour="#1A1A1A", lwd=1.3)+ 
   expand_limits(x=2)+
   ylab("Body Mass Index")+
-  annotate(geom = "text", x=1, y=10,label=paste0("N = ",nrow(pheno)),color="#696969")+
+  annotate(geom = "text", x=1, y=10,label=paste0("N = ",nrow(pheno)),color="#444444", size = 7)+
   theme_bw() +
-  theme(text = element_text(size=12),#, colour='lemonchiffon4'
+  theme(text = element_text(size=15),
         axis.text.x = element_blank(),
-        axis.text.y = element_text(size=13, colour='#696969'),
-        axis.title.y = element_text(face="bold", colour='#1A1A1A', size=17),
+        axis.text.y = element_text(size=15, colour='#696969'),
+        axis.title.y = element_text(face="bold", colour='#1A1A1A', size=20),
         axis.title.x = element_blank(),
         axis.line.x = element_blank(),
         axis.line.y = element_blank(),
@@ -102,7 +102,7 @@ bmi_plot
 
 ############################################################
 
-pheno<-read.table("gpheno.txt",header=F)
+pheno<-read.table(paste0(wd,"/pheno/gpheno.txt"),header=F)
 
 names(pheno) <- c("IID","FID","g")
 
@@ -116,12 +116,12 @@ g_plot <- ggplot(data=pheno, aes(x=name, y=g))+
   geom_boxplot(width = .2, guides = FALSE, outlier.shape = NA, alpha = 0.5, colour="#1A1A1A", lwd=1.3)+ 
   expand_limits(x=2)+
   ylab("General Cognitive Ability")+
-  annotate(geom = "text", x=1, y=-2.5,label=paste0("N = ",nrow(pheno)),color="#696969")+
+  annotate(geom = "text", x=1, y=-2.5,label=paste0("N = ",nrow(pheno)),color="#444444", size = 7)+
   theme_bw() +
-  theme(text = element_text(size=12),#, colour='lemonchiffon4'
+  theme(text = element_text(size=15),#, colour='lemonchiffon4'
         axis.text.x = element_blank(),
-        axis.text.y = element_text(size=13, colour='#696969'),
-        axis.title.y = element_text(face="bold", colour='#1A1A1A', size=17),
+        axis.text.y = element_text(size=15, colour='#696969'),
+        axis.title.y = element_text(face="bold", colour='#1A1A1A', size=20),
         axis.title.x = element_blank(),
         axis.line.x = element_blank(),
         axis.line.y = element_blank(),
@@ -141,7 +141,7 @@ g_plot
 #pheno$sex[1:1300] <- 0
 #pheno$sex[1301:nrow(pheno)] <- 1
 
-pheno<-read.table("sex_pheno.txt",header=F)
+pheno<-read.table(paste0(wd,"pheno/sex_pheno.txt"),header=F)
 
 names(pheno) <- c("IID","FID","sex")
 
@@ -153,14 +153,14 @@ pheno = merge(pheno, ids, by="IID")
 sex_plot<-
   ggplot(pheno,aes(x=sex))+
   geom_histogram(binwidth = 1, fill="#98bdcd", color="#1A1A1A",lwd=1.3)+
-  annotate(geom = "text", x=0, y=sum(pheno$sex == 0)-2000,label=paste0(sum(pheno$sex == 0),"\nfemales"),color="#696969")+
-  annotate(geom = "text", x=1, y=sum(pheno$sex == 1)-2000,label=paste0(sum(pheno$sex == 1),"\nmales"),color="#696969")+
+  annotate(geom = "text", x=0, y=sum(pheno$sex == 0)-2000,label=paste0(sum(pheno$sex == 0),"\nfemales"),color="#444444", size = 6)+
+  annotate(geom = "text", x=1, y=sum(pheno$sex == 1)-2000,label=paste0(sum(pheno$sex == 1),"\nmales"),color="#444444", size = 6)+
   ylab("Males and females (count)")+
   theme_bw() +
-  theme(text = element_text(size=12),#, colour='lemonchiffon4'
+  theme(text = element_text(size=15),#, colour='lemonchiffon4'
         axis.text.x = element_blank(),
-        axis.text.y = element_text(size=13, colour='#696969'),
-        axis.title.y = element_text(face="bold", colour='#1A1A1A', size=17),
+        axis.text.y = element_text(size=15, colour='#696969'),
+        axis.title.y = element_text(face="bold", colour='#1A1A1A', size=20),
         axis.title.x = element_blank(),
         axis.line.x = element_blank(),
         axis.line.y = element_blank(),
@@ -172,7 +172,7 @@ sex_plot
 
 ##########################
 
-pheno<-read.table("cig_pheno.txt",header=F)
+pheno<-read.table(paste0(wd,"pheno/cig_pheno.txt"),header=F)
 
 names(pheno) <- c("IID","FID","cig")
 # restrict to overlapping participants with brain data
@@ -182,19 +182,19 @@ cig_plot<-
   ggplot(pheno,aes(x=cig))+
   geom_histogram(binwidth = 1, fill="#98bdcd", color="#1A1A1A",lwd=1.3)+
   ylab("Cigarette smoking (count)")+
-  annotate(geom = "text", x=3.5, y=21000,label=paste0("N = ", nrow(pheno)),color="#696969")+
-  annotate(geom = "text", x=0, y=sum(pheno$cig == 0)+2500,label="Never smoked",color="#696969",angle = 90)+
-  annotate(geom = "text", x=1, y=sum(pheno$cig == 1)+4000,label="Just tried once or twice",color="#696969",angle = 90)+
-  annotate(geom = "text", x=2, y=sum(pheno$cig == 2)-2500,label="Occasionally",color="#696969",angle = 90)+
-  annotate(geom = "text", x=3, y=sum(pheno$cig == 3)+7000,label="Regularly - bottom quantile quantity",color="#696969",angle = 90)+
-  annotate(geom = "text", x=4, y=sum(pheno$cig == 4)+7000,label="Regularly - second quantile quantity",color="#696969",angle = 90)+
-  annotate(geom = "text", x=5, y=sum(pheno$cig == 5)+7000,label="Regularly - third quantile quantity",color="#696969",angle = 90)+
-  annotate(geom = "text", x=6, y=sum(pheno$cig == 6)+7000,label="Regularly - top quantile quantity",color="#696969",angle = 90)+
+  annotate(geom = "text", x=3.5, y=21000,label=paste0("N = ", nrow(pheno)),color="#444444", size = 6)+
+  annotate(geom = "text", x=0, y=sum(pheno$cig == 0)+5000,label="Never smoked",color="#444444", size = 6,angle = 90)+
+  annotate(geom = "text", x=1, y=sum(pheno$cig == 1)+5100,label="Tried once or twice",color="#444444", size = 6,angle = 90)+
+  annotate(geom = "text", x=2, y=sum(pheno$cig == 2)-4300,label="Occasionally",color="#444444", size = 6,angle = 90)+
+  annotate(geom = "text", x=3, y=sum(pheno$cig == 3)+7800,label="Regularly - bottom quantile",color="#444444", size = 6,angle = 90)+
+  annotate(geom = "text", x=4, y=sum(pheno$cig == 4)+7800,label="Regularly - second quantile",color="#444444", size = 6,angle = 90)+
+  annotate(geom = "text", x=5, y=sum(pheno$cig == 5)+7700,label="Regularly - third quantile",color="#444444", size = 6,angle = 90)+
+  annotate(geom = "text", x=6, y=sum(pheno$cig == 6)+8000,label="Regularly - top quantile",color="#444444", size = 6,angle = 90)+
   theme_bw() +
-  theme(text = element_text(size=12),#, colour='lemonchiffon4'
+  theme(text = element_text(size=15),
         axis.text.x = element_blank(),
-        axis.text.y = element_text(size=13, colour='#696969'),
-        axis.title.y = element_text(face="bold", colour='#1A1A1A', size=17),
+        axis.text.y = element_text(size=15, colour='#696969'),
+        axis.title.y = element_text(face="bold", colour='#1A1A1A', size=20),
         axis.title.x = element_blank(),
         axis.line.x = element_blank(),
         axis.line.y = element_blank(),
@@ -206,7 +206,7 @@ cig_plot
 
 ##########################
 
-pheno<-read.table("edu_pheno.txt",header=F)
+pheno<-read.table(paste0(wd,"pheno/edu_pheno.txt"),header=F)
 
 names(pheno) <- c("IID","FID","edu")
 
@@ -218,18 +218,18 @@ edu_plot<-
   geom_histogram(binwidth = 1, fill="#98bdcd", color="#1A1A1A",lwd=1.3)+
   ylab("Education (count)")+
   theme_bw() +
-  annotate(geom = "text", x=0, y=sum(pheno$edu == 0)+4000,label="None of the above",color="#696969",angle = 90)+
-  annotate(geom = "text", x=1, y=sum(pheno$edu == 1)+6000,label="Other professional qualifications",color="#696969",angle = 90)+
-  annotate(geom = "text", x=2, y=sum(pheno$edu == 2)+6000,label="NVQ or HND or HNC or equivalent",color="#696969",angle = 90)+
-  annotate(geom = "text", x=3, y=sum(pheno$edu == 3)+4000,label="CSEs or equivalent",color="#696969",angle = 90)+
-  annotate(geom = "text", x=4, y=sum(pheno$edu == 4)+5500,label="O levels/GCSEs or equivalent",color="#696969",angle = 90)+
-  annotate(geom = "text", x=5, y=sum(pheno$edu == 5)+5500,label="A levels/AS levels or equivalent",color="#696969",angle = 90)+
-  annotate(geom = "text", x=6, y=sum(pheno$edu == 6)-5000,label="College or University degree",color="#696969",angle = 90)+
-  annotate(geom = "text", x=3.5, y=21000,label=paste0("N = ", nrow(pheno)),color="#696969")+
-  theme(text = element_text(size=12),#, colour='lemonchiffon4'
+  annotate(geom = "text", x=0, y=sum(pheno$edu == 0)+2000,label="None",color="#444444", size = 6,angle = 90)+
+  annotate(geom = "text", x=1, y=sum(pheno$edu == 1)+7000,label="Other prof. qualifications",color="#444444", size = 6,angle = 90)+
+  annotate(geom = "text", x=2, y=sum(pheno$edu == 2)+6500,label="NVQ or HND or HNC",color="#444444", size = 6,angle = 90)+
+  annotate(geom = "text", x=3, y=sum(pheno$edu == 3)+2500,label="CSEs",color="#444444", size = 6,angle = 90)+
+  annotate(geom = "text", x=4, y=sum(pheno$edu == 4)+5000,label="O levels/GCSEs",color="#444444", size = 6,angle = 90)+
+  annotate(geom = "text", x=5, y=sum(pheno$edu == 5)+6500,label="A levels/AS levels",color="#444444", size = 6,angle = 90)+
+  annotate(geom = "text", x=6, y=sum(pheno$edu == 6)-7700,label="College or University degree",color="#444444", size = 6,angle = 90)+
+  annotate(geom = "text", x=3.5, y=21000,label=paste0("N = ", nrow(pheno)),color="#444444", size = 6)+
+  theme(text = element_text(size=15),
         axis.text.x = element_blank(),
-        axis.text.y = element_text(size=13, colour='#696969'),
-        axis.title.y = element_text(face="bold", colour='#1A1A1A', size=17),
+        axis.text.y = element_text(size=15, colour='#696969'),
+        axis.title.y = element_text(face="bold", colour='#1A1A1A', size=20),
         axis.title.x = element_blank(),
         axis.line.x = element_blank(),
         axis.line.y = element_blank(),
@@ -242,7 +242,7 @@ edu_plot
 
 ##########################
 
-pheno<-read.table("alc_pheno.txt",header=F)
+pheno<-read.table(paste0(wd,"pheno/alc_pheno.txt"),header=F)
 
 names(pheno) <- c("IID","FID","alc")
 # restrict to overlapping participants with brain data
@@ -252,17 +252,17 @@ alc_plot<-
   ggplot(pheno,aes(x=alc))+
   geom_histogram(binwidth = 1, fill="#98bdcd", color="#1A1A1A",lwd=1.3)+
   ylab("Alcohol (count)")+
-  annotate(geom = "text", x=1.5, y=10000,label=paste0("N = ", nrow(pheno)),color="#696969")+
-  annotate(geom = "text", x=0, y=sum(pheno$alc == 0)+2000,label="Never drinking",color="#696969",angle = 90)+
-  annotate(geom = "text", x=1, y=sum(pheno$alc == 1)+2000,label="Monthly or less",color="#696969",angle = 90)+
-  annotate(geom = "text", x=2, y=sum(pheno$alc == 2)+2000,label="2 to 4 times a month",color="#696969",angle = 90)+
-  annotate(geom = "text", x=3, y=sum(pheno$alc == 3)-2000,label="2 to 3 times a week",color="#696969",angle = 90)+
-  annotate(geom = "text", x=4, y=sum(pheno$alc == 4)-2000,label="4 or more times a week",color="#696969",angle = 90)+
+  annotate(geom = "text", x=1.5, y=10000,label=paste0("N = ", nrow(pheno)),color="#444444", size = 6)+
+  annotate(geom = "text", x=0, y=sum(pheno$alc == 0)+2500,label="Never drinking",color="#444444", size = 6,angle = 90)+
+  annotate(geom = "text", x=1, y=sum(pheno$alc == 1)+2500,label="Monthly or less",color="#444444", size = 6,angle = 90)+
+  annotate(geom = "text", x=2, y=sum(pheno$alc == 2)-2500,label="2-4 times a month",color="#444444", size = 6,angle = 90)+
+  annotate(geom = "text", x=3, y=sum(pheno$alc == 3)-2800,label="2-3 times a week",color="#444444", size = 6,angle = 90)+
+  annotate(geom = "text", x=4, y=sum(pheno$alc == 4)-3300,label="4 or more times a week",color="#444444", size = 6,angle = 90)+
   theme_bw() +
-  theme(text = element_text(size=12),#, colour='lemonchiffon4'
+  theme(text = element_text(size=15),#, colour='lemonchiffon4'
         axis.text.x = element_blank(),
-        axis.text.y = element_text(size=13, colour='#696969'),
-        axis.title.y = element_text(face="bold", colour='#1A1A1A', size=17),
+        axis.text.y = element_text(size=15, colour='#696969'),
+        axis.title.y = element_text(face="bold", colour='#1A1A1A', size=20),
         axis.title.x = element_blank(),
         axis.line.x = element_blank(),
         axis.line.y = element_blank(),
@@ -276,13 +276,13 @@ alc_plot
 library(cowplot)
 library(gridExtra)
 
-tiff("~/Comparing labelling protocols/results/pheno/cont_plots.tiff", width = 15, height = 5, units = 'in', res=1000)
+tiff(paste0(wd, "pheno/cont_plots.tiff"), width = 15, height = 5, units = 'in', res=1000)
 
 plot_grid(age_plot, bmi_plot, g_plot, nrow = 1, ncol = 3, labels=c("A","B","C"), label_colour = "#696969")
 
 dev.off()
 
-tiff("~/Comparing labelling protocols/results/pheno/cat_plots.tiff", width = 15, height = 5, units = 'in', res=1000)
+tiff(paste0(wd, "pheno/cat_plots.tiff"), width = 15, height = 5, units = 'in', res=1000)
 
 plot_grid(sex_plot, cig_plot, edu_plot, alc_plot, nrow = 1, ncol = 4, labels=c("D","E","F","G"), label_colour = "#696969")
 
@@ -1510,9 +1510,203 @@ dev.off()
 
 ![](C:/Users/k1894405/Documents/GitHub/Comparing_atlases/other_images/nulldistr.PNG)
 
-
+<br>
 <br>
 
+Baptiste is suggesting to plot data by phenotype and not by atlas as done in the other plots. I actually preferred this too, and this will likely be included in the manuscript. 
+
+
+
+```{r}
+library(ggplot2)
+library(cowplot)
+library(dplyr)
+library(PupillometryR)
+library(stringr)
+
+wd=getwd()
+#setwd(paste0(wd,"/nulldistr"))
+
+save=list()
+
+for(pheno in c("age","alc","bmi","cig","edu","gpheno","sex")){
+
+  
+ # read in random parcellations and iterate over differnt dimensionality levels, save in frame
+keep = NULL
+  
+  for(i in c(34, 68, 148, 274, 334, 360, 500)){
+    # read in random parcellations and iterate over differnt dimensionality levels  
+    null = read.table(paste0(wd,"/nulldistr/morph_results_",i,"randomROIs.table"), header=T)
+  
+    # keep only relevant pheno
+    keep = rbind(keep, null[which(null$pheno == pheno),])
+    
+  }
+  
+
+  # name random atlases pretty
+  keep$atlas_num = str_remove(keep$atlas, pattern="randomROIs")
+
+
+      
+  # change measurement type names from randomaparc
+  keep$meas[which(keep$meas == "area")] = "SurfArea"
+  keep$meas[which(keep$meas == "volume")] = "GrayVol"
+  keep$meas[which(keep$meas == "thickness")] = "ThickAvg"
+        
+  names(keep)[which(names(keep) == "meas")] = "Measurement type"
+    
+  # sizes in plot
+  title_size=22
+  other_size=20
+  axis_text=16
+    
+
+    # get estimates from empirical atlases
+
+    est = read.table(paste0(wd,"/empirical/morph_results_QCed.table"), header=T)
+    
+    # remove Schaefer estimates for surfarea and cortical thickness as we will replace them with the deflated ones
+    est=est[-which(est$atlas == "Schaefer" & est$meas == "GrayVol"| est$atlas == "Schaefer" & est$meas == "SurfArea"),]
+    
+    # get corrected Schaefer estimates
+    Schaefer_est = read.table(paste0(wd,"/empirical/morph_results_Schaefer_rankdist.table"), header=T)
+    # only replace surfarea and cortical thickness
+    Schaefer_est=Schaefer_est[-which(Schaefer_est$meas == "ThickAvg"),]
+        
+    # combine/ reintroduce deflated Schaefer estimates
+    est=rbind(est, Schaefer_est)
+    
+    # keep only trait relevant estimates
+    mu = est[which(est$pheno == pheno),c("atlas","meas", "morph","ci_l","ci_u")]
+
+for(l in unique(mu$atlas)){
+  GrayVolnum = mu$morph[which(mu$meas=="GrayVol" & mu$atlas==l)]
+  SurfAreanum = mu$morph[which(mu$meas=="SurfArea" & mu$atlas==l)]
+  ThickAvgnum = mu$morph[which(mu$meas=="ThickAvg" & mu$atlas==l)]
+
+  assign(paste0("GrayVolnum_",l), GrayVolnum)
+  assign(paste0("SurfAreanum_",l), SurfAreanum)
+  assign(paste0("ThickAvgnum_",l), ThickAvgnum)
+}
+# rename columns to match keep
+names(mu)[which(names(mu) == "meas")] = "Measurement type"
+names(mu)[which(names(mu) == "morph")] = "morph_emp"
+names(mu)[which(names(mu) == "ci_l")] = "ci_l_emp"
+names(mu)[which(names(mu) == "ci_u")] = "ci_u_emp"
+
+# rename phenos to match keep
+mu$atlas_num = mu$atlas
+mu$atlas_num[which(mu$atlas =="DK")] = 68
+mu$atlas_num[which(mu$atlas =="Yeo")] = 34
+mu$atlas_num[which(mu$atlas =="Des")] = 148
+mu$atlas_num[which(mu$atlas =="JulichBrain")] = 274
+mu$atlas_num[which(mu$atlas =="Glasser")] = 360
+mu$atlas_num[which(mu$atlas =="Gordon")] = 334
+mu$atlas_num[which(mu$atlas =="Schaefer")] = 500
+
+# merge mu & keep to have empirical estimate part of the keep frame
+keep = merge(keep, mu, by=c("atlas_num","Measurement type"))
+# reduce computational burden by plotting confidence intervall only once per pheno 
+keep[setdiff(1:nrow(keep),seq(from = 2, to = nrow(keep), by =100)),c("ci_l_emp","ci_u_emp")]=NA
+
+# make atlas_num column numeric
+keep$atlas_num = as.numeric(keep$atlas_num)
+
+
+    # name phenos pretty
+    if(pheno == "age"){pheno = "Age"}
+    if(pheno == "gpheno"){pheno = "General cognitive ability"}
+    if(pheno == "sex"){pheno = "Sex"}
+    if(pheno == "alc"){pheno ="Alcohol consumption"}
+    if(pheno == "cig"){pheno ="Cigarette consumption"}
+    if(pheno == "bmi"){pheno ="Body Mass index"}
+    if(pheno == "edu"){pheno ="Education"}
+
+    title = paste0(pheno)
+
+    # decided to not space out the x-axis proportionately to ROIs, it's not practical
+    keep$num_plot = 0
+    keep$num_plot[which(keep$atlas.y == "DK")] = 2
+    keep$num_plot[which(keep$atlas.y == "Des")] = 3
+    keep$num_plot[which(keep$atlas.y == "Glasser")] = 6
+    keep$num_plot[which(keep$atlas.y == "Gordon")] = 5
+    keep$num_plot[which(keep$atlas.y == "Schaefer")] = 7
+    keep$num_plot[which(keep$atlas.y == "Yeo")] = 1
+    keep$num_plot[which(keep$atlas.y == "JulichBrain")] = 4
+    keep$num_plot = as.character(keep$num_plot)
+    
+
+random_plot <- ggplot(keep, aes(y = morph, x = num_plot, color = `Measurement type`, group = interaction(num_plot, `Measurement type`))) +
+    ggtitle(title)+
+    geom_boxplot(alpha = 0.5, width=0.25, position = position_dodge(width=0.25)) +
+    geom_point(position = position_dodge(width=0.25),alpha = 0.2, size=2)+
+    scale_color_manual(values=c("#0492C2","#63C5DA","#016064"))+
+    theme_bw()+
+    ylab("Morphometricity estimate (%)")+
+    scale_x_discrete(labels=c("1" = "34 ROIs\n(Yeo)", "2" = "68 ROIs\n(DK)",
+                              "3" = "148 ROIs\n(Des)", "4" = "274 ROIs\n(Julich-Brain)", 
+                              "5" = "334 ROIs\n(Gordon)", "6" = "360 ROIs\n(Glasser)", 
+                              "7" = "500 ROIs\n(Schaefer)"))+
+    theme(text = element_text(size=other_size),
+          axis.text.x = element_text(size=axis_text, colour='#696969', angle = 45),
+          axis.text.y = element_text(size=axis_text, colour='#696969'),
+          plot.title = element_text(face="bold", colour='#1A1A1A', size=18, hjust = 0.5),
+          axis.title.y = element_text(face="bold", colour='#1A1A1A', size=18),
+          axis.title.x = element_blank(),
+          axis.line.x = element_blank(),
+          axis.line.y = element_blank(),
+          axis.ticks.x = element_blank(),
+          axis.ticks.y = element_blank(),
+          panel.border = element_blank())+
+    geom_errorbar(aes(ymin = ci_l_emp,
+                      ymax = ci_u_emp, x = num_plot), size=.3, alpha = 0.6, position=position_dodge(width=0.25), color="red", linetype =2)+
+    annotate(geom="point", y=SurfAreanum_Yeo, x=1, shape=4, color="red", size=2.5, stroke=1.2)+
+    annotate(geom="point", y=GrayVolnum_Yeo, x=1-0.1, shape=4, color="red", size=2.5, stroke=1.2)+
+    annotate(geom="point", y=ThickAvgnum_Yeo, x=1+0.1, shape=4, color="red", size=2.5, stroke=1.2)+
+  
+    annotate(geom="point", y=SurfAreanum_DK, x=2, shape=4, color="red", size=2.5, stroke=1.2)+
+    annotate(geom="point", y=GrayVolnum_DK, x=2-0.1, shape=4, color="red", size=2.5, stroke=1.2)+
+    annotate(geom="point", y=ThickAvgnum_DK, x=2+0.1, shape=4, color="red", size=2.5, stroke=1.2)+
+  
+    annotate(geom="point", y=SurfAreanum_Des, x=3, shape=4, color="red", size=2.5, stroke=1.2)+
+    annotate(geom="point", y=GrayVolnum_Des, x=3-0.1, shape=4, color="red", size=2.5, stroke=1.2)+
+    annotate(geom="point", y=ThickAvgnum_Des, x=3+0.1, shape=4, color="red", size=2.5, stroke=1.2)+
+  
+    annotate(geom="point", y=SurfAreanum_JulichBrain, x=4, shape=4, color="red", size=2.5, stroke=1.2)+
+    annotate(geom="point", y=GrayVolnum_JulichBrain, x=4-0.1, shape=4, color="red", size=2.5, stroke=1.2)+
+    annotate(geom="point", y=ThickAvgnum_JulichBrain, x=4+0.1, shape=4, color="red", size=2.5, stroke=1.2)+
+  
+    annotate(geom="point", y=SurfAreanum_Gordon, x=5, shape=4, color="red", size=2.5, stroke=1.2)+
+    annotate(geom="point", y=GrayVolnum_Gordon, x=5-0.1, shape=4, color="red", size=2.5, stroke=1.2)+
+    annotate(geom="point", y=ThickAvgnum_Gordon, x=5+0.1, shape=4, color="red", size=2.5, stroke=1.2)+
+  
+    annotate(geom="point", y=SurfAreanum_Glasser, x=6, shape=4, color="red", size=2.5, stroke=1.2)+
+    annotate(geom="point", y=GrayVolnum_Glasser, x=6-0.1, shape=4, color="red", size=2.5, stroke=1.2)+
+    annotate(geom="point", y=ThickAvgnum_Glasser, x=6+0.1, shape=4, color="red", size=2.5, stroke=1.2)+
+  
+    annotate(geom="point", y=SurfAreanum_Schaefer, x=7, shape=4, color="red", size=2.5, stroke=1.2)+
+    annotate(geom="point", y=GrayVolnum_Schaefer, x=7-0.1, shape=4, color="red", size=2.5, stroke=1.2)+
+    annotate(geom="point", y=ThickAvgnum_Schaefer, x=7+0.1, shape=4, color="red", size=2.5, stroke=1.2)
+    
+save[[pheno]] <- random_plot
+}
+
+num = 4
+    
+tiff(paste0(wd,"/plots/nulldistr_", num, ".tiff"), width = 10, height = 6, units = "in", pointsize = 2, bg="white", res=800)
+save[[num]]
+dev.off()
+
+
+```
+
+
+![](C:/Users/k1894405/Documents/GitHub/Comparing_atlases/other_images/Nulldistr2.PNG)
+
+<br>
+<br>
 
 ### Add data to excel sheet
 ```{r eval=T}
@@ -1953,15 +2147,17 @@ for(i in unique(LRT$meas)){
 
   for(j in unique(LRT$pheno)){
       # subset the LRT data frame 
-      subset=LRT[which(LRT$meas == i & LRT$pheno == j),c("atlas1","atlas2","sum_G")]
+      subset=LRT[which(LRT$meas == i & LRT$pheno == j),c("atlas1","atlas2","sum_G","p_val")]
       subset$morph = NA
       
       # subset morph data frame
-      subset_morph = morph[which(morph$meas == i & morph$pheno == j),c("atlas1","morph")]
+      subset_morph = morph[which(morph$meas == i & morph$pheno == j),c("atlas1","morph","pval")]
       subset_morph$atlas2 <- subset_morph$atlas1
       subset_morph$sum_G = NA
-      subset_morph = subset_morph[,c("atlas1","atlas2","sum_G","morph")]
+      subset_morph = subset_morph[,c("atlas1","atlas2","sum_G","morph","pval")]
       subset_morph$morph = round(subset_morph$morph, digits = 0)
+      # harmonise names between data sets
+      names(subset_morph)[names(subset_morph)=="pval"]="p_val"
       
       # combine data sets
       subset = rbind(subset, subset_morph)
@@ -1973,8 +2169,8 @@ for(i in unique(LRT$meas)){
       subset$ratio = round(subset$sum_G / subset$morph, digits=2)
       
       subset$sig = ifelse(!is.na(subset$sum_G),paste0(subset$ratio, "\n(",subset$sum_G,"%)"), paste0(subset$morph,"%"))
-
-      
+      # which(LRT$p_val > 0.05/588)
+      subset$sig = ifelse((subset$p_val > 0.05/588), paste0(subset$sig, "\nn.s."), subset$sig)
       # plot heatmap
       
 
@@ -2033,49 +2229,49 @@ for(i in unique(LRT$meas)){
 }
 
 i="age"
-tiff(paste0("C:/Users/k1894405/OneDrive - King's College London/PhD/Projects/Comparing labelling protocols/results/plots/ratio_morph_", i, ".tiff"), width = 12, height = 5, units = "in", pointsize = 2, bg="white", res=800)
+tiff(paste0(wd,"plots/ratio_morph_", i, ".tiff"), width = 12, height = 5, units = "in", pointsize = 2, bg="white", res=800)
 
 plot_grid(save[[paste0("GrayVol_",i)]], save[[paste0("SurfArea_",i)]], save[[paste0("ThickAvg_",i)]], ncol=3)
 
 dev.off()
 
 i="sex"
-tiff(paste0("C:/Users/k1894405/OneDrive - King's College London/PhD/Projects/Comparing labelling protocols/results/plots/ratio_morph_", i, ".tiff"), width = 12, height = 5, units = "in", pointsize = 2, bg="white", res=800)
+tiff(paste0(wd,"plots/ratio_morph_", i, ".tiff"), width = 12, height = 5, units = "in", pointsize = 2, bg="white", res=800)
 
 plot_grid(save[[paste0("GrayVol_",i)]], save[[paste0("SurfArea_",i)]], save[[paste0("ThickAvg_",i)]], ncol=3)
 
 dev.off()
 
 i="bmi"
-tiff(paste0("C:/Users/k1894405/OneDrive - King's College London/PhD/Projects/Comparing labelling protocols/results/plots/ratio_morph_", i, ".tiff"), width = 12, height = 5, units = "in", pointsize = 2, bg="white", res=800)
+tiff(paste0(wd,"plots/ratio_morph_", i, ".tiff"), width = 12, height = 5, units = "in", pointsize = 2, bg="white", res=800)
 
 plot_grid(save[[paste0("GrayVol_",i)]], save[[paste0("SurfArea_",i)]], save[[paste0("ThickAvg_",i)]], ncol=3)
 
 dev.off()
 
 i="edu"
-tiff(paste0("C:/Users/k1894405/OneDrive - King's College London/PhD/Projects/Comparing labelling protocols/results/plots/ratio_morph_", i, ".tiff"), width = 12, height = 5, units = "in", pointsize = 2, bg="white", res=800)
+tiff(paste0(wd,"plots/ratio_morph_", i, ".tiff"), width = 12, height = 5, units = "in", pointsize = 2, bg="white", res=800)
 
 plot_grid(save[[paste0("GrayVol_",i)]], save[[paste0("SurfArea_",i)]], save[[paste0("ThickAvg_",i)]], ncol=3)
 
 dev.off()
 
 i="gpheno"
-tiff(paste0("C:/Users/k1894405/OneDrive - King's College London/PhD/Projects/Comparing labelling protocols/results/plots/ratio_morph_", i, ".tiff"), width = 12, height = 5, units = "in", pointsize = 2, bg="white", res=800)
+tiff(paste0(wd,"plots/ratio_morph_", i, ".tiff"), width = 12, height = 5, units = "in", pointsize = 2, bg="white", res=800)
 
 plot_grid(save[[paste0("GrayVol_",i)]], save[[paste0("SurfArea_",i)]], save[[paste0("ThickAvg_",i)]], ncol=3)
 
 dev.off()
 
 i="cig"
-tiff(paste0("C:/Users/k1894405/OneDrive - King's College London/PhD/Projects/Comparing labelling protocols/results/plots/ratio_morph_", i, ".tiff"), width = 12, height = 5, units = "in", pointsize = 2, bg="white", res=800)
+tiff(paste0(wd,"plots/ratio_morph_", i, ".tiff"), width = 12, height = 5, units = "in", pointsize = 2, bg="white", res=800)
 
 plot_grid(save[[paste0("GrayVol_",i)]], save[[paste0("SurfArea_",i)]], save[[paste0("ThickAvg_",i)]], ncol=3)
 
 dev.off()
 
 i="alc"
-tiff(paste0("C:/Users/k1894405/OneDrive - King's College London/PhD/Projects/Comparing labelling protocols/results/plots/ratio_morph_", i, ".tiff"), width = 12, height = 5, units = "in", pointsize = 2, bg="white", res=800)
+tiff(paste0(wd,"plots/ratio_morph_", i, ".tiff"), width = 12, height = 5, units = "in", pointsize = 2, bg="white", res=800)
 
 plot_grid(save[[paste0("GrayVol_",i)]], save[[paste0("SurfArea_",i)]], save[[paste0("ThickAvg_",i)]], ncol=3)
 
@@ -2406,7 +2602,7 @@ xlsx.addTitle(sheet, rowIndex=1, title="STable 7: Wilcoxon sign rank tests",
               titleStyle = TITLE_STYLE)
 ## Add sub title
 xlsx.addTitle(sheet, rowIndex=2, 
-              title="Wilcoxon tests based on LASSO prediction errors",
+              title="Wilcoxon tests based on LASSO prediction errors (which tests whether there is a sig. difference between the difference in observed vs. predicted values from two atlases)",
               titleStyle = SUB_TITLE_STYLE)
 
 # indicate table to be saved
